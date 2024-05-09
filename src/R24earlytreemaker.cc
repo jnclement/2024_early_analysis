@@ -81,36 +81,37 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _f = new TFile( _foutname.c_str(), "RECREATE");
   
   _tree = new TTree("ttree","a persevering date tree");
-  _tree->Branch("emetot",&emetot,"emetot/F");
-  _tree->Branch("ihetot",&ihetot,"ihetot/F");
-  _tree->Branch("ohetot",&ohetot,"ohetot/F");
-  _tree->Branch("sectorem",&sectorem,"sectorem/I"); //Number of hit sectors in the emcal
+  //_tree->Branch("emetot",&emetot,"emetot/F");
+  //_tree->Branch("ihetot",&ihetot,"ihetot/F");
+  //_tree->Branch("ohetot",&ohetot,"ohetot/F");
+  //_tree->Branch("sectorem",&sectorem,"sectorem/I"); //Number of hit sectors in the emcal
   _tree->Branch("sectorih",&sectorih,"sectorih/I"); // IHcal etc.
   _tree->Branch("sectoroh",&sectoroh,"sectoroh/I");
-  _tree->Branch("sectoremuc",&sectoremuc,"sectoremuc/I");
-  _tree->Branch("emcalen",emcalen,"emcalen[sectorem]/F"); //energy per EMCal sector
+  //_tree->Branch("sectoremuc",&sectoremuc,"sectoremuc/I");
+  //_tree->Branch("emcalen",emcalen,"emcalen[sectorem]/F"); //energy per EMCal sector
   _tree->Branch("ihcalen",ihcalen,"ihcalen[sectorih]/F"); // per IHCal sector (etc.)
   _tree->Branch("ohcalen",ohcalen,"ohcalen[sectoroh]/F");
-  _tree->Branch("emcalchi2",emcalchi2,"emcalchi2[sectorem]/F"); //energy per EMCal sector
-  _tree->Branch("ihcalchi2",ihcalchi2,"ihcalchi2[sectorih]/F"); // per IHCal sector (etc.)
-  _tree->Branch("ohcalchi2",ohcalchi2,"ohcalchi2[sectoroh]/F");
-  _tree->Branch("emcalenuc",emcalenuc,"emcalenuc[sectoremuc]/F");
-  _tree->Branch("emcaletabin",emcaletabin,"emcaletabin[sectorem]/I"); //eta of EMCal sector
+  //_tree->Branch("emcalchi2",emcalchi2,"emcalchi2[sectorem]/F"); //energy per EMCal sector
+  //_tree->Branch("ihcalchi2",ihcalchi2,"ihcalchi2[sectorih]/F"); // per IHCal sector (etc.)
+  //_tree->Branch("ohcalchi2",ohcalchi2,"ohcalchi2[sectoroh]/F");
+  //_tree->Branch("emcalenuc",emcalenuc,"emcalenuc[sectoremuc]/F");
+  //_tree->Branch("emcaletabin",emcaletabin,"emcaletabin[sectorem]/I"); //eta of EMCal sector
   _tree->Branch("ihcaletabin",ihcaletabin,"ihcaletabin[sectorih]/I");
   _tree->Branch("ohcaletabin",ohcaletabin,"ohcaletabin[sectoroh]/I");
-  _tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
+  //_tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
   _tree->Branch("ihcalphibin",ihcalphibin,"ihcalphibin[sectorih]/I");
   _tree->Branch("ohcalphibin",ohcalphibin,"ohcalphibin[sectoroh]/I");
-  _tree->Branch("sectormb",&sectormb,"sectormb/I");
-  _tree->Branch("mbenrgy",mbenrgy,"mbenrgy[sectormb]/F"); //MBD reported value (could be charge or time)
-  _tree->Branch("emcalt",emcalt,"emcalt[sectorem]/F"); //time value of EMCal sector
-  _tree->Branch("ihcalt",ihcalt,"ihcalt[sectorih]/F");
-  _tree->Branch("ohcalt",ohcalt,"ohcalt[sectoroh]/F");
-  _tree->Branch("vtx",vtx,"vtx[3]/F");
+  //_tree->Branch("sectormb",&sectormb,"sectormb/I");
+  //_tree->Branch("mbenrgy",mbenrgy,"mbenrgy[sectormb]/F"); //MBD reported value (could be charge or time)
+  //_tree->Branch("emcalt",emcalt,"emcalt[sectorem]/F"); //time value of EMCal sector
+  //_tree->Branch("ihcalt",ihcalt,"ihcalt[sectorih]/F");
+  //_tree->Branch("ohcalt",ohcalt,"ohcalt[sectoroh]/F");
+  //_tree->Branch("vtx",vtx,"vtx[3]/F");
   _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
   _tree->Branch("njet",&njet,"njet/I");
+  _tree->Branch("seedD",&seedD,"seedD[njet]/F");
   _tree->Branch("jet_e",jet_e,"jet_e[njet]/F");
-  _tree->Branch("jet_r",jet_r,"jet_r[njet]/F");
+  //_tree->Branch("jet_r",jet_r,"jet_r[njet]/F");
   _tree->Branch("jet_et",jet_et,"jet_et[njet]/F");
   _tree->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
   _tree->Branch("rtemen",rtemen,"rtemen[sector_rtem]/F");
@@ -167,6 +168,10 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      jet_ph[njet] = jet->get_phi();
 	    }
 	  if(jet_e[njet] < 2) continue;
+	  float maxeoveravg = jet->get_property(Jet::PROPERTY::prop_SeedD);
+	  float ncomp = jet->size_comp();
+	  if(maxeoveravg/ncomp > 0.7) continue;
+	  seedD[njet] = maxeoveravg/ncomp;
 	  jet_ph[njet] = (jet_ph[njet]>0?jet_ph[njet]-M_PI:jet_ph[njet]+M_PI);
 	  ++njet;
 	}
@@ -175,6 +180,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     {
       if(_debug > 1) cout << "No jet node!" << endl;
     }
+
+  if(!njet) return Fun4AllReturnCodes::EVENT_OK;
 
   if(_debug > 1) cout << "Getting retowered EMCal towers: " << endl;
 

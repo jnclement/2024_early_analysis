@@ -50,6 +50,7 @@ class R24earlytreemaker : public SubsysReco
   int sectoremuc;
   int njet;
   int sector_rtem;
+  float seedD[1000];
   float jet_e[1000];
   float jet_r[1000];
   float jet_et[1000];
