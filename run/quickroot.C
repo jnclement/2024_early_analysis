@@ -139,7 +139,7 @@ int quickroot(string filebase="events_prod20240507_0_40693.root")
 	      int ncircle = 16;
 	      for(int l=0; l<ncircle; ++l)
 		{
-		  TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.1*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.1*sin(2*l*M_PI/ncircle)),20);
+		  TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.2*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.2*sin(2*l*M_PI/ncircle)),20);
 		  circlemarker->SetMarkerSize(0.2);
 		  circlemarker->SetMarkerColor(kRed);
 		  circlemarker->Draw();
@@ -169,7 +169,7 @@ int quickroot(string filebase="events_prod20240507_0_40693.root")
 	      int ncircle = 16;
 	      for(int l=0; l<ncircle; ++l)
 		{
-		  TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.1*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.1*sin(2*l*M_PI/ncircle)),20);
+		  TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.2*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.2*sin(2*l*M_PI/ncircle)),20);
 		  circlemarker->SetMarkerSize(0.2);
 		  circlemarker->SetMarkerColor(kRed);
 		  circlemarker->Draw();
