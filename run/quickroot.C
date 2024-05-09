@@ -26,8 +26,6 @@
 #include <TLine.h>
 #include <TFile.h>
 #include <algorithm>
-//#include "/home/jocl/Documents/main/physics/projects/sphenix_macros/macros/macros/sPHENIXStyle/sPhenixStyle.h"
-//#include "/home/jocl/Documents/main/physics/projects/sphenix_macros/macros/macros/sPHENIXStyle/sPhenixStyle.C"
 float get_eta(float eta)
 {
   return (eta+1.1)*24/2.2;
@@ -177,7 +175,7 @@ int quickroot(string filebase="events_prod20240507_0_40693.root")
 		  circlemarker->Draw();
 		}
 	    }
-      c->SaveAs(("./output/images/candidate_"+filebase+"_"+to_string(cancount)+".pdf").c_str());
+      c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(cancount)+".pdf").c_str());
       ++cancount;
     }
 

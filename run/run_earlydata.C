@@ -73,7 +73,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   rc->set_uint64Flag("TIMESTAMP",rn);
   ifstream list1;
   string line1;
-  list1.open(("/sphenix/user/jocl/projects/run2024_earlydata/run/"+to_string(rn)+(szs?"_ysZS":"_noZS")+".list"), ifstream::in);
+  list1.open(("./"+to_string(rn)+(szs?"_ysZS":"_noZS")+".list"), ifstream::in);
   if(!list1) exit(1);
   for(int i=0; i<nproc+1; i++)
     {
