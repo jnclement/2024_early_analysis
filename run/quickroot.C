@@ -26,8 +26,8 @@
 #include <TLine.h>
 #include <TFile.h>
 #include <algorithm>
-#include "/home/jocl/Documents/main/physics/projects/sphenix_macros/macros/macros/sPHENIXStyle/sPhenixStyle.h"
-#include "/home/jocl/Documents/main/physics/projects/sphenix_macros/macros/macros/sPHENIXStyle/sPhenixStyle.C"
+//#include "/home/jocl/Documents/main/physics/projects/sphenix_macros/macros/macros/sPHENIXStyle/sPhenixStyle.h"
+//#include "/home/jocl/Documents/main/physics/projects/sphenix_macros/macros/macros/sPHENIXStyle/sPhenixStyle.C"
 float get_eta(float eta)
 {
   return (eta+1.1)*24/2.2;
@@ -56,7 +56,7 @@ int quickroot(string filebase="events_prod20240507_0_40693.root")
   float jet_e[1000];
   float jet_et[1000];
   float jet_ph[1000];
-  string filename="/home/jocl/datatemp/"+filebase;
+  string filename="./output/evt/"+filebase;
   TFile* file = TFile::Open(filename.c_str());
   TTree* tree = file->Get<TTree>("ttree");
   TH1D* hist = new TH1D("hist","",200,-20,50);
@@ -110,9 +110,9 @@ int quickroot(string filebase="events_prod20240507_0_40693.root")
   event_sum->GetYaxis()->SetTitle("Tower Sum #phi Bin");
   event_sum->GetZaxis()->SetTitle("Tower Energy [GeV]");
   event_sum->GetZaxis()->SetTitleOffset(2);
-  for(int i=0; i<1; ++i)//tree->GetEntries(); ++i)
+  for(int i=0; i<tree->GetEntries(); ++i)
     {
-      if(i % 1000 == 0) cout << i << endl;
+      //if(i % 1000 == 0) cout << i << endl;
       tree->GetEntry(i);
       if(!njet) continue;
       //event_display->Reset();
@@ -124,7 +124,7 @@ int quickroot(string filebase="events_prod20240507_0_40693.root")
 	    {
 	      event_disrt[j]->Fill(etart[j][k],phirt[j][k],enrt[j][k]);
 	      event_sum->Fill(etart[j][k],phirt[j][k],enrt[j][k]);
-	      if(enrt[j][k] > 0.1) cout << j << " " << k << " " << etart[j][k] << " " << phirt[j][k] << " " << enrt[j][k] << endl;
+	      //if(enrt[j][k] > 0.1) cout << j << " " << k << " " << etart[j][k] << " " << phirt[j][k] << " " << enrt[j][k] << endl;
 	    }
 	  c->cd(j+1);
 	  gPad->SetFrameFillColor(kBlack);
@@ -158,7 +158,7 @@ int quickroot(string filebase="events_prod20240507_0_40693.root")
 	  for(int k=0; k<64; ++k)
 	    {
 	      float val = event_sum->GetBinContent(j+1,k+1);
-	      if(val > 0.5) cout << j << " " << k << " " << val << endl;
+	      //if(val > 0.5) cout << j << " " << k << " " << val << endl;
 	    }
 	}
       TMarker* jets[1000];
@@ -177,7 +177,7 @@ int quickroot(string filebase="events_prod20240507_0_40693.root")
 		  circlemarker->Draw();
 		}
 	    }
-      c->SaveAs(("/home/jocl/datatemp/dijets/candidate_"+filebase+"_"+to_string(cancount)+".pdf").c_str());
+      c->SaveAs(("./output/images/candidate_"+filebase+"_"+to_string(cancount)+".pdf").c_str());
       ++cancount;
     }
 
