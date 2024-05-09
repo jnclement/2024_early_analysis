@@ -6,7 +6,7 @@
 #include <jetbase/JetReco.h>
 #include <jetbase/TowerJetInput.h>
 #include <g4jets/TruthJetInput.h>
-
+#include <caloreco/CaloTowerStatus.h>
 #include <jetbackground/CopyAndSubtractJets.h>
 #include <jetbackground/DetermineTowerBackground.h>
 #include <jetbackground/FastJetAlgoSub.h>
@@ -103,6 +103,31 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //std::string geoLocation = cdb->getUrl("calo_geo");
   //intrue2->AddFile(geoLocation);
   //se->registerInputManager(intrue2);
+  /*
+  CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
+  statusEMC->set_detector_type(CaloTowerDefs::CEMC);
+  statusEMC->set_time_cut(1);
+  se->registerSubsystem(statusEMC);
+
+  CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
+  statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
+  statusHCalIn->set_time_cut(2);
+  se->registerSubsystem(statusHCalIn);
+
+  CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
+  statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
+  statusHCALOUT->set_time_cut(2);
+  se->registerSubsystem(statusHCALOUT);
+  */
+  CaloTowerCalib* ctcem = new CaloTowerCalib("EMCALIB");
+  ctcem->set_detector_type(CaloTowerDefs::CEMC);
+  CaloTowerCalib* ctcih = new CaloTowerCalib("IHCALIB");
+  ctcih->set_detector_type(CaloTowerDefs::HCALIN);
+  CaloTowerCalib* ctcoh = new CaloTowerCalib("OHCALIB");
+  ctcoh->set_detector_type(CaloTowerDefs::HCALOUT);
+  se->registerSubsystem(ctcem);
+  se->registerSubsystem(ctcih);
+  se->registerSubsystem(ctcoh);
   RetowerCEMC *rcemc = new RetowerCEMC();
   rcemc->set_towerinfo(true);
   se->registerSubsystem(rcemc);
