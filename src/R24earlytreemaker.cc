@@ -168,10 +168,35 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      jet_ph[njet] = jet->get_phi();
 	    }
 	  if(jet_e[njet] < 2) continue;
-	  float maxeoveravg = jet->get_property(Jet::PROPERTY::prop_SeedD);
-	  float ncomp = jet->size_comp();
-	  if(maxeoveravg/ncomp > 0.7) continue;
-	  seedD[njet] = maxeoveravg/ncomp;
+	  float maxeovertot = 0;
+	  for(auto comp: jet->get_comp_vec())
+	    {
+	      unsigned int channel = comp.second;
+	      TowerInfo* tower;
+	      if(comp.first == 5 || comp.first == 26)
+		{
+		  tower = towersIH->get_tower_at_channel(channel);
+		}
+	      else if(comp.first == 7 || comp.first == 27)
+		{
+		  tower = towersOH->get_tower_at_channel(channel);
+		}
+	      else if(comp.first == 13 || comp.first == 28)
+		{
+		  tower = towersEM->get_tower_at_channel(channel);
+		}
+	      else
+		{
+		  if(_debug > 1) cout << "No good detector for getting jet components" << endl;
+		  continue;
+		}
+	      float eval = tower->get_energy();
+	      if(eval > maxeovertot) maxeovertot = eval;
+	    }
+	  maxeovertot /= jet_e[njet];
+	  //if(_debug) cout << maxeovertot << endl;
+	  //if(maxeovertot > 0.7) continue;
+	  seedD[njet] = maxeovertot;
 	  jet_ph[njet] = (jet_ph[njet]>0?jet_ph[njet]-M_PI:jet_ph[njet]+M_PI);
 	  ++njet;
 	}
@@ -390,7 +415,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     for(int i=0; i<sectormb; ++i)
       {
 	MbdPmtHit *mbdhit = mbdtow->get_pmt(i);
-	if(_debug > 2) cout << "PMT " << i << " address: " << mbdhit << " charge: " << mbdhit->get_q() << endl;
+	//if(_debug > 2) cout << "PMT " << i << " address: " << mbdhit << " charge: " << mbdhit->get_q() << endl;
 	mbenrgy[i] = mbdhit->get_q();
 	mbdq += mbdhit->get_q();
       }
