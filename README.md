@@ -8,10 +8,10 @@ One time after cloning:
 
 To compile:
 
-1. Build your own copy of jetbase from coresoftware and modify it to ignore the lack of a global vertex. See ```/sphenix/user/jocl/projects/coresoftware/offline/packages/jetbase/TowerJetInput.cc``` for the way I did it.
-    This washes out any z info in your jet, but this module doesn't use that anyway.
-2. cd to your build directory and do ```[path_to_autogen]/autogen.sh --prefix=[your_install_directory]```
-3. In your build directory, run ```make install```
+1. Build your own copy of jetbase from coresoftware and modify it to ignore the lack of a global vertex. See ```/sphenix/user/jocl/projects/coresoftware/offline/packages/jetbase/TowerJetInput.cc``` for the way I did it. This washes out any z info in your jet, but this module doesn't use that anyway.
+2. Build your own copy of CaloReco from coresoftware and modify it to set BadChi2 tower energies to 0. See ```/sphenix/user/jocl/projects/coresoftware/offline/packages/CaloReco/CaloTowerCalib.cc``` for the way I did it.
+3. cd to your build directory and do ```[path_to_autogen]/autogen.sh --prefix=[your_install_directory]```
+4. In your build directory, run ```make install```
 
 Everything should compile nicely.
 
