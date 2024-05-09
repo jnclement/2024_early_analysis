@@ -117,6 +117,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree->Branch("rtemen",rtemen,"rtemen[sector_rtem]/F");
   _tree->Branch("rtemet",rtemet,"rtemet[sector_rtem]/I");
   _tree->Branch("rtemph",rtemph,"rtemph[sector_rtem]/I");
+  _tree->Branch("ehjet",ehjet,"ehjet[njet]/F");
   if(_debug > 1) cout << "Init done"  << endl;
   return Fun4AllReturnCodes::EVENT_OK;
 }
@@ -167,8 +168,10 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      jet_et[njet] = jet->get_eta();
 	      jet_ph[njet] = jet->get_phi();
 	    }
-	  if(jet_e[njet] < 2) continue;
+	  if(jet_e[njet] < 4) continue;
 	  float maxeovertot = 0;
+	  float hcale = 0;
+	  float ecale = 0;
 	  for(auto comp: jet->get_comp_vec())
 	    {
 	      unsigned int channel = comp.second;
@@ -176,14 +179,17 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      if(comp.first == 5 || comp.first == 26)
 		{
 		  tower = towersIH->get_tower_at_channel(channel);
+		  hcale += tower->get_energy();
 		}
 	      else if(comp.first == 7 || comp.first == 27)
 		{
 		  tower = towersOH->get_tower_at_channel(channel);
+		  hcale += tower->get_energy();
 		}
 	      else if(comp.first == 13 || comp.first == 28)
 		{
-		  tower = towersEM->get_tower_at_channel(channel);
+		  tower = rtem->get_tower_at_channel(channel);
+		  ecale += tower->get_energy();
 		}
 	      else
 		{
@@ -193,6 +199,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      float eval = tower->get_energy();
 	      if(eval > maxeovertot) maxeovertot = eval;
 	    }
+	  if(_debug && jet_e[njet] - ecale - hcale > 0.01) cout << jet_e[njet] << " " << ecale << " " << hcale << endl;
+	  ehjet[njet] = ecale/hcale;
 	  maxeovertot /= jet_e[njet];
 	  //if(_debug) cout << maxeovertot << endl;
 	  //if(maxeovertot > 0.7) continue;
