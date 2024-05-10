@@ -3,8 +3,9 @@ One time after cloning:
 2. do ```mkdir -p output/images```
 3. do ```mkdir -p output/out```
 4. do ```mkdir -p output/err```
-5. do ```chmod +x earlydata.sh```
-6. do ```chmod +x quickroot.sh```
+5. do ```mkdir -p output/img```
+6. do ```chmod +x earlydata.sh```
+7. do ```chmod +x quickroot.sh```
 
 To compile:
 
@@ -28,7 +29,8 @@ The tree files are located in ```output/evt```
 
 
 To create images of your maybe jetty events:
-1. do ```bash  run_images_for_all.sh``` to run over all files in your ```output/evt``` directory, or ```bash run_images.sh [filename]``` with the base name (no pathing) of the file you want for a single file
+1. do ```bash get_image_lists.sh``` to get a some list files for images that will concatenate runs into a TChain
+2. do ```bash run_images_for_all.sh``` to run over all files in your ```output/evt``` directory, or ```bash run_images.sh [filename]``` with the base name (no pathing) of the file you want for a single file
 
 The images are located in ```output/img```
 
