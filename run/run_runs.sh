@@ -5,7 +5,7 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-nmax=20
+nmax=1000
 
 for rn in `ls  /sphenix/tg/tg01/commissioning/CaloCalibWG/bseidlitz/temp24DSTs/*0000* | awk -F'-' '{print $2}'`; do
     rn=$(expr $rn + 0)

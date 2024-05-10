@@ -207,6 +207,7 @@ int quickroot(string filebase="")
   event_sum->GetZaxis()->SetRangeUser(0.1,5);
   int ncircle = 64;
   int highejet = 0;
+  int passcut = 0;
   for(int i=0; i<tree->GetEntries(); ++i)
     {
       //if(i % 1000 == 0) cout << i << endl;
@@ -288,7 +289,11 @@ int quickroot(string filebase="")
 	  jetE[0]->Fill(jet_e[k]);
 	  if(ehjet[k] < 10) jetE[1]->Fill(jet_e[k]);
 	  if(seedD[k] < 0.65) jetE[2]->Fill(jet_e[k]);
-	  if(seedD[k] < 0.65 && ehjet[k] < 10) jetE[3]->Fill(jet_e[k]);
+	  if(seedD[k] < 0.65 && ehjet[k] < 10)
+	    {
+	      passcut = 1;
+	      jetE[3]->Fill(jet_e[k]);
+	    }
 	  jets[k] = new TMarker(get_eta(jet_et[k]),get_phi(jet_ph[k]),20);
 	  jets[k]->SetMarkerSize(jet_e[k]/3);
 	  jets[k]->SetMarkerColor(kRed);
@@ -301,7 +306,7 @@ int quickroot(string filebase="")
 	      circlemarker->Draw();
 	    }
 	}
-      if(highejet)
+      if(highejet && passcut)
 	{
 	  c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(cancount)+".pdf").c_str());
 	  highejet = 0;
