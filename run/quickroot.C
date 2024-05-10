@@ -207,9 +207,9 @@ int quickroot(string filebase="")
   event_sum->GetZaxis()->SetRangeUser(0.1,5);
   int ncircle = 64;
   int highejet = 0;
-  int passcut = 0;
   for(int i=0; i<tree->GetEntries(); ++i)
     {
+      int passcut = 0;
       //if(i % 1000 == 0) cout << i << endl;
       tree->GetEntry(i);
       int countedjets = 0;
