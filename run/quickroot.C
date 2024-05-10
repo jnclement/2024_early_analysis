@@ -209,7 +209,7 @@ int quickroot(string filebase="")
   int highejet = 0;
   for(int i=0; i<tree->GetEntries(); ++i)
     {
-      int passcut = 0;
+      int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
       tree->GetEntry(i);
       int countedjets = 0;
@@ -217,8 +217,7 @@ int quickroot(string filebase="")
       //event_display->Reset();
       for(int j=0; j<njet; ++j)
 	{
-	  //if(ehjet[j] > 10) continue;
-	  //if(seedD[j] > 0.65) continue;
+	  if(ehjet[j] > 10 || seedD[j] > 0.65) passcut = 0;
 	  ++countedjets;
 	}
       if(!countedjets) continue;
@@ -251,7 +250,7 @@ int quickroot(string filebase="")
 		{
 		  TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle)),20);
 		  circlemarker->SetMarkerSize(0.2);
-		  circlemarker->SetMarkerColor(kRed);
+		  circlemarker->SetMarkerColor(kBlue);
 		  circlemarker->Draw();
 		}
 	    }
@@ -291,7 +290,6 @@ int quickroot(string filebase="")
 	  if(seedD[k] < 0.65) jetE[2]->Fill(jet_e[k]);
 	  if(seedD[k] < 0.65 && ehjet[k] < 10)
 	    {
-	      passcut = 1;
 	      jetE[3]->Fill(jet_e[k]);
 	    }
 	  jets[k] = new TMarker(get_eta(jet_et[k]),get_phi(jet_ph[k]),20);
@@ -302,7 +300,7 @@ int quickroot(string filebase="")
 	    {
 	      TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle)),20);
 	      circlemarker->SetMarkerSize(0.2);
-	      circlemarker->SetMarkerColor(kRed);
+	      circlemarker->SetMarkerColor(kBlue);
 	      circlemarker->Draw();
 	    }
 	}
