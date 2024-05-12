@@ -217,7 +217,7 @@ int quickroot(string filebase="")
       //event_display->Reset();
       for(int j=0; j<njet; ++j)
 	{
-	  if(ehjet[j] > 10 || seedD[j] > 0.65) passcut = 0;
+	  if(ehjet[j] > 5 || seedD[j] > 0.65 || ehjet[j] < 0) passcut = 0;
 	  ++countedjets;
 	}
       if(!countedjets) continue;
@@ -239,9 +239,9 @@ int quickroot(string filebase="")
 	  TMarker* jets[1000];
 	  for(int k=0; k<njet; ++k)
 	    {
-	      if(ehjet[k] > 10) continue;
+	      if(ehjet[k] > 10 || ehjet[k] < 0) continue;
 	      if(seedD[k] > 0.65) continue;
-	      if(jet_e[k] > 9) highejet = 1;
+	      if(jet_e[k] > 7.5) highejet = 1;
 	      jets[k] = new TMarker(get_eta(jet_et[k]),get_phi(jet_ph[k]),43);
 	      jets[k]->SetMarkerSize(jet_e[k]/3);
 	      jets[k]->SetMarkerColor(kRed);
@@ -306,7 +306,7 @@ int quickroot(string filebase="")
 	}
       if(highejet && passcut)
 	{
-	  c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(cancount)+".pdf").c_str());
+	  c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(cancount)+".png").c_str());
 	  highejet = 0;
 	}
       ++cancount;
