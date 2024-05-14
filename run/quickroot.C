@@ -209,6 +209,7 @@ int quickroot(string filebase="")
   int highejet = 0;
   for(int i=0; i<tree->GetEntries(); ++i)
     {
+      highejet = 0;
       int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
       tree->GetEntry(i);
@@ -217,7 +218,8 @@ int quickroot(string filebase="")
       //event_display->Reset();
       for(int j=0; j<njet; ++j)
 	{
-	  if(ehjet[j] > 5 || seedD[j] > 0.65 || ehjet[j] < 0) passcut = 0;
+	  if(ehjet[j] > 3 || seedD[j] > 0.65 || ehjet[j] < 0) passcut = 0;
+	  if(get_phi(jet_ph[j]) > 32 && get_phi(jet_ph[j]) < 36) passcut = 0;
 	  ++countedjets;
 	}
       if(!countedjets) continue;
@@ -249,7 +251,7 @@ int quickroot(string filebase="")
 	      for(int l=0; l<ncircle; ++l)
 		{
 		  TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle)),20);
-		  circlemarker->SetMarkerSize(0.2);
+		  circlemarker->SetMarkerSize(0.3);
 		  circlemarker->SetMarkerColor(kBlue);
 		  circlemarker->Draw();
 		}
@@ -286,9 +288,9 @@ int quickroot(string filebase="")
 	  //if(seedD[k] > 0.65) continue;
 	  hejet->Fill(ehjet[njet]);
 	  jetE[0]->Fill(jet_e[k]);
-	  if(ehjet[k] < 10) jetE[1]->Fill(jet_e[k]);
+	  if(ehjet[k] < 10 && ehjet[k] > 0) jetE[1]->Fill(jet_e[k]);
 	  if(seedD[k] < 0.65) jetE[2]->Fill(jet_e[k]);
-	  if(seedD[k] < 0.65 && ehjet[k] < 10)
+	  if(seedD[k] < 0.65 && ehjet[k] < 10 && ehjet[k] > 0)
 	    {
 	      jetE[3]->Fill(jet_e[k]);
 	    }
@@ -299,7 +301,7 @@ int quickroot(string filebase="")
 	  for(int l=0; l<ncircle; ++l)
 	    {
 	      TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle)),20);
-	      circlemarker->SetMarkerSize(0.2);
+	      circlemarker->SetMarkerSize(0.3);
 	      circlemarker->SetMarkerColor(kBlue);
 	      circlemarker->Draw();
 	    }
@@ -307,7 +309,6 @@ int quickroot(string filebase="")
       if(highejet && passcut)
 	{
 	  c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(cancount)+".png").c_str());
-	  highejet = 0;
 	}
       ++cancount;
     }
