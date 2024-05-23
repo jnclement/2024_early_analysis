@@ -27,6 +27,7 @@
 #include <TLine.h>
 #include <TFile.h>
 #include <algorithm>
+#include "dlUtility.h"
 float get_eta(float eta)
 {
   return (eta+1.1)*24/2.2;
@@ -141,11 +142,11 @@ int quickroot(string filebase="")
   jetE[0]->GetYaxis()->SetTitle("Event Normalized Counts");
   jetE[0]->GetXaxis()->SetTitle("E_{jet} No Cuts");
   jetE[1]->GetYaxis()->SetTitle("Event Normalized Counts");
-  jetE[1]->GetXaxis()->SetTitle("E_{jet} E_{EMCal} < 10E_{HCal}");
+  jetE[1]->GetXaxis()->SetTitle("E_{jet}  with E_{EMCal} < 10E_{HCal}");
   jetE[2]->GetYaxis()->SetTitle("Event Normalized Counts");
-  jetE[2]->GetXaxis()->SetTitle("E_{jet} E_{lead tower} < 0.65E_{jet}");
+  jetE[2]->GetXaxis()->SetTitle("E_{jet}  with E_{lead tower} < 0.65E_{jet}");
   jetE[3]->GetYaxis()->SetTitle("Event Normalized Counts");
-  jetE[3]->GetXaxis()->SetTitle("E_{jet} E_{EMCal} < 10E_{HCal} \& E_{lead tower} < 0.65E_{jet}");
+  jetE[3]->GetXaxis()->SetTitle("E_{jet}  with E_{EMCal} < 10E_{HCal} \& E_{lead tower} < 0.65E_{jet}");
   hejet->GetXaxis()->SetTitle("E_{jet, EMCal} / E_{jet, HCals}");
   hejet->GetYaxis()->SetTitle("Event Normalized Counts");
   hejet->SetMarkerStyle(43);
@@ -207,6 +208,8 @@ int quickroot(string filebase="")
   event_sum->GetZaxis()->SetRangeUser(0.1,5);
   int ncircle = 64;
   int highejet = 0;
+  float fakejets = 0;
+  int dispcount = 1;
   for(int i=0; i<tree->GetEntries(); ++i)
     {
       highejet = 0;
@@ -216,12 +219,23 @@ int quickroot(string filebase="")
       int countedjets = 0;
       if(!njet) continue;
       //event_display->Reset();
+      //int breakvar = 0;
       for(int j=0; j<njet; ++j)
 	{
 	  if(ehjet[j] > 3 || seedD[j] > 0.65 || ehjet[j] < 0) passcut = 0;
-	  if(get_phi(jet_ph[j]) > 32 && get_phi(jet_ph[j]) < 36) passcut = 0;
-	  ++countedjets;
+	  if(get_phi(jet_ph[j]) > 29.5 && get_phi(jet_ph[j]) < 37.5)
+	    {
+	      passcut = 0;
+	      //breakvar = 1;
+	      fakejets += 1;
+	      // break;
+	    }
+	  else
+	    {
+	      ++countedjets;
+	    }
 	}
+      //if(breakvar) continue;
       if(!countedjets) continue;
       event_sum->Reset();
       for(int j=0; j<3; ++j)
@@ -233,34 +247,56 @@ int quickroot(string filebase="")
 	      event_sum->Fill(etart[j][k],phirt[j][k],enrt[j][k]);
 	      //if(enrt[j][k] > 0.1) cout << j << " " << k << " " << etart[j][k] << " " << phirt[j][k] << " " << enrt[j][k] << endl;
 	    }
-	  c->cd(j+1);
+
 	  //gPad->SetFrameFillColor(kBlack);
 	  gPad->SetLogz();
 	  gPad->SetRightMargin(0.2);
+	  //gPad->SetTopMargin(0);
+	  //gPad->SetBottomMargin(0);
+	  //cout << (12*((dispcount%18)/3)+2*(dispcount%3)+(j==2?7:j+1)) << endl;
+	  //c->cd(12*((dispcount%18)/3)+2*(dispcount%3)+(j==2?7:j+1));
+	  c->cd(j+1);
+	  event_disrt[j]->SetTitle(("Event "+to_string(i)).c_str());
 	  event_disrt[j]->Draw("COLZ");
 	  TMarker* jets[1000];
 	  for(int k=0; k<njet; ++k)
 	    {
-	      if(ehjet[k] > 10 || ehjet[k] < 0) continue;
+	      if(get_phi(jet_ph[k]) > 29.5 && get_phi(jet_ph[k]) < 37.5)
+		{
+		  continue;
+		}
+	      //if(ehjet[k] > 10 || ehjet[k] < 0) continue;
 	      if(seedD[k] > 0.65) continue;
-	      if(jet_e[k] > 7.5) highejet = 1;
+	      if(jet_e[k] > 10)
+		{
+		  highejet = 1;
+		}
 	      jets[k] = new TMarker(get_eta(jet_et[k]),get_phi(jet_ph[k]),43);
 	      jets[k]->SetMarkerSize(jet_e[k]/3);
 	      jets[k]->SetMarkerColor(kRed);
 	      //jets[k]->Draw();
 	      for(int l=0; l<ncircle; ++l)
 		{
-		  TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle)),20);
+		  float eta = get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle));
+		  float phi = get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle));
+		  if(eta > 24 || eta < 0) continue;
+		  if(phi > 64) phi -= 64;
+		  if(phi < 0) phi += 64;
+		  TMarker* circlemarker = new TMarker(eta,phi,20);
 		  circlemarker->SetMarkerSize(0.3);
 		  circlemarker->SetMarkerColor(kBlue);
 		  circlemarker->Draw();
 		}
 	    }
 	}
-      c->cd(4);
       gPad->SetLogz();
       gPad->SetRightMargin(0.2);
+      //gPad->SetTopMargin(0);
+      //gPad->SetBottomMargin(0);
       //gPad->SetFrameFillColor(kBlack);
+      //c->cd(12*((dispcount%18)/3)+2*(dispcount%3)+8);
+      c->cd(4);
+      event_sum->SetTitle(("Event "+to_string(i)).c_str());
       event_sum->Draw("COLZ");
       for(int j=0; j<24; ++j)
 	{
@@ -273,6 +309,10 @@ int quickroot(string filebase="")
       TMarker* jets[1000];
       for(int k=0; k<njet; ++k)
 	{
+	  if(get_phi(jet_ph[k]) > 29.5 && get_phi(jet_ph[k]) < 37.5)
+	    {
+	      continue;
+	    }
 	  if(jet_e[k] < 7.5)
 	    {
 	      jetfrac[0]->Fill(seedD[k]);
@@ -294,28 +334,52 @@ int quickroot(string filebase="")
 	    {
 	      jetE[3]->Fill(jet_e[k]);
 	    }
+	  if(seedD[k] > 0.65) continue;
 	  jets[k] = new TMarker(get_eta(jet_et[k]),get_phi(jet_ph[k]),20);
 	  jets[k]->SetMarkerSize(jet_e[k]/3);
 	  jets[k]->SetMarkerColor(kRed);
 	  //jets[k]->Draw();
 	  for(int l=0; l<ncircle; ++l)
 	    {
-	      TMarker* circlemarker = new TMarker(get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle)),get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle)),20);
+	      float eta = get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle));
+	      float phi = get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle));
+	      if(eta > 24 || eta < 0) continue;
+	      if(phi > 64) phi -= 64;
+	      if(phi < 0) phi += 64;
+	      TMarker* circlemarker = new TMarker(eta,phi,20);
 	      circlemarker->SetMarkerSize(0.3);
 	      circlemarker->SetMarkerColor(kBlue);
 	      circlemarker->Draw();
 	    }
+	  std::stringstream e_stream;
+	  e_stream << std::fixed << std::setprecision(2) << jet_e[k];
+	  std::string e_string = e_stream.str();
+	  drawText((e_string+" GeV").c_str(),get_eta(jet_et[k]),get_phi(jet_ph[k]),(get_eta(jet_et[k])>15?1:0),kBlack,0.08,42,false);
 	}
-      if(highejet && passcut)
+      //if(dispcount % 18 == 17 && highejet)
+      if(highejet)
 	{
+	  //cout << "Saving display " << dispcount/18 << endl;
+	  //c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(dispcount/18)+".pdf").c_str());
 	  c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(cancount)+".png").c_str());
+	  //cout << "Saved!" << endl;
+	  //c->Clear("D");
 	}
       ++cancount;
+      if(highejet)
+	{
+	  //cout << dispcount << endl;
+	  ++dispcount;
+	}
     }
+  //if(dispcount % 18 != 0)
+  //  {
+  //    c->SaveAs(("./output/img/candidate_"+filebase+"_last.pdf").c_str());
+  //  }
   d->cd();
   for(int i=0; i<3; ++i)
     {
-      jetfrac[i]->Scale(1./tree->GetEntries());
+      jetfrac[i]->Scale(1./(tree->GetEntries()*(64-(37.5-29.5))/64));
     }
   jetfrac[0]->Draw();
   d->SaveAs(("output/img/"+filebase+"_"+to_string(cancount)+"_jetfrac0.pdf").c_str());
@@ -324,13 +388,14 @@ int quickroot(string filebase="")
   jetfrac[2]->Draw();
   d->SaveAs(("output/img/"+filebase+"_"+to_string(cancount)+"_jetfrac2.pdf").c_str());
   d->SetLogy();
+  //float goodfrac = 1 - fakejets/tree->GetEntries();
   for(int i=0; i<4; ++i)
     {
-      jetE[i]->Scale(1./tree->GetEntries());
+      jetE[i]->Scale(1./(tree->GetEntries()*(64-(37.5-29.5))/64));
       jetE[i]->Draw();
       d->SaveAs(("output/img/"+filebase+"_"+to_string(cancount)+"_jetE"+to_string(i)+".pdf").c_str());
     }
-  hejet->Scale(1./tree->GetEntries());
+  hejet->Scale(1./(tree->GetEntries()*(64-(37.5-29.5))/64));
   hejet->Draw();
   d->SaveAs(("output/img/"+filebase+"_"+to_string(cancount)+"_hejet.pdf").c_str());
   cout << "cancount/evtnum: " << cancount << " " << tree->GetEntries() << endl;
