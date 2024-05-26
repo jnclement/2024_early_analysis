@@ -1,5 +1,5 @@
-#ifndef MDCTREEMAKER_H
-#define MDCTREEMAKER_H
+#ifndef R24TREEMAKER_H
+#define R24TREEMAKER_H
 
 #include <fun4all/SubsysReco.h>
 #include <gsl/gsl_rng.h>
@@ -40,6 +40,7 @@ class R24earlytreemaker : public SubsysReco
   int _debug;
   TFile *_f;
   TTree *_tree;
+  TTree *_tree2;
   std::string _foutname;
   float emetot, ihetot, ohetot;
   int sectorem;
@@ -49,6 +50,8 @@ class R24earlytreemaker : public SubsysReco
   int sectorzd;
   int sectoremuc;
   int njet;
+  long long unsigned int triggervec;
+  int mbevt;
   int sector_rtem;
   float seedD[1000];
   float jet_e[1000];
@@ -131,4 +134,4 @@ class R24earlytreemaker : public SubsysReco
   //    5514,5524,5532,5534,5542,5544,5554};
 };
 
-#endif // MDCTREEMAKER
+#endif // R24TREEMAKER

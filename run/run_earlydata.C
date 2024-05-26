@@ -1,3 +1,4 @@
+
 #include <fun4all/Fun4AllServer.h>
 #include <fun4all/Fun4AllInputManager.h>
 #include <fun4all/Fun4AllDstInputManager.h>
@@ -28,9 +29,12 @@
 #include <fun4all/Fun4AllRunNodeInputManager.h>
 #include <g4centrality/PHG4CentralityReco.h>
 #include <centrality/CentralityReco.h>
+
 #include <r24earlytreemaker/R24earlytreemaker.h>
+#include <chi2checker/Chi2checker.h>
 //#include <G4Setup_sPHENIX.C>
 using namespace std;
+R__LOAD_LIBRARY(libchi2checker.so)
 R__LOAD_LIBRARY(libr24earlytreemaker.so)
 R__LOAD_LIBRARY(libg4centrality.so)
 R__LOAD_LIBRARY(libFROG.so)
@@ -55,7 +59,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   cout << "test0" << endl;
   int verbosity = 0;
   string filename = "output/evt/events_"+tag+(tag==""?"":"_");
-  filename += (szs?"yszs_":"nszs_")+to_string(szs)+"_"+to_string(rn)+"_";
+  //filename += (szs?"yszs_":"nszs_")+to_string(szs)+"_"+
+  filename += to_string(rn)+"_";
   filename += to_string(nproc);
   filename += ".root";
   FROG *fr = new FROG();
@@ -73,7 +78,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   rc->set_uint64Flag("TIMESTAMP",rn);
   ifstream list1;
   string line1;
-  list1.open(("./"+to_string(rn)+(szs?"_ysZS":"_noZS")+".list"), ifstream::in);
+  list1.open(("./"+to_string(rn)+".list"), ifstream::in);
   if(!list1) exit(1);
   for(int i=0; i<nproc+1; i++)
     {
@@ -83,7 +88,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   in_1->AddFile(line1);
   se->registerInputManager( in_1 );
   // this points to the global tag in the CDB
-  rc->set_StringFlag("CDB_GLOBALTAG","2023p009");//"ProdA_2023");                                     
+  rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
 // The calibrations have a validity range set by the beam clock which is not read out of the prdfs as of now
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
@@ -119,15 +124,17 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   statusHCALOUT->set_time_cut(2);
   se->registerSubsystem(statusHCALOUT);
   */
-  CaloTowerCalib* ctcem = new CaloTowerCalib("EMCALIB");
-  ctcem->set_detector_type(CaloTowerDefs::CEMC);
-  CaloTowerCalib* ctcih = new CaloTowerCalib("IHCALIB");
-  ctcih->set_detector_type(CaloTowerDefs::HCALIN);
-  CaloTowerCalib* ctcoh = new CaloTowerCalib("OHCALIB");
-  ctcoh->set_detector_type(CaloTowerDefs::HCALOUT);
-  se->registerSubsystem(ctcem);
-  se->registerSubsystem(ctcih);
-  se->registerSubsystem(ctcoh);
+  //  CaloTowerCalib* ctcem = new CaloTowerCalib("EMCALIB");
+  //  ctcem->set_detector_type(CaloTowerDefs::CEMC);
+  //  CaloTowerCalib* ctcih = new CaloTowerCalib("IHCALIB");
+  //  ctcih->set_detector_type(CaloTowerDefs::HCALIN);
+  //  CaloTowerCalib* ctcoh = new CaloTowerCalib("OHCALIB");
+  //  ctcoh->set_detector_type(CaloTowerDefs::HCALOUT);
+  //  se->registerSubsystem(ctcem);
+  //  se->registerSubsystem(ctcih);
+  //  se->registerSubsystem(ctcoh);
+  Chi2checker* chi2c = new Chi2checker("chi2checker",debug);
+  se->registerSubsystem(chi2c);
   RetowerCEMC *rcemc = new RetowerCEMC();
   rcemc->set_towerinfo(true);
   se->registerSubsystem(rcemc);
@@ -137,7 +144,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALIN_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALOUT_TOWERINFO));
-  towerjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r02");
+  towerjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
   towerjetreco->set_algo_node("ANTIKT");
   towerjetreco->set_input_node("TOWER");
   //towerjetreco->Verbosity(verbosity);

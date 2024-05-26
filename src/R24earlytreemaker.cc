@@ -56,7 +56,7 @@
 
 #include <centrality/CentralityInfo.h>
 #include <calotrigger/MinimumBiasInfo.h>
-
+#include <ffarawobjects/Gl1Packetv1.h>
 using namespace std;
 //____________________________________________________________________________..
 R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug):
@@ -79,26 +79,29 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
 
   if(_debug > 1) cout << "Begin init: " << endl;
   _f = new TFile( _foutname.c_str(), "RECREATE");
-  
+  _tree2 = new TTree("ttree2","another persevering date tree");
+  _tree2->Branch("_evtct",&_evtct,"_evtct/I");
   _tree = new TTree("ttree","a persevering date tree");
+  _tree->Branch("triggervec",&triggervec,"triggervec/g");
+  _tree->Branch("mbevt",&mbevt,"mbevt/I");
   //_tree->Branch("emetot",&emetot,"emetot/F");
   //_tree->Branch("ihetot",&ihetot,"ihetot/F");
   //_tree->Branch("ohetot",&ohetot,"ohetot/F");
-  //_tree->Branch("sectorem",&sectorem,"sectorem/I"); //Number of hit sectors in the emcal
+  _tree->Branch("sectorem",&sectorem,"sectorem/I"); //Number of hit sectors in the emcal
   _tree->Branch("sectorih",&sectorih,"sectorih/I"); // IHcal etc.
   _tree->Branch("sectoroh",&sectoroh,"sectoroh/I");
   //_tree->Branch("sectoremuc",&sectoremuc,"sectoremuc/I");
-  //_tree->Branch("emcalen",emcalen,"emcalen[sectorem]/F"); //energy per EMCal sector
+  _tree->Branch("emcalen",emcalen,"emcalen[sectorem]/F"); //energy per EMCal sector
   _tree->Branch("ihcalen",ihcalen,"ihcalen[sectorih]/F"); // per IHCal sector (etc.)
   _tree->Branch("ohcalen",ohcalen,"ohcalen[sectoroh]/F");
   //_tree->Branch("emcalchi2",emcalchi2,"emcalchi2[sectorem]/F"); //energy per EMCal sector
   //_tree->Branch("ihcalchi2",ihcalchi2,"ihcalchi2[sectorih]/F"); // per IHCal sector (etc.)
   //_tree->Branch("ohcalchi2",ohcalchi2,"ohcalchi2[sectoroh]/F");
   //_tree->Branch("emcalenuc",emcalenuc,"emcalenuc[sectoremuc]/F");
-  //_tree->Branch("emcaletabin",emcaletabin,"emcaletabin[sectorem]/I"); //eta of EMCal sector
+  _tree->Branch("emcaletabin",emcaletabin,"emcaletabin[sectorem]/I"); //eta of EMCal sector
   _tree->Branch("ihcaletabin",ihcaletabin,"ihcaletabin[sectorih]/I");
   _tree->Branch("ohcaletabin",ohcaletabin,"ohcaletabin[sectoroh]/I");
-  //_tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
+  _tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
   _tree->Branch("ihcalphibin",ihcalphibin,"ihcalphibin[sectorih]/I");
   _tree->Branch("ohcalphibin",ohcalphibin,"ohcalphibin[sectoroh]/I");
   //_tree->Branch("sectormb",&sectormb,"sectormb/I");
@@ -153,7 +156,13 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   TowerInfoContainer *towersOHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALOUT");
   TowerInfoContainer *towersZD = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_ZDC");
   TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
-  JetContainer *jets = findNode::getClass<JetContainerv1>(topNode, "AntiKt_Tower_HIRecoSeedsRaw_r02");
+  JetContainer *jets = findNode::getClass<JetContainerv1>(topNode, "AntiKt_Tower_HIRecoSeedsRaw_r04");
+  Gl1Packet *gl1 = findNode::getClass<Gl1Packetv1>(topNode, "Gl1Packet");
+  triggervec = gl1->getTriggerVector();
+  if(triggervec >> 10 & 0x1)
+    {
+      ++mbevt;
+    }
   if(_debug > 1) cout << "Getting jets: " << endl;
   if(jets)
     {
@@ -164,7 +173,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  if(jet)
 	    {
 	      jet_e[njet] = jet->get_e();
-	      jet_r[njet] = 0.2;
+	      jet_r[njet] = 0.4;
 	      jet_et[njet] = jet->get_eta();
 	      jet_ph[njet] = jet->get_phi();
 	    }
@@ -470,7 +479,7 @@ int R24earlytreemaker::End(PHCompositeNode *topNode)
     {
       std::cout << "R24earlytreemaker::End(PHCompositeNode *topNode) This is the End..." << std::endl;
     }
-
+  _tree2->Fill();
   _f->cd();
   _f->Write();
   _f->Close();
