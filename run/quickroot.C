@@ -354,7 +354,7 @@ int quickroot(string filebase="")
 	      */
 	      if(ehjet[k] > 10 || ehjet[k] < 0) continue;
 	      if(seedD[k] > 0.65) continue;
-	      if(jet_e[k] > 10)
+	      if(jet_e[k] > 10 && jet_e[k] < 20)
 		{
 		  highejet = 1;
 		}
