@@ -59,12 +59,14 @@
 #include <ffarawobjects/Gl1Packetv1.h>
 using namespace std;
 //____________________________________________________________________________..
-R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug):
+R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim):
   SubsysReco("test")//).c_str())
 {
   _evtct = 0;
   _foutname = name;
   _debug = debug;
+  mbevt = 0;
+  _datorsim = datorsim;
 }
 
 //____________________________________________________________________________..
@@ -83,7 +85,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree2->Branch("_evtct",&_evtct,"_evtct/I");
   _tree = new TTree("ttree","a persevering date tree");
   _tree->Branch("triggervec",&triggervec,"triggervec/g");
-  _tree->Branch("mbevt",&mbevt,"mbevt/I");
+  _tree2->Branch("mbevt",&mbevt,"mbevt/I");
   //_tree->Branch("emetot",&emetot,"emetot/F");
   //_tree->Branch("ihetot",&ihetot,"ihetot/F");
   //_tree->Branch("ohetot",&ohetot,"ohetot/F");
@@ -149,24 +151,34 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   sector_rtem = 0;
   //Get towerinfocontainer objects from nodetree
   TowerInfoContainer *towersEM = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
+  if(!_datorsim) towersEM = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
   TowerInfoContainer *towersIH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALIN");
+  if(!_datorsim) towersIH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALIN");
   TowerInfoContainer *towersOH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALOUT");
+  if(!_datorsim) towersOH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
   TowerInfoContainer *towersEMuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_CEMC");
   TowerInfoContainer *towersIHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALIN");
   TowerInfoContainer *towersOHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALOUT");
-  TowerInfoContainer *towersZD = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_ZDC");
+  //TowerInfoContainer *towersZD = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_ZDC");
   TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
+  if(!_datorsim) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
   JetContainer *jets = findNode::getClass<JetContainerv1>(topNode, "AntiKt_Tower_HIRecoSeedsRaw_r04");
-  Gl1Packet *gl1 = findNode::getClass<Gl1Packetv1>(topNode, "Gl1Packet");
-  triggervec = gl1->getTriggerVector();
-  if(triggervec >> 10 & 0x1)
+  Gl1Packet *gl1;
+  if(_datorsim)
     {
-      ++mbevt;
+      gl1 = findNode::getClass<Gl1Packetv1>(topNode, "GL1Packet");
+      if(_debug > 1) cout << "Getting gl1 trigger vector from: " << gl1 << endl;
+      triggervec = gl1->getTriggerVector();
+      if(triggervec >> 10 & 0x1)
+	{
+	  ++mbevt;
+	}
     }
   if(_debug > 1) cout << "Getting jets: " << endl;
   if(jets)
     {
       int tocheck = jets->size();
+      if(_debug > 2) cout << "Found " << tocheck << " jets to check..." << endl;
       for(int i=0; i<tocheck; ++i)
 	{
 	  Jet *jet = jets->get_jet(i);
@@ -178,6 +190,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      jet_ph[njet] = jet->get_phi();
 	    }
 	  if(jet_e[njet] < 4) continue;
+	  if(_debug > 2) cout << "found a good jet!" << endl;
 	  float maxeovertot = 0;
 	  float hcale = 0;
 	  float ecale = 0;
@@ -185,19 +198,26 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	    {
 	      unsigned int channel = comp.second;
 	      TowerInfo* tower;
+	      if(_debug > 1) cout << towersIH << " " << towersOH << " " << towersEM << endl;
 	      if(comp.first == 5 || comp.first == 26)
 		{
+		  if(_debug > 1) cout << "ihfail" << endl;
 		  tower = towersIH->get_tower_at_channel(channel);
+		  if(_debug > 1) cout << "towerad: " << tower << endl;
 		  hcale += tower->get_energy();
 		}
 	      else if(comp.first == 7 || comp.first == 27)
 		{
+		  if(_debug > 1) cout << "ohfail" << endl;
 		  tower = towersOH->get_tower_at_channel(channel);
+		  if(_debug > 1) cout << "towerad: " << tower << endl;
 		  hcale += tower->get_energy();
 		}
 	      else if(comp.first == 13 || comp.first == 28)
 		{
+		  if(_debug > 1) cout << "emfail" << endl;
 		  tower = rtem->get_tower_at_channel(channel);
+		  if(_debug > 1) cout << "towerad: " << tower << endl;
 		  ecale += tower->get_energy();
 		}
 	      else
@@ -205,9 +225,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  if(_debug > 1) cout << "No good detector for getting jet components" << endl;
 		  continue;
 		}
+	      if(_debug > 1) cout << tower << endl;
 	      float eval = tower->get_energy();
 	      if(eval > maxeovertot) maxeovertot = eval;
 	    }
+	  if(_debug > 2) cout << "Now filling some jet adjacent numbers: " << endl;
 	  if(_debug && jet_e[njet] - ecale - hcale > 0.01) cout << jet_e[njet] << " " << ecale << " " << hcale << endl;
 	  ehjet[njet] = ecale/hcale;
 	  maxeovertot /= jet_e[njet];
@@ -222,7 +244,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     {
       if(_debug > 1) cout << "No jet node!" << endl;
     }
-
+  //int jetfired = ((1 & triggervec >> 20) | (1 & triggervec >> 21) | (1 & triggervec >> 22) | (1 & triggervec >> 23));
+  //int phtfired = ((1 & triggervec >> 28) | (1 & triggervec >> 29) | (1 & triggervec >> 30) | (1 & triggervec >> 31));
   if(!njet) return Fun4AllReturnCodes::EVENT_OK;
 
   if(_debug > 1) cout << "Getting retowered EMCal towers: " << endl;
@@ -276,7 +299,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       if(_debug > 1) cout << sectoremuc << endl;
     }
   
-
+  /*
   if(towersZD)
     {
       int nchannels = 16;
@@ -302,6 +325,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  zdcalt[i] = -1;
 	}
     }
+  */
   emetot = 0;
   ohetot = 0;
   ihetot = 0;

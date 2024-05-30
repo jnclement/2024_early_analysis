@@ -54,7 +54,7 @@ bool file_exists(const char* filename)
   std::ifstream infile(filename);
   return infile.good();
 }
-int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0)
+int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1)
 {
   cout << "test0" << endl;
   int verbosity = 0;
@@ -75,10 +75,10 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   se->Verbosity( verbosity );
   // just if we set some flags somewhere in this macro
   recoConsts *rc =  recoConsts::instance();
-  rc->set_uint64Flag("TIMESTAMP",rn);
+  if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
   ifstream list1;
   string line1;
-  list1.open(("./"+to_string(rn)+".list"), ifstream::in);
+  list1.open(datorsim?("./"+to_string(rn)+".list"):"dst_calo_cluster.list", ifstream::in);
   if(!list1) exit(1);
   for(int i=0; i<nproc+1; i++)
     {
@@ -133,8 +133,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //  se->registerSubsystem(ctcem);
   //  se->registerSubsystem(ctcih);
   //  se->registerSubsystem(ctcoh);
-  Chi2checker* chi2c = new Chi2checker("chi2checker",debug);
-  se->registerSubsystem(chi2c);
+  Chi2checker* chi2c;
+  if(datorsim) chi2c = new Chi2checker("chi2checker",debug);
+  if(datorsim) se->registerSubsystem(chi2c);
   RetowerCEMC *rcemc = new RetowerCEMC();
   rcemc->set_towerinfo(true);
   se->registerSubsystem(rcemc);
@@ -150,7 +151,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
   cout << "test2" << endl;
-  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug);
+  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim);
   cout << "test3" << endl;
   se->registerSubsystem( tt );
   cout << "test4" << endl;

@@ -14,7 +14,7 @@ class R24earlytreemaker : public SubsysReco
 {
  public:
 
-  R24earlytreemaker(const std::string &name = "R24earlytreemaker", const int debug = 0);
+  R24earlytreemaker(const std::string &name = "R24earlytreemaker", const int debug = 0, int datorsim = 1);
 
   virtual ~R24earlytreemaker();
 
@@ -36,6 +36,7 @@ class R24earlytreemaker : public SubsysReco
 
 
  private:
+  int _datorsim;
   int _evtct;
   int _debug;
   TFile *_f;

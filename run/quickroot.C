@@ -69,6 +69,8 @@ int quickroot(string filebase="")
   gStyle->SetPalette(kOcean);
   gROOT->SetStyle("Plain");
   gStyle->SetOptStat(0);
+  gStyle->SetPadTickX(1);
+  gStyle->SetPadTickY(1);
   //gStyle->SetOptTitle(0);
   float emcalen[25000];
   float emcalchi2[25000];
@@ -87,8 +89,29 @@ int quickroot(string filebase="")
   string filename=filebase;
   TChain* tree = new TChain("ttree");
   TChain* tree2 = new TChain("ttree2");
+  TChain* simt = new TChain("ttree");
+  TChain* simt2 = new TChain("ttree2");
   ifstream list;
   string line;
+  ifstream simlist;
+  simlist.open("sim.list",ifstream::in);
+  if(!simlist)
+    {
+      cout << "nosimlist" << endl;
+      exit(1);
+    }
+  while(getline(simlist,line))
+    {
+      try
+	{
+	  simt->Add(line.c_str());
+	  simt2->Add(line.c_str());
+	}
+      catch(...)
+	{
+	  continue;
+	}
+    }
   list.open(filename,ifstream::in);
   if(!list)
     {
@@ -107,15 +130,21 @@ int quickroot(string filebase="")
 	  continue;
 	}
     }
-  int nevents = 0;
+  long long unsigned int nevents = 0;
   int evtct;
+  int mbevt;
+  long long unsigned int nmb = 0;
   tree2->SetBranchAddress("_evtct",&evtct);
+  tree2->SetBranchAddress("mbevt",&mbevt);
   for(int i=0; i<tree2->GetEntries(); ++i)
     {
       tree2->GetEntry(i);
       nevents += evtct;
+      nmb += mbevt;
+      //cout << mbevt << endl;
     }
-  cout << "Total " << nevents << "events." << endl;
+  cout << "Total " << nevents << " events." << endl;
+  cout << "with " << nmb << " minbias events." << endl;
   const int ncol = 9;
   double red[ncol] = {1, 1, 1, 1, 1, 1, 1, 1};
   double grn[ncol] = {1, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125, 0};
@@ -125,12 +154,22 @@ int quickroot(string filebase="")
   TH1D* h1_rej[4];
   for(int i=0; i<4; ++i)
     {
-      h1_rej[i] = new TH1D(("h1_rej"+to_string(i)).c_str(),"",150,5,20);
+      h1_rej[i] = new TH1D(("h1_rej"+to_string(i)).c_str(),"",150,0,15);
+      h1_rej[i]->GetYaxis()->SetRangeUser(0.5,200000);
     }
   TH2D* event_display = new TH2D("event_display","",96,-0.5,95.5,256,-0.5,255.5);
   TH2D* event_diphcal = new TH2D("event_display_hc","",24,0,24,64,0,64);
-  TH1D* h1_dphi = new TH1D("h1_dphi","",32,0,2*M_PI);
+  TH1D* h1_dphi[4];
+  for(int i=0; i<4; ++i)
+    {
+      h1_dphi[i] = new TH1D(("h1_dphi"+to_string(i)).c_str(),"",32,0,2*M_PI);
+    }
   TH2D* h2_dphi_E = new TH2D("h2_dphi_E","",32,0,2*M_PI,50,0,50);
+  TH1D* h1_AJ[4];
+  for(int i=0; i<4; ++i)
+    {
+      h1_AJ[i] = new TH1D(("h1_AJ"+to_string(i)).c_str(),"",100,0,1);
+    }
   TH2D* event_disrt[3];
   TH2D* event_sum = new TH2D("event_sum","Calorimeter Sum",24,0,24,64,0,64);
   TH1D* jetfrac[3];
@@ -178,7 +217,7 @@ int quickroot(string filebase="")
   jetE[3]->GetYaxis()->SetTitleOffset(1.7);
   jetE[3]->GetXaxis()->SetLabelSize(0.02);
   jetE[3]->GetXaxis()->SetTitleSize(0.03);
-  jetfrac[0]->GetYaxis()->SetTitle("Event Normalized Counts 5 < E_{jet} < 7.5");
+  jetfrac[0]->GetYaxis()->SetTitle("Event Normalized Counts 4 < E_{jet} < 7.5");
   jetfrac[0]->GetXaxis()->SetTitle("E_{leading tower} / E_{jet}");
   jetfrac[1]->GetYaxis()->SetTitle("Event Normalized Counts 7.5 < E_{jet} < 10");
   jetfrac[1]->GetXaxis()->SetTitle("E_{leading tower} / E_{jet}");
@@ -205,6 +244,8 @@ int quickroot(string filebase="")
   float emetot;
   float seedD[1000];
   float ehjet[1000];
+  long unsigned int trigvec;
+  tree->SetBranchAddress("triggervec",&trigvec);
   tree->SetBranchAddress("ehjet",ehjet);
   tree->SetBranchAddress("seedD",seedD);
   tree->SetBranchAddress("njet",&njet);
@@ -257,7 +298,8 @@ int quickroot(string filebase="")
   int dispcount = 1;
   int shighe = 0;
   int sshighe = 0;
-  for(int i=110000; i<tree->GetEntries(); ++i)
+  int maxeh = 5;
+  for(int i=0; i<tree->GetEntries(); ++i)
     {
       highejet = 0;
       shighe = 0;
@@ -272,6 +314,8 @@ int quickroot(string filebase="")
       float minjet[4] = {9999,9999,9999,9999};
       //float minjetseedD[4] = {0};
       //float minjeteh[4] = {0};
+      if(trigvec >> 10 & 1)
+	{
       for(int j=0; j<njet; ++j)
 	{
 	  for(int k=0; k<4; ++k)
@@ -284,7 +328,7 @@ int quickroot(string filebase="")
 		      //minjetseedD[k] = seedD[j];
 		      //minjeteh[k] = ehjet[j];
 		    }
-		  else if(k==1 && ehjet[j] < 10)
+		  else if(k==1 && ehjet[j] < maxeh)
 		    {
 		      minjet[k] = jet_e[j];
 		      //minjetseedD[k] = seedD[j];
@@ -296,7 +340,7 @@ int quickroot(string filebase="")
 		      //minjetseedD[k] = seedD[j];
 		      //minjeteh[k] = ehjet[j];
 		    }
-		  else if(k==3 && seedD[j] <0.65 && ehjet[j] < 10)
+		  else if(k==3 && seedD[j] <0.65 && ehjet[j] < maxeh)
 		    {
 		      minjet[k] = jet_e[j];
 		      //minjetseedD[k] = seedD[j];
@@ -304,6 +348,7 @@ int quickroot(string filebase="")
 		    }
 		}
 	    }
+	}
 	}
       for(int j=0; j<4; ++j)
 	{
@@ -314,11 +359,11 @@ int quickroot(string filebase="")
 	}
       for(int j=0; j<4; ++j)
 	{
-	  float it = 5;
-	  while(it+0.001 < minjet[j])
+	  int it = 40;
+	  while(it < 10*minjet[j])
 	    {
-	      h1_rej[j]->Fill(it);
-	      it += 0.1;
+	      h1_rej[j]->Fill(h1_rej[j]->GetBinCenter(it+1));
+	      ++it;
 	    }
 	}
       //if(breakvar) continue;
@@ -352,14 +397,14 @@ int quickroot(string filebase="")
 		  continue;
 		}
 	      */
-	      if(ehjet[k] > 10 || ehjet[k] < 0) continue;
+	      if(ehjet[k] > maxeh || ehjet[k] < 0) continue;
 	      if(seedD[k] > 0.65) continue;
 	      if(jet_e[k] > 10)
 		{
 		  highejet = 1;
 		}
 	      if(jet_e[k] > 20) shighe = 1;
-	      if(jet_e[k] > 30)
+	      if(jet_e[k] > 25)
 		{
 		  sshighe = 1;
 		  save_etaphiE(etart[0], phirt[0], enrt[0], sectorrt[0], "output/json/"+filebase+"_"+to_string(i)+"_em.txt", 0);
@@ -427,26 +472,38 @@ int quickroot(string filebase="")
 	  //if(seedD[k] > 0.65) continue;
 	  hejet->Fill(ehjet[njet]);
 	  jetE[0]->Fill(jet_e[k]);
-	  if(ehjet[k] < 10 && ehjet[k] > 0) jetE[1]->Fill(jet_e[k]);
+	  if(ehjet[k] < maxeh && ehjet[k] > 0) jetE[1]->Fill(jet_e[k]);
 	  if(seedD[k] < 0.65) jetE[2]->Fill(jet_e[k]);
-	  if(seedD[k] < 0.65 && ehjet[k] < 10 && ehjet[k] > 0)
+	  if(seedD[k] < 0.65 && ehjet[k] < maxeh && ehjet[k] > 0)
 	    {
 	      jetE[3]->Fill(jet_e[k]);
 	    }
-	  if(seedD[k] > 0.65) continue;
-	  if(ehjet[k] > 10 || ehjet[k] < 0) continue;
+	  
 	  for(int l = 0; l<njet; ++l)
 	    {
 	      if(l==k) continue;
+	      if(jet_e[k] < jet_e[l]) continue;
 	      if(jet_e[k] > 10 && jet_e[l] > 5)
 		{
+		  float ET1 = jet_e[k]/cosh(jet_et[k]);
+		  float ET2 = jet_e[l]/cosh(jet_et[l]);
+		  float AJ = (ET1-ET2)/(ET1+ET2);
+		  h1_AJ[0]->Fill(AJ);
+		  if(seedD[k] < 0.65) h1_AJ[2]->Fill(AJ);
+		  if(ehjet[k] < maxeh) h1_AJ[1]->Fill(AJ);
+		  if(ehjet[k] < maxeh && seedD[k] < 0.65) h1_AJ[3]->Fill(AJ);
 		  float dphi = jet_ph[k] - jet_ph[l];
-		  dphi = abs(dphi);
-		  cout << dphi << endl;
-		  h1_dphi->Fill(dphi);
+		  if(dphi < 0) dphi+=2*M_PI;
+		  //cout << dphi << endl;
+		  h1_dphi[0]->Fill(dphi);
+		  if(seedD[k] < 0.65) h1_dphi[2]->Fill(AJ);
+		  if(ehjet[k] < maxeh) h1_dphi[1]->Fill(AJ);
+		  if(ehjet[k] < maxeh && seedD[k] < 0.65) h1_dphi[3]->Fill(AJ);
 		  h2_dphi_E->Fill(dphi,jet_e[k]);
 		}
 	    }
+	  if(seedD[k] > 0.65) continue;
+	  if(ehjet[k] > maxeh || ehjet[k] < 0) continue;
 	  jets[k] = new TMarker(get_eta(jet_et[k]),get_phi(jet_ph[k]),20);
 	  jets[k]->SetMarkerSize(jet_e[k]/3);
 	  jets[k]->SetMarkerColor(kRed);
@@ -506,17 +563,40 @@ int quickroot(string filebase="")
       jetfrac[i]->Scale(1./(nevents));
     }
   //h1_dphi->SetMarkerColor(kMagenta+3);
-  h1_dphi->GetYaxis()->SetLabelSize(0.02);
-  h1_dphi->GetYaxis()->SetTitleSize(0.03);
-  h1_dphi->GetYaxis()->SetTitleOffset(1.7);
-  h1_dphi->GetXaxis()->SetLabelSize(0.02);
-  h1_dphi->GetXaxis()->SetTitleSize(0.03);
-  h1_dphi->Scale(1./nevents);
-  h1_dphi->GetYaxis()->SetTitle("Event Normalized Counts");
-  h1_dphi->GetXaxis()->SetTitle("#Delta#phi [rad]");
-  h1_dphi->SetFillColorAlpha(kMagenta,0.4);
-  h1_dphi->Draw("HIST");
-  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_dphi_1d.pdf").c_str());
+  for(int i=0; i<4; ++i)
+    {
+      h1_dphi[i]->GetYaxis()->SetLabelSize(0.02);
+      h1_dphi[i]->GetYaxis()->SetTitleSize(0.03);
+      h1_dphi[i]->GetYaxis()->SetTitleOffset(1.7);
+      h1_dphi[i]->GetXaxis()->SetLabelSize(0.02);
+      h1_dphi[i]->GetXaxis()->SetTitleSize(0.03);
+      h1_dphi[i]->Scale(1./nevents);
+      h1_dphi[i]->GetYaxis()->SetTitle("Event Normalized Counts");
+      h1_dphi[i]->GetXaxis()->SetTitle("#Delta#phi [rad]");
+      h1_dphi[i]->SetFillColorAlpha(kMagenta,0.4);
+      h1_dphi[i]->Draw("HIST");
+      drawText("Leading Jet E > 10 GeV", 0.5, 0.85, 0, kBlack, 0.02);
+      drawText("Subleading Jet E > 5 GeV", 0.5, 0.825, 0, kBlack, 0.02);
+      if(i>1) drawText("E_{lead tower} < 0.65 E_{jet}", 0.5, 0.8, 0, kBlack, 0.02);
+      if(i==1 || i==3) drawText(("E_{EM} < "+to_string(maxeh)+" E_{HAD}").c_str(), 0.5, (i==1?0.8:0.775), 0, kBlack, 0.02);
+      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_"+to_string(i)+"_dphi_1d.pdf").c_str());
+      
+      h1_AJ[i]->GetYaxis()->SetLabelSize(0.02);
+      h1_AJ[i]->GetYaxis()->SetTitleSize(0.03);
+      h1_AJ[i]->GetYaxis()->SetTitleOffset(1.7);
+      h1_AJ[i]->GetXaxis()->SetLabelSize(0.02);
+      h1_AJ[i]->GetXaxis()->SetTitleSize(0.03);
+      h1_AJ[i]->Scale(1./nevents);
+      h1_AJ[i]->GetYaxis()->SetTitle("Event Normalized Counts");
+      h1_AJ[i]->GetXaxis()->SetTitle("A_{J}");
+      h1_AJ[i]->SetFillColorAlpha(kMagenta,0.4);
+      h1_AJ[i]->Draw("HIST");
+      drawText("Leading Jet E > 10 GeV", 0.5, 0.85, 0, kBlack, 0.02);
+      drawText("Subleading Jet E > 5 GeV", 0.5, 0.825, 0, kBlack, 0.02);
+      if(i>1) drawText("E_{lead tower} < 0.65 E_{jet}", 0.5, 0.8, 0, kBlack, 0.02);
+      if(i==1 || i==3) drawText(("E_{EM} < "+to_string(maxeh)+" E_{HAD}").c_str(), 0.5, (i==1?0.8:0.775), 0, kBlack, 0.02);
+      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_"+to_string(i)+"_AJ_1d.pdf").c_str());
+    }
   //h2_dphi_E->SetMarkerColor(kMagenta+3);
   h2_dphi_E->GetYaxis()->SetLabelSize(0.02);
   h2_dphi_E->GetYaxis()->SetTitleSize(0.03);
@@ -537,40 +617,64 @@ int quickroot(string filebase="")
   d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_jetfrac2.pdf").c_str());
   d->SetLogy();
   //float goodfrac = 1 - fakejets/tree->GetEntries();
+  float erejf[9] = {14.24,42.76,111.95,281.76,681.85,1466.6,3033.03,6272.51,11086.03};
+  float x[9] = {4,5,6,7,8,9,10,11,12};
+  TGraph* erejg = new TGraph(9,x,erejf);
+  erejg->SetMarkerStyle(43);
+  erejg->SetMarkerColor(kMagenta);
   for(int i=0; i<4; ++i)
     {
       jetE[i]->Scale(1./(nevents));
       jetE[i]->Draw();
       d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_jetE"+to_string(i)+".pdf").c_str());
-      for(int j=0; j<150; ++j)
+      for(int j=0; j<160; ++j)
 	{
-	  if(h1_rej[i]->GetBinContent(j+1) != 0) h1_rej[i]->SetBinContent(j+1,nevents/h1_rej[i]->GetBinContent(j+1));
+	  if(h1_rej[i]->GetBinContent(j+1) != 0) h1_rej[i]->SetBinContent(j+1,nmb/h1_rej[i]->GetBinContent(j+1));
 	}
       //      h1_rej[i]->Scale(nevents);
       h1_rej[i]->GetXaxis()->SetTitle("Threshold E [GeV]");
       h1_rej[i]->GetYaxis()->SetTitle("Rejection Factor");
-      h1_rej[i]->SetMarkerStyle(43);
-      h1_rej[i]->SetMarkerColor(kMagenta+3);
-      h1_rej[i]->SetMarkerSize(3);
+      h1_rej[i]->SetMarkerStyle(40+i);
+      h1_rej[i]->SetMarkerColor((i<3?2+i:3+i));
+      h1_rej[i]->SetMarkerSize(2);
       h1_rej[i]->GetYaxis()->SetLabelSize(0.02);
       h1_rej[i]->GetYaxis()->SetTitleSize(0.03);
       h1_rej[i]->GetYaxis()->SetTitleOffset(1.7);
       h1_rej[i]->GetXaxis()->SetLabelSize(0.02);
       h1_rej[i]->GetXaxis()->SetTitleSize(0.03);
-      h1_rej[i]->Draw();
-      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_rej"+to_string(i)+".pdf").c_str());
+
     }
+  h1_rej[0]->Draw("P");
+  for(int i=1; i<4; ++i)
+    {
+      h1_rej[i]->Draw("SAME P");
+    }
+  erejg->SetLineWidth(2);
+  erejg->Draw("SAME");
+  TLegend* leg = new TLegend(0.12,0.6,0.4,0.85);
+  leg->SetFillStyle(0);
+  leg->SetBorderSize(0);
+  leg->SetFillColor(0);
+  leg->AddEntry(h1_rej[0],"Rejection factor (no cuts)","p");
+  leg->AddEntry(h1_rej[1],("Rejection factor (E_{EM} < "+to_string(maxeh)+" E_{had})").c_str(),"p");
+  leg->AddEntry(h1_rej[2],"Rejection factor (E_{lead} < 0.65 E_{jet})","p");
+  leg->AddEntry(h1_rej[3],"Rejection factor (both cuts)","p");
+  leg->AddEntry(erejg,"Expected rejection factor","l");
+  leg->Draw();
+  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_rej"+".pdf").c_str());
   hejet->Scale(1./(nevents));
   hejet->Draw();
   d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_hejet.pdf").c_str());
-  cout << "cancount/ntree/nevents: " << cancount << " " << tree->GetEntries() << " " << nevents << endl;
+  cout << "cancount/ntree/nevents/nmb: " << cancount << " " << tree->GetEntries() << " " << nevents  << " " << nmb << endl;
   cout << "Rejection factors:" << endl;
-  for(int i=0; i<8; ++i)
+  
+  
+  for(int i=0; i<9; ++i)
     {
-      cout << i+5;
+      cout << i+4;
       for(int j=0; j<4; ++j)
 	{
-	  cout << " " << h1_rej[j]->GetBinContent(10*i+1);
+	  cout << " " << h1_rej[j]->GetBinContent(10*(i+4)+1) << " " << h1_rej[j]->GetBinContent(10*(i+4)+1)/erejf[i];
 	}
       cout << endl;
     }

@@ -21,7 +21,8 @@ printf "{
         \"pv\": [0,0,0],
         \"runstats\": [
                 \"sPHENIX Experiment at RHIC\",
-                \"Collisions: Au + Au @ √S<sub>NN</sub> = 200 GeV\"
+                \"Collisions: p + p @ √S<sub>NN</sub> = 200 GeV\",
+                \"sPHENIX Internal\"
             ]
     },
 
@@ -92,7 +93,7 @@ printf "{
 
 \t\"CEMC\":  [" > $OUTN
 
-cat json/$EMCN | while read line; do
+cat $EMCN | while read line; do
     printf "\t" >> $OUTN
     echo $line >> $OUTN
 done
@@ -101,7 +102,7 @@ printf "\t],
 
 \"HCALIN\": [" >> $OUTN
 
-cat json/$IHCN | while read line; do
+cat $IHCN | while read line; do
     echo $line >> $OUTN
 done
 
@@ -109,7 +110,7 @@ printf "],
 
 \"HCALOUT\": [" >> $OUTN
 
-cat json/$OHCN | while read line; do
+cat $OHCN | while read line; do
     echo $line >> $OUTN
 done
 
