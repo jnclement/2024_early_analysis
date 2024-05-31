@@ -72,205 +72,213 @@ int quickroot(string filebase="")
   gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
   //gStyle->SetOptTitle(0);
-  float emcalen[25000];
-  float emcalchi2[25000];
-  float emcalt[25000];
-  int sectorrt[3];
-  int sectorem;
-  int njet;
-  float enrt[3][1536];
-  int etart[3][1536];
-  int phirt[3][1536];
-  int etabin[25000];
-  int phibin[25000];
-  float jet_e[1000];
-  float jet_et[1000];
-  float jet_ph[1000];
+  float emcalen[2][25000];
+  float emcalchi2[2][25000];
+  float emcalt[2][25000];
+  int sectorrt[2][3];
+  int sectorem[2];
+  int njet[2];
+  float enrt[2][3][1536];
+  int etart[2][3][1536];
+  int phirt[2][3][1536];
+  int etabin[2][25000];
+  int phibin[2][25000];
+  float jet_e[2][1000];
+  float jet_et[2][1000];
+  float jet_ph[2][1000];
   string filename=filebase;
-  TChain* tree = new TChain("ttree");
-  TChain* tree2 = new TChain("ttree2");
-  TChain* simt = new TChain("ttree");
-  TChain* simt2 = new TChain("ttree2");
-  ifstream list;
+  TChain* tree[2];
+  TChain* tree2[2];
+  ifstream list[2];
   string line;
-  ifstream simlist;
-  simlist.open("sim.list",ifstream::in);
-  if(!simlist)
+  list[0].open("sim.list",ifstream::in);
+  list[1].open(filename,ifstream::in);
+
+  for(int h=0; h < 2; ++h)
     {
-      cout << "nosimlist" << endl;
-      exit(1);
-    }
-  while(getline(simlist,line))
-    {
-      try
+      tree[h] = new TChain("ttree");
+      tree2[h] = new TChain("ttree2");
+      if(!list[h])
 	{
-	  simt->Add(line.c_str());
-	  simt2->Add(line.c_str());
+	  cout << "nosimlist" << endl;
+	  exit(1);
 	}
-      catch(...)
+      while(getline(list[h],line))
 	{
-	  continue;
-	}
-    }
-  list.open(filename,ifstream::in);
-  if(!list)
-    {
-      cout << "nofile" << endl;
-      exit(1);
-    }
-  while(getline(list,line))
-    {
-      try
-	{
-	  tree->Add(line.c_str());
-	  tree2->Add(line.c_str());
-	}
-      catch(...)
-	{
-	  continue;
+	  try
+	    {
+	      tree[h]->Add(line.c_str());
+	      tree2[h]->Add(line.c_str());
+	    }
+	  catch(...)
+	    {
+	      continue;
+	    }
 	}
     }
-  long long unsigned int nevents = 0;
-  int evtct;
-  int mbevt;
-  long long unsigned int nmb = 0;
-  tree2->SetBranchAddress("_evtct",&evtct);
-  tree2->SetBranchAddress("mbevt",&mbevt);
-  for(int i=0; i<tree2->GetEntries(); ++i)
+  long long unsigned int nevents[2] = {0};
+  int evtct[2];
+  int mbevt[2];
+  long long unsigned int nmb[2] = {0};
+  for(int h=0; h<2; ++h)
     {
-      tree2->GetEntry(i);
-      nevents += evtct;
-      nmb += mbevt;
-      //cout << mbevt << endl;
+      tree2[h]->SetBranchAddress("_evtct",&evtct[h]);
+      tree2[h]->SetBranchAddress("mbevt",&mbevt[h]);
+      for(int i=0; i<tree2[h]->GetEntries(); ++i)
+	{
+	  tree2[h]->GetEntry(i);
+	  nevents[h] += evtct[h];
+	  nmb[h] += mbevt[h];
+	  //cout << mbevt << endl;
+	}
+      cout << "Total " << nevents[h] << " events." << endl;
+      if(h==0) nmb[h] = nevents[h];
+      cout << "with " << nmb[h] << " minbias events." << endl;
     }
-  cout << "Total " << nevents << " events." << endl;
-  cout << "with " << nmb << " minbias events." << endl;
+
   const int ncol = 9;
   double red[ncol] = {1, 1, 1, 1, 1, 1, 1, 1};
   double grn[ncol] = {1, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125, 0};
   double blu[ncol] = {1, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125, 0};
   double stp[ncol] = {0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0};
   TColor::CreateGradientColorTable(ncol, stp, red, grn, blu, ncol);
-  TH1D* h1_rej[4];
-  for(int i=0; i<4; ++i)
+  TH1D* h1_rej[2][4];
+  for(int h=0; h<2; ++h)
     {
-      h1_rej[i] = new TH1D(("h1_rej"+to_string(i)).c_str(),"",150,0,15);
-      h1_rej[i]->GetYaxis()->SetRangeUser(0.5,200000);
+      for(int i=0; i<4; ++i)
+	{
+	  h1_rej[h][i] = new TH1D(("h1_rej"+to_string(h)+"_"+to_string(i)).c_str(),"",150,0,15);
+	  h1_rej[h][i]->GetYaxis()->SetRangeUser(0.5,200000);
+	}
     }
   TH2D* event_display = new TH2D("event_display","",96,-0.5,95.5,256,-0.5,255.5);
   TH2D* event_diphcal = new TH2D("event_display_hc","",24,0,24,64,0,64);
-  TH1D* h1_dphi[4];
-  for(int i=0; i<4; ++i)
+  TH1D* h1_dphi[2][4];
+  for(int h=0; h<2; ++h)
     {
-      h1_dphi[i] = new TH1D(("h1_dphi"+to_string(i)).c_str(),"",32,0,2*M_PI);
+      for(int i=0; i<4; ++i)
+	{
+	  h1_dphi[h][i] = new TH1D(("h1_dphi"+to_string(h)+"_"+to_string(i)).c_str(),"",32,0,2*M_PI);
+	}
     }
-  TH2D* h2_dphi_E = new TH2D("h2_dphi_E","",32,0,2*M_PI,50,0,50);
-  TH1D* h1_AJ[4];
-  for(int i=0; i<4; ++i)
+  TH2D* h2_dphi_deta[2];
+  TH1D* h1_AJ[2][4];
+    for(int h=0; h<2; ++h)
     {
-      h1_AJ[i] = new TH1D(("h1_AJ"+to_string(i)).c_str(),"",100,0,1);
+      h2_dphi_deta[h] = new TH2D(("h2_dphi_deta"+to_string(h)).c_str(),"",20,-2.2,2.2,32,0,2*M_PI);
+      for(int i=0; i<4; ++i)
+	{
+	  h1_AJ[h][i] = new TH1D(("h1_AJ"+to_string(h)+"_"+to_string(i)).c_str(),"",100,0,1);
+	}
     }
   TH2D* event_disrt[3];
   TH2D* event_sum = new TH2D("event_sum","Calorimeter Sum",24,0,24,64,0,64);
-  TH1D* jetfrac[3];
-  TH1D* jetE[4];
-  TH1D* hejet = new TH1D("hejet","",100,0,10);
-  hejet->SetMarkerStyle(43);
-  hejet->SetMarkerSize(3);
-  hejet->SetMarkerColor(kMagenta+3);
-  for(int i=0; i<3; ++i)
+  TH1D* jetfrac[2][3];
+  TH1D* jetE[2][4];
+  TH1D* hejet[2];
+  for(int h=0; h<2; ++h)
     {
-      string calo = "EMCal";
-      if(i==1) calo = "IHCal";
-      if(i==2) calo = "OHCal";
-      jetE[i] = new TH1D(("jetE"+to_string(i)).c_str(),"",200,0,20);
-      jetfrac[i] = new TH1D(("jetfrac"+to_string(i)).c_str(),"",100,0,1);
-      event_disrt[i] = new TH2D(("event_display_rt"+to_string(i)).c_str(),calo.c_str(),24,0,24,64,0,64);
-      jetfrac[i]->SetMarkerStyle(43);
-      jetfrac[i]->SetMarkerColor(kMagenta+3);
-      jetfrac[i]->SetMarkerSize(3);
-      jetfrac[i]->GetYaxis()->SetLabelSize(0.02);
-      jetfrac[i]->GetYaxis()->SetTitleSize(0.03);
-      jetfrac[i]->GetYaxis()->SetTitleOffset(1.7);
-      jetfrac[i]->GetXaxis()->SetLabelSize(0.02);
-      jetfrac[i]->GetXaxis()->SetTitleSize(0.03);
-      jetE[i]->SetMarkerStyle(43);
-      jetE[i]->SetMarkerSize(3);
-      jetE[i]->SetMarkerColor(kMagenta+3);
-      jetE[i]->SetMarkerStyle(43);
-      jetE[i]->SetMarkerColor(kMagenta+3);
-      jetE[i]->SetMarkerSize(3);
-      jetE[i]->GetYaxis()->SetLabelSize(0.02);
-      jetE[i]->GetYaxis()->SetTitleSize(0.03);
-      jetE[i]->GetYaxis()->SetTitleOffset(1.7);
-      jetE[i]->GetXaxis()->SetLabelSize(0.02);
-      jetE[i]->GetXaxis()->SetTitleSize(0.03);
-    }
+      hejet[h] = new TH1D(("hejet"+to_string(h)).c_str(),"",100,0,10);
+      hejet[h]->SetMarkerStyle(43);
+      hejet[h]->SetMarkerSize(3);
+      hejet[h]->SetMarkerColor(kMagenta+3);
+      for(int i=0; i<3; ++i)
+	{
+	  string calo = "EMCal";
+	  if(i==1) calo = "IHCal";
+	  if(i==2) calo = "OHCal";
+	  jetE[h][i] = new TH1D(("jetE"+to_string(h)+"_"+to_string(i)).c_str(),"",200,0,20);
+	  jetfrac[h][i] = new TH1D(("jetfrac"+to_string(h)+"_"+to_string(i)).c_str(),"",100,0,1);
+	  event_disrt[i] = new TH2D(("event_display_rt"+to_string(h)+"_"+to_string(i)).c_str(),calo.c_str(),24,0,24,64,0,64);
+	  jetfrac[h][i]->SetMarkerStyle(43);
+	  jetfrac[h][i]->SetMarkerColor(kMagenta+3);
+	  jetfrac[h][i]->SetMarkerSize(3);
+	  jetfrac[h][i]->GetYaxis()->SetLabelSize(0.02);
+	  jetfrac[h][i]->GetYaxis()->SetTitleSize(0.03);
+	  jetfrac[h][i]->GetYaxis()->SetTitleOffset(1.7);
+	  jetfrac[h][i]->GetXaxis()->SetLabelSize(0.02);
+	  jetfrac[h][i]->GetXaxis()->SetTitleSize(0.03);
+	  jetE[h][i]->SetMarkerStyle(43);
+	  jetE[h][i]->SetMarkerSize(3);
+	  jetE[h][i]->SetMarkerColor(kMagenta+3);
+	  jetE[h][i]->SetMarkerStyle(43);
+	  jetE[h][i]->SetMarkerColor(kMagenta+3);
+	  jetE[h][i]->SetMarkerSize(3);
+	  jetE[h][i]->GetYaxis()->SetLabelSize(0.02);
+	  jetE[h][i]->GetYaxis()->SetTitleSize(0.03);
+	  jetE[h][i]->GetYaxis()->SetTitleOffset(1.7);
+	  jetE[h][i]->GetXaxis()->SetLabelSize(0.02);
+	  jetE[h][i]->GetXaxis()->SetTitleSize(0.03);
+	}
   
-  jetE[3] = new TH1D(("jetE"+to_string(3)).c_str(),"",200,0,20);
-  jetE[3]->SetMarkerColor(kMagenta+3);
-  jetE[3]->SetMarkerSize(3);
-  jetE[3]->SetMarkerStyle(43);
-  jetE[3]->SetMarkerColor(kMagenta+3);
-  jetE[3]->GetYaxis()->SetLabelSize(0.02);
-  jetE[3]->GetYaxis()->SetTitleSize(0.03);
-  jetE[3]->GetYaxis()->SetTitleOffset(1.7);
-  jetE[3]->GetXaxis()->SetLabelSize(0.02);
-  jetE[3]->GetXaxis()->SetTitleSize(0.03);
-  jetfrac[0]->GetYaxis()->SetTitle("Event Normalized Counts 4 < E_{jet} < 7.5");
-  jetfrac[0]->GetXaxis()->SetTitle("E_{leading tower} / E_{jet}");
-  jetfrac[1]->GetYaxis()->SetTitle("Event Normalized Counts 7.5 < E_{jet} < 10");
-  jetfrac[1]->GetXaxis()->SetTitle("E_{leading tower} / E_{jet}");
-  jetfrac[2]->GetYaxis()->SetTitle("Event Normalized Counts 10 < E_{jet}");
-  jetfrac[2]->GetXaxis()->SetTitle("E_{leading tower} / E_{jet}");
-  jetE[0]->GetYaxis()->SetTitle("Event Normalized Counts");
-  jetE[0]->GetXaxis()->SetTitle("E_{jet} No Cuts");
-  jetE[1]->GetYaxis()->SetTitle("Event Normalized Counts");
-  jetE[1]->GetXaxis()->SetTitle("E_{jet}  with E_{EMCal} < 10E_{HCal}");
-  jetE[2]->GetYaxis()->SetTitle("Event Normalized Counts");
-  jetE[2]->GetXaxis()->SetTitle("E_{jet}  with E_{lead tower} < 0.65E_{jet}");
-  jetE[3]->GetYaxis()->SetTitle("Event Normalized Counts");
-  jetE[3]->GetXaxis()->SetTitle("E_{jet}  with E_{EMCal} < 10E_{HCal} \& E_{lead tower} < 0.65E_{jet}");
-  hejet->GetXaxis()->SetTitle("E_{jet, EMCal} / E_{jet, HCals}");
-  hejet->GetYaxis()->SetTitle("Event Normalized Counts");
-  hejet->SetMarkerStyle(43);
-  hejet->SetMarkerColor(kMagenta+3);
-  hejet->SetMarkerSize(3);
-  hejet->GetYaxis()->SetLabelSize(0.02);
-  hejet->GetYaxis()->SetTitleSize(0.03);
-  hejet->GetYaxis()->SetTitleOffset(1.7);
-  hejet->GetXaxis()->SetLabelSize(0.02);
-  hejet->GetXaxis()->SetTitleSize(0.03);
-  float emetot;
-  float seedD[1000];
-  float ehjet[1000];
+      jetE[h][3] = new TH1D(("jetE"+to_string(3)).c_str(),"",200,0,20);
+      jetE[h][3]->SetMarkerColor(kMagenta+3);
+      jetE[h][3]->SetMarkerSize(3);
+      jetE[h][3]->SetMarkerStyle(43);
+      jetE[h][3]->SetMarkerColor(kMagenta+3);
+      jetE[h][3]->GetYaxis()->SetLabelSize(0.02);
+      jetE[h][3]->GetYaxis()->SetTitleSize(0.03);
+      jetE[h][3]->GetYaxis()->SetTitleOffset(1.7);
+      jetE[h][3]->GetXaxis()->SetLabelSize(0.02);
+      jetE[h][3]->GetXaxis()->SetTitleSize(0.03);
+      jetfrac[h][0]->GetYaxis()->SetTitle("Event Normalized Counts 4 < E_{jet} < 7.5");
+      jetfrac[h][0]->GetXaxis()->SetTitle("E_{leading tower} / E_{jet}");
+      jetfrac[h][1]->GetYaxis()->SetTitle("Event Normalized Counts 7.5 < E_{jet} < 10");
+      jetfrac[h][1]->GetXaxis()->SetTitle("E_{leading tower} / E_{jet}");
+      jetfrac[h][2]->GetYaxis()->SetTitle("Event Normalized Counts 10 < E_{jet}");
+      jetfrac[h][2]->GetXaxis()->SetTitle("E_{leading tower} / E_{jet}");
+      jetE[h][0]->GetYaxis()->SetTitle("Event Normalized Counts");
+      jetE[h][0]->GetXaxis()->SetTitle("E_{jet} No Cuts");
+      jetE[h][1]->GetYaxis()->SetTitle("Event Normalized Counts");
+      jetE[h][1]->GetXaxis()->SetTitle("E_{jet}  with E_{EMCal} < 10E_{HCal}");
+      jetE[h][2]->GetYaxis()->SetTitle("Event Normalized Counts");
+      jetE[h][2]->GetXaxis()->SetTitle("E_{jet}  with E_{lead tower} < 0.65E_{jet}");
+      jetE[h][3]->GetYaxis()->SetTitle("Event Normalized Counts");
+      jetE[h][3]->GetXaxis()->SetTitle("E_{jet}  with E_{EMCal} < 10E_{HCal} \& E_{lead tower} < 0.65E_{jet}");
+      hejet[h]->GetXaxis()->SetTitle("E_{jet, EMCal} / E_{jet, HCals}");
+      hejet[h]->GetYaxis()->SetTitle("Event Normalized Counts");
+      hejet[h]->SetMarkerStyle(43);
+      hejet[h]->SetMarkerColor(kMagenta+3);
+      hejet[h]->SetMarkerSize(3);
+      hejet[h]->GetYaxis()->SetLabelSize(0.02);
+      hejet[h]->GetYaxis()->SetTitleSize(0.03);
+      hejet[h]->GetYaxis()->SetTitleOffset(1.7);
+      hejet[h]->GetXaxis()->SetLabelSize(0.02);
+      hejet[h]->GetXaxis()->SetTitleSize(0.03);
+    }
+  float emetot[2];
+  float seedD[2][1000];
+  float ehjet[2][1000];
   long unsigned int trigvec;
-  tree->SetBranchAddress("triggervec",&trigvec);
-  tree->SetBranchAddress("ehjet",ehjet);
-  tree->SetBranchAddress("seedD",seedD);
-  tree->SetBranchAddress("njet",&njet);
-  tree->SetBranchAddress("sectoroh",&sectorrt[2]);
-  tree->SetBranchAddress("ohcaletabin",etart[2]);
-  tree->SetBranchAddress("ohcalphibin",phirt[2]);
-  tree->SetBranchAddress("ohcalen",enrt[2]);
-  tree->SetBranchAddress("sectorih",&sectorrt[1]);
-  tree->SetBranchAddress("sector_rtem",&sectorrt[0]);
-  tree->SetBranchAddress("rtemen",enrt[0]);
-  tree->SetBranchAddress("rtemet",etart[0]);
-  tree->SetBranchAddress("rtemph",phirt[0]);
-  tree->SetBranchAddress("jet_e",jet_e);
-  tree->SetBranchAddress("jet_et",jet_et);
-  tree->SetBranchAddress("jet_ph",jet_ph);
-  tree->SetBranchAddress("ihcaletabin",etart[1]);
-  tree->SetBranchAddress("ihcalphibin",phirt[1]);
-  tree->SetBranchAddress("ihcalen",enrt[1]);
-  //tree->SetBranchAddress("emcalen",emcalen);
-  //tree->SetBranchAddress("emcalt",emcalt);
-  //tree->SetBranchAddress("emcalchi2",emcalchi2);
-  //tree->SetBranchAddress("sectorem",&sectorem);
-  //tree->SetBranchAddress("emcaletabin",etabin);
-  //tree->SetBranchAddress("emcalphibin",phibin);
-  //tree->SetBranchAddress("emetot",&emetot);
+  tree[1]->SetBranchAddress("triggervec",&trigvec);
+  for(int h=0; h<2; ++h)
+    {
+      tree[h]->SetBranchAddress("ehjet",ehjet[h]);
+      tree[h]->SetBranchAddress("seedD",seedD[h]);
+      tree[h]->SetBranchAddress("njet",&njet[h]);
+      tree[h]->SetBranchAddress("sectoroh",&sectorrt[h][2]);
+      tree[h]->SetBranchAddress("ohcaletabin",etart[h][2]);
+      tree[h]->SetBranchAddress("ohcalphibin",phirt[h][2]);
+      tree[h]->SetBranchAddress("ohcalen",enrt[h][2]);
+      tree[h]->SetBranchAddress("sectorih",&sectorrt[h][1]);
+      tree[h]->SetBranchAddress("sector_rtem",&sectorrt[h][0]);
+      tree[h]->SetBranchAddress("rtemen",enrt[h][0]);
+      tree[h]->SetBranchAddress("rtemet",etart[h][0]);
+      tree[h]->SetBranchAddress("rtemph",phirt[h][0]);
+      tree[h]->SetBranchAddress("jet_e",jet_e[h]);
+      tree[h]->SetBranchAddress("jet_et",jet_et[h]);
+      tree[h]->SetBranchAddress("jet_ph",jet_ph[h]);
+      tree[h]->SetBranchAddress("ihcaletabin",etart[h][1]);
+      tree[h]->SetBranchAddress("ihcalphibin",phirt[h][1]);
+      tree[h]->SetBranchAddress("ihcalen",enrt[h][1]);
+      //tree->SetBranchAddress("emcalen",emcalen);
+      //tree->SetBranchAddress("emcalt",emcalt);
+      //tree->SetBranchAddress("emcalchi2",emcalchi2);
+      //tree->SetBranchAddress("sectorem",&sectorem);
+      //tree->SetBranchAddress("emcaletabin",etabin);
+      //tree->SetBranchAddress("emcalphibin",phibin);
+      //tree->SetBranchAddress("emetot",&emetot);
+    }
   int cancount = 0;
   TCanvas* c = new TCanvas("","",800,500);
   TCanvas* d = new TCanvas("","",1000,1000);
@@ -299,57 +307,60 @@ int quickroot(string filebase="")
   int shighe = 0;
   int sshighe = 0;
   int maxeh = 5;
-  for(int i=0; i<tree->GetEntries(); ++i)
+  for(int h=0; h<2; ++h)
+    {
+      cancount = 0;
+  for(int i=0; i<tree[h]->GetEntries(); ++i)
     {
       highejet = 0;
       shighe = 0;
       sshighe = 0;
       int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
-      tree->GetEntry(i);
-      if(!njet) continue;
-      if(njet > 4) continue;
+      tree[h]->GetEntry(i);
+      if(!njet[h]) continue;
+      if(njet[h] > 4) continue;
       //event_display->Reset();
       //int breakvar = 0;
       float minjet[4] = {9999,9999,9999,9999};
       //float minjetseedD[4] = {0};
       //float minjeteh[4] = {0};
-      if(trigvec >> 10 & 1)
-	{
-      for(int j=0; j<njet; ++j)
+      //if(trigvec >> 10 & 1)
+      //{
+      for(int j=0; j<njet[h]; ++j)
 	{
 	  for(int k=0; k<4; ++k)
 	    {
-	      if(jet_e[j] < minjet[k])
+	      if(jet_e[h][j] < minjet[k])
 		{
 		  if(k==0)
 		    {
-		      minjet[k] = jet_e[j];
+		      minjet[k] = jet_e[h][j];
 		      //minjetseedD[k] = seedD[j];
 		      //minjeteh[k] = ehjet[j];
 		    }
-		  else if(k==1 && ehjet[j] < maxeh)
+		  else if(k==1 && ehjet[h][j] < maxeh)
 		    {
-		      minjet[k] = jet_e[j];
+		      minjet[k] = jet_e[h][j];
 		      //minjetseedD[k] = seedD[j];
 		      //minjeteh[k] = ehjet[j];
 		    }
-		  else if(k==2 && seedD[j] < 0.65)
+		  else if(k==2 && seedD[h][j] < 0.65)
 		    {
-		      minjet[k] = jet_e[j];
+		      minjet[k] = jet_e[h][j];
 		      //minjetseedD[k] = seedD[j];
 		      //minjeteh[k] = ehjet[j];
 		    }
-		  else if(k==3 && seedD[j] <0.65 && ehjet[j] < maxeh)
+		  else if(k==3 && seedD[h][j] <0.65 && ehjet[h][j] < maxeh)
 		    {
-		      minjet[k] = jet_e[j];
+		      minjet[k] = jet_e[h][j];
 		      //minjetseedD[k] = seedD[j];
 		      //minjeteh[k] = ehjet[j];
 		    }
 		}
 	    }
 	}
-	}
+      //}
       for(int j=0; j<4; ++j)
 	{
 	  if(minjet[j] > 9000)
@@ -362,7 +373,7 @@ int quickroot(string filebase="")
 	  int it = 40;
 	  while(it < 10*minjet[j])
 	    {
-	      h1_rej[j]->Fill(h1_rej[j]->GetBinCenter(it+1));
+	      h1_rej[h][j]->Fill(h1_rej[h][j]->GetBinCenter(it+1));
 	      ++it;
 	    }
 	}
@@ -371,10 +382,10 @@ int quickroot(string filebase="")
       for(int j=0; j<3; ++j)
 	{
 	  event_disrt[j]->Reset();
-	  for(int k=0; k<sectorrt[j]; ++k)
+	  for(int k=0; k<sectorrt[h][j]; ++k)
 	    {
-	      event_disrt[j]->Fill(etart[j][k],phirt[j][k],enrt[j][k]);
-	      event_sum->Fill(etart[j][k],phirt[j][k],enrt[j][k]);
+	      event_disrt[j]->Fill(etart[h][j][k],phirt[h][j][k],enrt[h][j][k]);
+	      event_sum->Fill(etart[h][j][k],phirt[h][j][k],enrt[h][j][k]);
 	      //if(enrt[j][k] > 0.1) cout << j << " " << k << " " << etart[j][k] << " " << phirt[j][k] << " " << enrt[j][k] << endl;
 	    }
 
@@ -389,7 +400,7 @@ int quickroot(string filebase="")
 	  event_disrt[j]->SetTitle(("Event "+to_string(i)).c_str());
 	  event_disrt[j]->Draw("COLZ");
 	  TMarker* jets[1000];
-	  for(int k=0; k<njet; ++k)
+	  for(int k=0; k<njet[h]; ++k)
 	    {
 	      /*
 	      if(get_phi(jet_ph[k]) > 29.5 && get_phi(jet_ph[k]) < 37.5)
@@ -397,28 +408,30 @@ int quickroot(string filebase="")
 		  continue;
 		}
 	      */
-	      if(ehjet[k] > maxeh || ehjet[k] < 0) continue;
-	      if(seedD[k] > 0.65) continue;
-	      if(jet_e[k] > 10)
+	      if(ehjet[h][k] > maxeh || ehjet[h][k] < 0) continue;
+	      if(seedD[h][k] > 0.65) continue;
+	      /*
+	      if(jet_e[h][k] > 10)
 		{
 		  highejet = 1;
 		}
-	      if(jet_e[k] > 20) shighe = 1;
-	      if(jet_e[k] > 25)
+	      */
+	      if(jet_e[h][k] > 20) shighe = 1;
+	      if(jet_e[h][k] > 25)
 		{
 		  sshighe = 1;
-		  save_etaphiE(etart[0], phirt[0], enrt[0], sectorrt[0], "output/json/"+filebase+"_"+to_string(i)+"_em.txt", 0);
-		  save_etaphiE(etart[1], phirt[1], enrt[1], sectorrt[1], "output/json/"+filebase+"_"+to_string(i)+"_ih.txt", 0);
-		  save_etaphiE(etart[2], phirt[2], enrt[2], sectorrt[2], "output/json/"+filebase+"_"+to_string(i)+"_oh.txt", 0);
+		  save_etaphiE(etart[h][0], phirt[h][0], enrt[h][0], sectorrt[h][0], "output/json/"+filebase+"_"+to_string(h)+"_"+to_string(i)+"_em.txt", 0);
+		  save_etaphiE(etart[h][1], phirt[h][1], enrt[h][1], sectorrt[h][1], "output/json/"+filebase+"_"+to_string(h)+"_"+to_string(i)+"_ih.txt", 0);
+		  save_etaphiE(etart[h][2], phirt[h][2], enrt[h][2], sectorrt[h][2], "output/json/"+filebase+"_"+to_string(h)+"_"+to_string(i)+"_oh.txt", 0);
 		}
-	      jets[k] = new TMarker(get_eta(jet_et[k]),get_phi(jet_ph[k]),43);
-	      jets[k]->SetMarkerSize(jet_e[k]/3);
+	      jets[k] = new TMarker(get_eta(jet_et[h][k]),get_phi(jet_ph[h][k]),43);
+	      jets[k]->SetMarkerSize(jet_e[h][k]/3);
 	      jets[k]->SetMarkerColor(kRed);
 	      //jets[k]->Draw();
 	      for(int l=0; l<ncircle; ++l)
 		{
-		  float eta = get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle));
-		  float phi = get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle));
+		  float eta = get_eta(jet_et[h][k]+0.4*cos(2*l*M_PI/ncircle));
+		  float phi = get_phi(jet_ph[h][k]+0.4*sin(2*l*M_PI/ncircle));
 		  if(eta > 24 || eta < 0) continue;
 		  if(phi > 64) phi -= 64;
 		  if(phi < 0) phi += 64;
@@ -447,7 +460,8 @@ int quickroot(string filebase="")
 	    }
 	}
       TMarker* jets[1000];
-      for(int k=0; k<njet; ++k)
+      int dodraw = 0;
+      for(int k=0; k<njet[h]; ++k)
 	{
 	  
 
@@ -457,61 +471,63 @@ int quickroot(string filebase="")
 	      continue;
 	    }
 	  */
-	  if(jet_e[k] < 7.5)
+	  if(jet_e[h][k] < 7.5)
 	    {
-	      jetfrac[0]->Fill(seedD[k]);
+	      jetfrac[h][0]->Fill(seedD[h][k]);
 	    }
-	  else if(jet_e[k] < 10)
+	  else if(jet_e[h][k] < 10)
 	    {
-	      jetfrac[1]->Fill(seedD[k]);
+	      jetfrac[h][1]->Fill(seedD[h][k]);
 	    }
 	  else
 	    {
-	      jetfrac[2]->Fill(seedD[k]);
+	      jetfrac[h][2]->Fill(seedD[h][k]);
 	    }
 	  //if(seedD[k] > 0.65) continue;
-	  hejet->Fill(ehjet[njet]);
-	  jetE[0]->Fill(jet_e[k]);
-	  if(ehjet[k] < maxeh && ehjet[k] > 0) jetE[1]->Fill(jet_e[k]);
-	  if(seedD[k] < 0.65) jetE[2]->Fill(jet_e[k]);
-	  if(seedD[k] < 0.65 && ehjet[k] < maxeh && ehjet[k] > 0)
+	  hejet[h]->Fill(ehjet[h][k]);
+	  jetE[h][0]->Fill(jet_e[h][k]);
+	  if(ehjet[h][k] < maxeh && ehjet[h][k] > 0) jetE[h][1]->Fill(jet_e[h][k]);
+	  if(seedD[h][k] < 0.65) jetE[h][2]->Fill(jet_e[h][k]);
+	  if(seedD[h][k] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
-	      jetE[3]->Fill(jet_e[k]);
+	      jetE[h][3]->Fill(jet_e[h][k]);
 	    }
 	  
-	  for(int l = 0; l<njet; ++l)
+	  for(int l = 0; l<njet[h]; ++l)
 	    {
 	      if(l==k) continue;
-	      if(jet_e[k] < jet_e[l]) continue;
-	      if(jet_e[k] > 10 && jet_e[l] > 5)
+	      if(jet_e[h][k] < jet_e[h][l]) continue;
+	      if(jet_e[h][k] > 5 && jet_e[h][l] > 5)
 		{
-		  float ET1 = jet_e[k]/cosh(jet_et[k]);
-		  float ET2 = jet_e[l]/cosh(jet_et[l]);
+		  float ET1 = jet_e[h][k]/cosh(jet_et[h][k]);
+		  float ET2 = jet_e[h][l]/cosh(jet_et[h][l]);
 		  float AJ = (ET1-ET2)/(ET1+ET2);
-		  h1_AJ[0]->Fill(AJ);
-		  if(seedD[k] < 0.65) h1_AJ[2]->Fill(AJ);
-		  if(ehjet[k] < maxeh) h1_AJ[1]->Fill(AJ);
-		  if(ehjet[k] < maxeh && seedD[k] < 0.65) h1_AJ[3]->Fill(AJ);
-		  float dphi = jet_ph[k] - jet_ph[l];
+		  h1_AJ[h][0]->Fill(AJ);
+		  if(seedD[h][k] < 0.65) h1_AJ[h][2]->Fill(AJ);
+		  if(ehjet[h][k] < maxeh) h1_AJ[h][1]->Fill(AJ);
+		  if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_AJ[h][3]->Fill(AJ);
+		  float dphi = jet_ph[h][k] - jet_ph[h][l];
+		  float deta = jet_et[h][k] - jet_et[h][l];
+		  if(sqrt(dphi*dphi+deta*deta) < 0.4 && seedD[h][k] < 0.65 && seedD[h][l] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0 && ehjet[h][l] > 0 && ehjet[h][l] < maxeh) dodraw = 1;
 		  if(dphi < 0) dphi+=2*M_PI;
 		  //cout << dphi << endl;
-		  h1_dphi[0]->Fill(dphi);
-		  if(seedD[k] < 0.65) h1_dphi[2]->Fill(AJ);
-		  if(ehjet[k] < maxeh) h1_dphi[1]->Fill(AJ);
-		  if(ehjet[k] < maxeh && seedD[k] < 0.65) h1_dphi[3]->Fill(AJ);
-		  h2_dphi_E->Fill(dphi,jet_e[k]);
+		  h1_dphi[h][0]->Fill(dphi);
+		  if(seedD[h][k] < 0.65) h1_dphi[h][2]->Fill(dphi);
+		  if(ehjet[h][k] < maxeh) h1_dphi[h][1]->Fill(dphi);
+		  if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_dphi[h][3]->Fill(dphi);
+		  h2_dphi_deta[h]->Fill(deta,dphi);
 		}
 	    }
-	  if(seedD[k] > 0.65) continue;
-	  if(ehjet[k] > maxeh || ehjet[k] < 0) continue;
-	  jets[k] = new TMarker(get_eta(jet_et[k]),get_phi(jet_ph[k]),20);
-	  jets[k]->SetMarkerSize(jet_e[k]/3);
+	  if(seedD[h][k] > 0.65) continue;
+	  if(ehjet[h][k] > maxeh || ehjet[h][k] < 0) continue;
+	  jets[k] = new TMarker(get_eta(jet_et[h][k]),get_phi(jet_ph[h][k]),20);
+	  jets[k]->SetMarkerSize(jet_e[h][k]/3);
 	  jets[k]->SetMarkerColor(kRed);
 	  //jets[k]->Draw();
 	  for(int l=0; l<ncircle; ++l)
 	    {
-	      float eta = get_eta(jet_et[k]+0.4*cos(2*l*M_PI/ncircle));
-	      float phi = get_phi(jet_ph[k]+0.4*sin(2*l*M_PI/ncircle));
+	      float eta = get_eta(jet_et[h][k]+0.4*cos(2*l*M_PI/ncircle));
+	      float phi = get_phi(jet_ph[h][k]+0.4*sin(2*l*M_PI/ncircle));
 	      if(eta > 24 || eta < 0) continue;
 	      if(phi > 64) phi -= 64;
 	      if(phi < 0) phi += 64;
@@ -521,31 +537,31 @@ int quickroot(string filebase="")
 	      circlemarker->Draw();
 	    }
 	  std::stringstream e_stream;
-	  e_stream << std::fixed << std::setprecision(2) << jet_e[k];
+	  e_stream << std::fixed << std::setprecision(2) << jet_e[h][k];
 	  std::string e_string = e_stream.str();
-	  drawText((e_string+" GeV").c_str(),get_eta(jet_et[k]),get_phi(jet_ph[k]),(get_eta(jet_et[k])>15?1:0),kBlack,0.08,42,false);
+	  drawText((e_string+" GeV").c_str(),get_eta(jet_et[h][k]),get_phi(jet_ph[h][k]),(get_eta(jet_et[h][k])>15?1:0),kBlack,0.08,42,false);
 	  //d->cd();
 	  //event_sum->Draw("LEGO");
 	}
       //if(dispcount % 18 == 17 && highejet)
-      if(highejet)
+      if(dodraw)
 	{
 	  //cout << "Saving display " << dispcount/18 << endl;
 	  //c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(dispcount/18)+".pdf").c_str());
-	  c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(cancount)+".pdf").c_str());
+	  c->SaveAs(("./output/img/candidate_"+filebase+"_"+to_string(h)+"_"+to_string(cancount)+".png").c_str());
 	  //cout << "Saved!" << endl;
 	  //c->Clear("D");
 	}
       ++cancount;
       if(shighe)
 	{
-	  c->SaveAs(("./output/hmg/candidate_"+filebase+"_superhighE_"+to_string(cancount)+".pdf").c_str());
-	  //d->SaveAs(("./output/hmg/candidate_"+filebase+"_superhighElego_"+to_string(cancount)+".pdf").c_str());
+	  c->SaveAs(("./output/hmg/candidate_"+filebase+"_superhighE_"+to_string(h)+"_"+to_string(cancount)+".png").c_str());
+	  //d->SaveAs(("./output/hmg/candidate_"+filebase+"_superhighElego_"+to_string(cancount)+".png").c_str());
 	}
       if(sshighe) 
 	{
-	  c->SaveAs(("./output/smg/candidate_"+filebase+"_supersuperhighE_"+to_string(cancount)+".pdf").c_str());
-	  //d->SaveAs(("./output/smg/candidate_"+filebase+"_supersuperhighElego_"+to_string(cancount)+".pdf").c_str());
+	  c->SaveAs(("./output/smg/candidate_"+filebase+"_supersuperhighE_"+to_string(h)+"_"+to_string(cancount)+".png").c_str());
+	  //d->SaveAs(("./output/smg/candidate_"+filebase+"_supersuperhighElego_"+to_string(cancount)+".png").c_str());
 	}
       if(highejet)
 	{
@@ -553,119 +569,142 @@ int quickroot(string filebase="")
 	  ++dispcount;
 	}
     }
+    }
   //if(dispcount % 18 != 0)
   //  {
-  //    c->SaveAs(("./output/img/candidate_"+filebase+"_last.pdf").c_str());
+  //    c->SaveAs(("./output/img/candidate_"+filebase+"_last.png").c_str());
   //  }
   d->cd();
-  for(int i=0; i<3; ++i)
-    {
-      jetfrac[i]->Scale(1./(nevents));
-    }
-  //h1_dphi->SetMarkerColor(kMagenta+3);
-  for(int i=0; i<4; ++i)
-    {
-      h1_dphi[i]->GetYaxis()->SetLabelSize(0.02);
-      h1_dphi[i]->GetYaxis()->SetTitleSize(0.03);
-      h1_dphi[i]->GetYaxis()->SetTitleOffset(1.7);
-      h1_dphi[i]->GetXaxis()->SetLabelSize(0.02);
-      h1_dphi[i]->GetXaxis()->SetTitleSize(0.03);
-      h1_dphi[i]->Scale(1./nevents);
-      h1_dphi[i]->GetYaxis()->SetTitle("Event Normalized Counts");
-      h1_dphi[i]->GetXaxis()->SetTitle("#Delta#phi [rad]");
-      h1_dphi[i]->SetFillColorAlpha(kMagenta,0.4);
-      h1_dphi[i]->Draw("HIST");
-      drawText("Leading Jet E > 10 GeV", 0.5, 0.85, 0, kBlack, 0.02);
-      drawText("Subleading Jet E > 5 GeV", 0.5, 0.825, 0, kBlack, 0.02);
-      if(i>1) drawText("E_{lead tower} < 0.65 E_{jet}", 0.5, 0.8, 0, kBlack, 0.02);
-      if(i==1 || i==3) drawText(("E_{EM} < "+to_string(maxeh)+" E_{HAD}").c_str(), 0.5, (i==1?0.8:0.775), 0, kBlack, 0.02);
-      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_"+to_string(i)+"_dphi_1d.pdf").c_str());
-      
-      h1_AJ[i]->GetYaxis()->SetLabelSize(0.02);
-      h1_AJ[i]->GetYaxis()->SetTitleSize(0.03);
-      h1_AJ[i]->GetYaxis()->SetTitleOffset(1.7);
-      h1_AJ[i]->GetXaxis()->SetLabelSize(0.02);
-      h1_AJ[i]->GetXaxis()->SetTitleSize(0.03);
-      h1_AJ[i]->Scale(1./nevents);
-      h1_AJ[i]->GetYaxis()->SetTitle("Event Normalized Counts");
-      h1_AJ[i]->GetXaxis()->SetTitle("A_{J}");
-      h1_AJ[i]->SetFillColorAlpha(kMagenta,0.4);
-      h1_AJ[i]->Draw("HIST");
-      drawText("Leading Jet E > 10 GeV", 0.5, 0.85, 0, kBlack, 0.02);
-      drawText("Subleading Jet E > 5 GeV", 0.5, 0.825, 0, kBlack, 0.02);
-      if(i>1) drawText("E_{lead tower} < 0.65 E_{jet}", 0.5, 0.8, 0, kBlack, 0.02);
-      if(i==1 || i==3) drawText(("E_{EM} < "+to_string(maxeh)+" E_{HAD}").c_str(), 0.5, (i==1?0.8:0.775), 0, kBlack, 0.02);
-      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_"+to_string(i)+"_AJ_1d.pdf").c_str());
-    }
-  //h2_dphi_E->SetMarkerColor(kMagenta+3);
-  h2_dphi_E->GetYaxis()->SetLabelSize(0.02);
-  h2_dphi_E->GetYaxis()->SetTitleSize(0.03);
-  h2_dphi_E->GetYaxis()->SetTitleOffset(1.7);
-  h2_dphi_E->GetXaxis()->SetLabelSize(0.02);
-  h2_dphi_E->GetXaxis()->SetTitleSize(0.03);
-  h2_dphi_E->Scale(1./nevents);
-  h2_dphi_E->GetYaxis()->SetTitle("Jet E [GeV]");
-  h2_dphi_E->GetXaxis()->SetTitle("#Delta#phi [rad]");
-  h2_dphi_E->GetZaxis()->SetTitle("Event Normalized Counts");
-  h2_dphi_E->Draw("COLZ");
-  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_dphi_2d.pdf").c_str());
-  jetfrac[0]->Draw();
-  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_jetfrac0.pdf").c_str());
-  jetfrac[1]->Draw();
-  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_jetfrac1.pdf").c_str());
-  jetfrac[2]->Draw();
-  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_jetfrac2.pdf").c_str());
-  d->SetLogy();
-  //float goodfrac = 1 - fakejets/tree->GetEntries();
   float erejf[9] = {14.24,42.76,111.95,281.76,681.85,1466.6,3033.03,6272.51,11086.03};
   float x[9] = {4,5,6,7,8,9,10,11,12};
+
+  for(int h=0; h<2; ++h)
+    {
+      gPad->SetLogy(0);
+      for(int i=0; i<3; ++i)
+	{
+	  //jetfrac[h][i]->Scale(1./(nevents[h]));
+	}
+      //h1_dphi->SetMarkerColor(kMagenta+3);
+      for(int i=0; i<4; ++i)
+	{
+	  h1_dphi[h][i]->GetYaxis()->SetLabelSize(0.02);
+	  h1_dphi[h][i]->GetYaxis()->SetTitleSize(0.03);
+	  h1_dphi[h][i]->GetYaxis()->SetTitleOffset(1.7);
+	  h1_dphi[h][i]->GetXaxis()->SetLabelSize(0.02);
+	  h1_dphi[h][i]->GetXaxis()->SetTitleSize(0.03);
+	  //h1_dphi[h][i]->Scale(1./nevents[h]);
+	  h1_dphi[h][i]->GetYaxis()->SetTitle("Event Normalized Counts");
+	  h1_dphi[h][i]->GetXaxis()->SetTitle("#Delta#phi [rad]");
+	  h1_dphi[h][i]->SetFillColorAlpha(kMagenta,0.4);
+	  h1_dphi[h][i]->Draw("HIST");
+	  drawText("Leading Jet E > 10 GeV", 0.5, 0.85, 0, kBlack, 0.02);
+	  drawText("Subleading Jet E > 5 GeV", 0.5, 0.825, 0, kBlack, 0.02);
+	  if(i>1) drawText("E_{lead tower} < 0.65 E_{jet}", 0.5, 0.8, 0, kBlack, 0.02);
+	  if(i==1 || i==3) drawText(("E_{EM} < "+to_string(maxeh)+" E_{HAD}").c_str(), 0.5, (i==1?0.8:0.775), 0, kBlack, 0.02);
+	  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(h)+"_"+to_string(cancount)+"_"+to_string(i)+"_dphi_1d.png").c_str());
+	  
+	  h1_AJ[h][i]->GetYaxis()->SetLabelSize(0.02);
+	  h1_AJ[h][i]->GetYaxis()->SetTitleSize(0.03);
+	  h1_AJ[h][i]->GetYaxis()->SetTitleOffset(1.7);
+	  h1_AJ[h][i]->GetXaxis()->SetLabelSize(0.02);
+	  h1_AJ[h][i]->GetXaxis()->SetTitleSize(0.03);
+	  //h1_AJ[h][i]->Scale(1./nevents[h]);
+	  h1_AJ[h][i]->GetYaxis()->SetTitle("Event Normalized Counts");
+	  h1_AJ[h][i]->GetXaxis()->SetTitle("A_{J}");
+	  h1_AJ[h][i]->SetFillColorAlpha(kMagenta,0.4);
+	  h1_AJ[h][i]->Draw("HIST");
+	  drawText("Leading Jet E > 10 GeV", 0.5, 0.85, 0, kBlack, 0.02);
+	  drawText("Subleading Jet E > 5 GeV", 0.5, 0.825, 0, kBlack, 0.02);
+	  if(i>1) drawText("E_{lead tower} < 0.65 E_{jet}", 0.5, 0.8, 0, kBlack, 0.02);
+	  if(i==1 || i==3) drawText(("E_{EM} < "+to_string(maxeh)+" E_{HAD}").c_str(), 0.5, (i==1?0.8:0.775), 0, kBlack, 0.02);
+	  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(h)+"_"+to_string(cancount)+"_"+to_string(i)+"_AJ_1d.png").c_str());
+	}
+      //h2_dphi_deta[h]->SetMarkerColor(kMagenta+3);
+      h2_dphi_deta[h]->GetYaxis()->SetLabelSize(0.02);
+      h2_dphi_deta[h]->GetYaxis()->SetTitleSize(0.03);
+      h2_dphi_deta[h]->GetYaxis()->SetTitleOffset(1.7);
+      h2_dphi_deta[h]->GetXaxis()->SetLabelSize(0.02);
+      h2_dphi_deta[h]->GetXaxis()->SetTitleSize(0.03);
+      //h2_dphi_deta[h]->Scale(1./nevents[h]);
+      h2_dphi_deta[h]->GetYaxis()->SetTitle("#Delta#phi [rad]");
+      h2_dphi_deta[h]->GetXaxis()->SetTitle("#Delta#eta [rad]");
+      h2_dphi_deta[h]->GetZaxis()->SetTitle("Event Normalized Counts");
+      h2_dphi_deta[h]->Draw("COLZ");
+      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(h)+"_"+to_string(cancount)+"_dphi_deta_2d.png").c_str());
+      jetfrac[h][0]->Draw();
+      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(h)+"_"+to_string(cancount)+"_jetfrac0.png").c_str());
+      jetfrac[h][1]->Draw();
+      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(h)+"_"+to_string(cancount)+"_jetfrac1.png").c_str());
+      jetfrac[h][2]->Draw();
+      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(h)+"_"+to_string(cancount)+"_jetfrac2.png").c_str());
+    }
+  d->SetLogy();
+  //float goodfrac = 1 - fakejets/tree->GetEntries();
   TGraph* erejg = new TGraph(9,x,erejf);
-  erejg->SetMarkerStyle(43);
-  erejg->SetMarkerColor(kMagenta);
   for(int i=0; i<4; ++i)
     {
-      jetE[i]->Scale(1./(nevents));
-      jetE[i]->Draw();
-      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_jetE"+to_string(i)+".pdf").c_str());
-      for(int j=0; j<160; ++j)
+      //jetE[h][i]->Scale(1./(nevents[h]));
+      jetE[0][i]->SetMarkerColor(kGreen);
+      for(int h=0; h<2; ++h)
 	{
-	  if(h1_rej[i]->GetBinContent(j+1) != 0) h1_rej[i]->SetBinContent(j+1,nmb/h1_rej[i]->GetBinContent(j+1));
+	  jetE[h][i]->Draw();
 	}
-      //      h1_rej[i]->Scale(nevents);
-      h1_rej[i]->GetXaxis()->SetTitle("Threshold E [GeV]");
-      h1_rej[i]->GetYaxis()->SetTitle("Rejection Factor");
-      h1_rej[i]->SetMarkerStyle(40+i);
-      h1_rej[i]->SetMarkerColor((i<3?2+i:3+i));
-      h1_rej[i]->SetMarkerSize(2);
-      h1_rej[i]->GetYaxis()->SetLabelSize(0.02);
-      h1_rej[i]->GetYaxis()->SetTitleSize(0.03);
-      h1_rej[i]->GetYaxis()->SetTitleOffset(1.7);
-      h1_rej[i]->GetXaxis()->SetLabelSize(0.02);
-      h1_rej[i]->GetXaxis()->SetTitleSize(0.03);
-
+      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_jetE"+to_string(i)+".png").c_str());
+      for(int h=0; h<2; ++h)
+	{
+	  for(int j=0; j<160; ++j)
+	    {
+	      if(h1_rej[h][i]->GetBinContent(j+1) != 0) h1_rej[h][i]->SetBinContent(j+1,nmb[h]/h1_rej[h][i]->GetBinContent(j+1));
+	    }
+	  //      h1_rej[i]->Scale(nevents[h]);
+	  h1_rej[h][i]->GetXaxis()->SetTitle("Threshold E [GeV]");
+	  h1_rej[h][i]->GetYaxis()->SetTitle("Rejection Factor");
+	  h1_rej[h][i]->SetMarkerStyle((h==1?40:20)+i);
+	  h1_rej[h][i]->SetMarkerColor((i<3?2+i:3+i));
+	  h1_rej[h][i]->SetMarkerSize(2);
+	  h1_rej[h][i]->GetYaxis()->SetLabelSize(0.02);
+	  h1_rej[h][i]->GetYaxis()->SetTitleSize(0.03);
+	  h1_rej[h][i]->GetYaxis()->SetTitleOffset(1.7);
+	  h1_rej[h][i]->GetXaxis()->SetLabelSize(0.02);
+	  h1_rej[h][i]->GetXaxis()->SetTitleSize(0.03);
+	  
+	}
+      h1_rej[0][0]->Draw("P");
+      h1_rej[1][0]->Draw("SAME P");
+      for(int i=1; i<4; ++i)
+	{
+	  for(int h=0; h<2; ++h)
+	    {
+	      h1_rej[h][i]->Draw("SAME P");
+	    }
+	}
+      erejg->SetLineWidth(2);
+      erejg->Draw("SAME");
     }
-  h1_rej[0]->Draw("P");
-  for(int i=1; i<4; ++i)
-    {
-      h1_rej[i]->Draw("SAME P");
-    }
-  erejg->SetLineWidth(2);
-  erejg->Draw("SAME");
   TLegend* leg = new TLegend(0.12,0.6,0.4,0.85);
-  leg->SetFillStyle(0);
-  leg->SetBorderSize(0);
-  leg->SetFillColor(0);
-  leg->AddEntry(h1_rej[0],"Rejection factor (no cuts)","p");
-  leg->AddEntry(h1_rej[1],("Rejection factor (E_{EM} < "+to_string(maxeh)+" E_{had})").c_str(),"p");
-  leg->AddEntry(h1_rej[2],"Rejection factor (E_{lead} < 0.65 E_{jet})","p");
-  leg->AddEntry(h1_rej[3],"Rejection factor (both cuts)","p");
+  for(int h=0; h<2; ++h)
+    {
+      string simstr = "Sim";
+      string datstr = "Data";
+      leg->SetFillStyle(0);
+      leg->SetBorderSize(0);
+      leg->SetFillColor(0);
+      leg->AddEntry(h1_rej[h][0],((h==0?simstr:datstr)+" Rejection factor (no cuts)").c_str(),"p");
+      leg->AddEntry(h1_rej[h][1],((h==0?simstr:datstr)+" Rejection factor (E_{EM} < "+to_string(maxeh)+" E_{had})").c_str(),"p");
+      leg->AddEntry(h1_rej[h][2],((h==0?simstr:datstr)+" Rejection factor (E_{lead} < 0.65 E_{jet})").c_str(),"p");
+      leg->AddEntry(h1_rej[h][3],((h==0?simstr:datstr)+" Rejection factor (both cuts)").c_str(),"p");
+    }
   leg->AddEntry(erejg,"Expected rejection factor","l");
   leg->Draw();
-  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_rej"+".pdf").c_str());
-  hejet->Scale(1./(nevents));
-  hejet->Draw();
-  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_hejet.pdf").c_str());
-  cout << "cancount/ntree/nevents/nmb: " << cancount << " " << tree->GetEntries() << " " << nevents  << " " << nmb << endl;
+  d->SaveAs(("output/gmg/"+filebase+"_"+to_string(cancount)+"_rej"+".png").c_str());
+  //hejet[h]->Scale(1./(nevents[h]));
+  for(int h=0; h<2; ++h)
+    {
+      hejet[h]->Draw();
+      d->SaveAs(("output/gmg/"+filebase+"_"+to_string(h)+"_"+to_string(cancount)+"_hejet.png").c_str());
+    }
+  cout << "cancount/ntree/nevents/nmb: " << cancount << " " << tree[1]->GetEntries() << " " << nevents[1]  << " " << nmb[1] << endl;
   cout << "Rejection factors:" << endl;
   
   
@@ -674,7 +713,7 @@ int quickroot(string filebase="")
       cout << i+4;
       for(int j=0; j<4; ++j)
 	{
-	  cout << " " << h1_rej[j]->GetBinContent(10*(i+4)+1) << " " << h1_rej[j]->GetBinContent(10*(i+4)+1)/erejf[i];
+	  cout << " " << h1_rej[1][j]->GetBinContent(10*(i+4)+1) << " " << h1_rej[1][j]->GetBinContent(10*(i+4)+1)/erejf[i];
 	}
       cout << endl;
     }
