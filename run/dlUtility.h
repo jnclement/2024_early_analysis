@@ -126,9 +126,14 @@ void drawText(const char *text, float xp, float yp, bool isRightAlign=0, int tex
   tex->Draw();
 }
 
-void sphenixtext()
+void sphenixtext(float xpos = 0.8, float ypos = 0.96, int ra = 1, float textsize = 0.04)
 {
-  drawText("#bf{#it{sPHENIX}} internal", 0.9, 0.96, 1, kBlack, 0.04);
+  drawText("#bf{#it{sPHENIX}} Internal", xpos, ypos, ra, kBlack, textsize);
+}
+
+void sphenixprelim(float xpos = 0.8, float ypos = 0.96, int ra = 1, float textsize = 0.04)
+{
+  drawText("#bf{#it{sPHENIX}} Preliminary", xpos, ypos, ra, kBlack, textsize);
 }
 
 void multitext(string* texts, int ntext, float xp = 0.03, float ytop = 0.1, bool rightalign = 0, int textColor = kBlack, double textsize = 0.025)

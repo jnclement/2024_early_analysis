@@ -56,12 +56,13 @@
 
 #include <centrality/CentralityInfo.h>
 #include <calotrigger/MinimumBiasInfo.h>
-#include <ffarawobjects/Gl1Packetv1.h>
+#include <ffarawobjects/Gl1Packetv2.h>
 using namespace std;
 //____________________________________________________________________________..
 R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim):
   SubsysReco("test")//).c_str())
 {
+  _evtnum = 0;
   _evtct = 0;
   _foutname = name;
   _debug = debug;
@@ -86,6 +87,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree = new TTree("ttree","a persevering date tree");
   _tree->Branch("triggervec",&triggervec,"triggervec/g");
   _tree2->Branch("mbevt",&mbevt,"mbevt/I");
+  _tree->Branch("ismb",&ismb,"ismb/I");
   //_tree->Branch("emetot",&emetot,"emetot/F");
   //_tree->Branch("ihetot",&ihetot,"ihetot/F");
   //_tree->Branch("ohetot",&ohetot,"ohetot/F");
@@ -123,6 +125,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree->Branch("rtemet",rtemet,"rtemet[sector_rtem]/I");
   _tree->Branch("rtemph",rtemph,"rtemph[sector_rtem]/I");
   _tree->Branch("ehjet",ehjet,"ehjet[njet]/F");
+  _tree->Branch("_evtnum",&_evtnum,"_evtnum/I");
   if(_debug > 1) cout << "Init done"  << endl;
   return Fun4AllReturnCodes::EVENT_OK;
 }
@@ -136,9 +139,10 @@ int R24earlytreemaker::InitRun(PHCompositeNode *topNode)
 //____________________________________________________________________________..
 int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 {
+  _evtnum++;
   _evtct++;
   if(_debug > 1) cout << endl << endl << endl << "Beginning event processing" << endl;
-  if(_debug > 1) cout << "Event " << _evtct << endl;
+  if(_debug > 1) cout << "Event " << _evtct << "Event " << _evtnum << endl;
   float mbdq = 0;
   //reset lengths to all zero
   sectorem = 0;
@@ -166,13 +170,22 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   Gl1Packet *gl1;
   if(_datorsim)
     {
-      gl1 = findNode::getClass<Gl1Packetv1>(topNode, "GL1Packet");
+      gl1 = findNode::getClass<Gl1Packetv2>(topNode, "GL1Packet");
       if(_debug > 1) cout << "Getting gl1 trigger vector from: " << gl1 << endl;
-      triggervec = gl1->getTriggerVector();
+      triggervec = gl1->getScaledVector();
       if(triggervec >> 10 & 0x1)
 	{
 	  ++mbevt;
+	  ismb = 1;
 	}
+      else
+	{
+	  ismb = 0;
+	}
+    }
+  else
+    {
+      ismb = 1;
     }
   if(_debug > 1) cout << "Getting jets: " << endl;
   if(jets)
@@ -472,7 +485,6 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(_debug > 1) cout << "Filling" << endl;
   //if(_debug) cout << rtemen[1535] << " " <<rtemen[sector_rtem-1] << endl;
   _tree->Fill();
-  
   return Fun4AllReturnCodes::EVENT_OK;
     
 }

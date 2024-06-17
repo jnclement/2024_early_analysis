@@ -6,7 +6,7 @@ if [ $# -lt 2 ]; then
 fi
 rn=0
 evt=$2
-nfile=2500
+nfile=10000
 if [ $evt -gt 1000 ]; then
     evt=0
 fi

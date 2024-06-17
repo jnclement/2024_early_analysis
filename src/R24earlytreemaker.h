@@ -36,7 +36,9 @@ class R24earlytreemaker : public SubsysReco
 
 
  private:
+  int ismb = 0;
   int _datorsim;
+  int _evtnum;
   int _evtct;
   int _debug;
   TFile *_f;
