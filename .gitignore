@@ -17,3 +17,5 @@ run/sPHENIXplots.C
 run/sPhenixStyle.C
 run/sPhenixStyle.h
 run/summed.root
+run/*.root
+run/*.sub

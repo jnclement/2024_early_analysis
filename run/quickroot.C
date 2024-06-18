@@ -66,7 +66,7 @@ int save_etaphiE(int etabins[], int phibins[], float energies[], int nsec, strin
   return 0;
 }
 
-int quickroot(string filebase="")
+int quickroot(string filebase="", int njob=0)
 {
   //gStyle->SetPalette(kOcean);
   gROOT->SetStyle("Plain");
@@ -94,12 +94,26 @@ int quickroot(string filebase="")
   TChain* tree2[2];
   ifstream list[2];
   string line;
-  int nosim = 0;
-  list[0].open("sim.list",ifstream::in);
+  int nosim = 1;
+  //list[0].open("sim.list",ifstream::in);
   list[1].open(filename,ifstream::in);
   string runnum = filename.substr(0,5);
+  string simliststr = "sim.imagelist";
+  string simstr = "sim";
+  string datstr = "dat";
+  string idstr;
+  if(filename == simliststr)
+    {
+      runnum = "sim";
+      idstr = simstr;
+    }
+  else
+    {
+      idstr = datstr;
+    }
   for(int h=nosim; h < 2; ++h)
     {
+      int counter = 0;
       tree[h] = new TChain("ttree");
       tree2[h] = new TChain("ttree2");
       if(!list[h])
@@ -107,8 +121,20 @@ int quickroot(string filebase="")
 	  cout << "nosimlist" << endl;
 	  exit(1);
 	}
+      /*
       while(getline(list[h],line))
 	{
+	}
+      */
+      for(int i=0; i<10*njob; ++i)
+	{
+	  getline(list[h],line);
+	}
+      for(int i=10*njob; i<10*(njob+1); ++i)
+	{
+	  int breakit = 0;
+	  getline(list[h],line);
+	  if(list[h].eof()) breakit = 1;
 	  try
 	    {
 	      tree[h]->Add(line.c_str());
@@ -118,6 +144,7 @@ int quickroot(string filebase="")
 	    {
 	      continue;
 	    }
+	  if(breakit) break;
 	}
     }
   long long unsigned int nevents[2] = {0};
@@ -139,14 +166,16 @@ int quickroot(string filebase="")
       if(h==0) nmb[h] = nevents[h];
       cout << "with " << nmb[h] << " minbias events." << endl;
     }
-  TFile* outfile = TFile::Open(("output/root/run_"+runnum+".root").c_str(),"RECREATE");
-  TTree* outt = new TTree("outt","output tree");
+  TFile* outfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+to_string(njob)+".root").c_str(),"RECREATE");
+  TTree* outt = new TTree((runnum==simstr?"st":"outt"),"output tree");
   int outnmb = nmb[1];
   int outevt = nevents[1];
   int njmb = nmb[1];
+  int nJetTrig[4] = {0};
   outt->Branch("outnmb",&outnmb,"outnmb/I");
   outt->Branch("outevt",&outevt,"outevt/I");
   outt->Branch("njmb",&njmb,"njmb/I");
+  outt->Branch("nJetTrig",nJetTrig,"nJetTrig[4]/I");
   const int ncol = 9;
   double red[ncol] = {1, 1, 1, 1, 1, 1, 1, 1};
   double grn[ncol] = {1, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125, 0};
@@ -154,12 +183,18 @@ int quickroot(string filebase="")
   double stp[ncol] = {0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0};
   TColor::CreateGradientColorTable(ncol, stp, red, grn, blu, ncol);
   TH1D* h1_rej[2][4];
+  TH1D* h1_eta[2][4];
+  TH1D* h1_phi[2][4];
+  TH1D* h1_mlt[2][4];
   for(int h=nosim; h<2; ++h)
     {
       for(int i=0; i<4; ++i)
 	{
 	  h1_rej[h][i] = new TH1D(("h1_rej"+to_string(h)+"_"+to_string(i)).c_str(),"",150,0,15);
 	  h1_rej[h][i]->GetYaxis()->SetRangeUser(0.5,200000);
+	  h1_eta[h][i] = new TH1D(("h1_eta"+to_string(h)+"_"+to_string(i)).c_str(),"",22,-1.1,1.1);
+	  h1_phi[h][i] = new TH1D(("h1_phi"+to_string(h)+"_"+to_string(i)).c_str(),"",30,-M_PI,M_PI);
+	  h1_mlt[h][i] = new TH1D(("h1_mlt"+to_string(h)+"_"+to_string(i)).c_str(),"",6,-0.5,5.5);
 	}
     }
   TH2D* event_display = new TH2D("event_display","",96,-0.5,95.5,256,-0.5,255.5);
@@ -200,7 +235,7 @@ int quickroot(string filebase="")
 	  string calo = "EMCal";
 	  if(i==1) calo = "IHCal";
 	  if(i==2) calo = "OHCal";
-	  jetE[h][i] = new TH1D(("jetE"+to_string(h)+"_"+to_string(i)).c_str(),"",200,0,20);
+	  jetE[h][i] = new TH1D(("jetE"+to_string(h)+"_"+to_string(i)).c_str(),"",400,0,40);
 	  jetfrac[h][i] = new TH1D(("jetfrac"+to_string(h)+"_"+to_string(i)).c_str(),"",100,0,1);
 	  event_disrt[i] = new TH2D(("event_display_rt"+to_string(h)+"_"+to_string(i)).c_str(),calo.c_str(),24,0,24,64,0,64);
 	  jetfrac[h][i]->SetMarkerStyle(43);
@@ -224,7 +259,7 @@ int quickroot(string filebase="")
 	  jetE[h][i]->GetXaxis()->SetTitleSize(0.03);
 	}
   
-      jetE[h][3] = new TH1D(("jetE"+to_string(3)).c_str(),"",200,0,20);
+      jetE[h][3] = new TH1D(("jetE"+to_string(3)).c_str(),"",400,0,40);
       jetE[h][3]->SetMarkerColor(kMagenta+3);
       jetE[h][3]->SetMarkerSize(3);
       jetE[h][3]->SetMarkerStyle(43);
@@ -263,7 +298,7 @@ int quickroot(string filebase="")
   float seedD[2][1000];
   float ehjet[2][1000];
   int evtnum[2];
-  long unsigned int trigvec;
+  long unsigned int trigvec = 0;
   int ismb[2];
   tree[1]->SetBranchAddress("triggervec",&trigvec);
 
@@ -349,12 +384,11 @@ int quickroot(string filebase="")
   int eventbase[2] = {0};
   int prevt = 0;
   TH1D* jetTrigE[4];
-  int nJetTrig[4] = {0};
   for(int i=0; i<4; i++)
     {
       //for(int j=0; j<4; ++j)
       //{
-      jetTrigE[i] = new TH1D(("jetTrigE"+to_string(i)).c_str(),"",200,0,20);
+      jetTrigE[i] = new TH1D(("jetTrigE"+to_string(i)).c_str(),"",400,0,40);
 	  //}
     }
   for(int h=nosim; h<2; ++h)
@@ -362,13 +396,13 @@ int quickroot(string filebase="")
       cancount = 0;
   for(int i=0; i<tree[h]->GetEntries(); ++i)
     {
-
       highejet = 0;
       shighe = 0;
       sshighe = 0;
       int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
       tree[h]->GetEntry(i);
+      int njo5 = 0;
       if(h==1) 
 	{
       if((trigvec >> 16) & 1 || (trigvec >> 17) & 1 || (trigvec >> 18) & 1 || (trigvec >> 19) & 1)
@@ -377,6 +411,7 @@ int quickroot(string filebase="")
 	  for(int j=0; j<njet[h]; ++j)
 	    {
 	      float ET = jet_e[h][j]/cosh(jet_et[h][j]);
+	      if(ET<4) continue;
 	      if((trigvec >> 16) & 1)
 		{
 		  nJetTrig[0]++;
@@ -551,68 +586,90 @@ int quickroot(string filebase="")
 	    }
 	}
       */
-      TMarker* jets[1000];
+      //      TMarker* jets[1000];
       int dodraw = 0;
       for(int k=0; k<njet[h]; ++k)
 	{
 	  float ET = jet_e[h][k]/cosh(jet_et[h][k]);
 	  if(ET < 4) continue;
-		  
+	  if(ET > 5) njo5++;
 	  /*
 	  if(get_phi(jet_ph[k]) > 29.5 && get_phi(jet_ph[k]) < 37.5)
 	    {
 	      continue;
 	    }
 	  */
-	  if(jet_e[h][k] < 7.5)
+	  if(jet_e[h][k] < 7)
 	    {
-	      jetfrac[h][0]->Fill(seedD[h][k]);
+	      jetfrac[h][0]->Fill(1.-1./ehjet[h][k]);
 	    }
 	  else if(jet_e[h][k] < 10)
 	    {
-	      jetfrac[h][1]->Fill(seedD[h][k]);
+	      jetfrac[h][1]->Fill(1.-1./ehjet[h][k]);
 	    }
 	  else
 	    {
-	      jetfrac[h][2]->Fill(seedD[h][k]);
+	      jetfrac[h][2]->Fill(1.-1./ehjet[h][k]);
 	    }
 	  //if(seedD[k] > 0.65) continue;
 	  
 	  hejet[h]->Fill(ehjet[h][k]);
 	  jetE[h][0]->Fill(ET);
-	  if(ehjet[h][k] < maxeh && ehjet[h][k] > 0) jetE[h][1]->Fill(ET);
-	  if(seedD[h][k] < 0.65) jetE[h][2]->Fill(ET);
+	  h1_eta[h][0]->Fill(jet_et[h][k]);
+	  h1_phi[h][0]->Fill(jet_ph[h][k]);
+	  if(ehjet[h][k] < maxeh && ehjet[h][k] > 0)
+	    {
+	      jetE[h][1]->Fill(ET);
+	      h1_eta[h][1]->Fill(jet_et[h][k]);
+	      h1_phi[h][1]->Fill(jet_ph[h][k]);
+	    }
+	  if(seedD[h][k] < 0.65)
+	    {
+	      jetE[h][2]->Fill(ET);
+	      h1_eta[h][2]->Fill(jet_et[h][k]);
+	      h1_phi[h][2]->Fill(jet_ph[h][k]);
+	    }
 	  if(seedD[h][k] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
+	      h1_eta[h][3]->Fill(jet_et[h][k]);
+	      h1_phi[h][3]->Fill(jet_ph[h][k]);
 	      jetE[h][3]->Fill(ET);
 	    }
 
 
 	  for(int l = 0; l<njet[h]; ++l)
 	    {
-
 	      if(l==k) continue;
 	      if(jet_e[h][k] < jet_e[h][l]) continue;
 	      float ET1 = jet_e[h][k]/cosh(jet_et[h][k]);
 	      float ET2 = jet_e[h][l]/cosh(jet_et[h][l]);
 	      float AJ = (ET1-ET2)/(ET1+ET2);
-	      h1_AJ[h][0]->Fill(AJ);
-	      if(seedD[h][k] < 0.65) h1_AJ[h][2]->Fill(AJ);
-	      if(ehjet[h][k] < maxeh) h1_AJ[h][1]->Fill(AJ);
-	      if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_AJ[h][3]->Fill(AJ);
-	      if(jet_e[h][k] > 7 && jet_e[h][l] > 4)
+	      float odph = jet_ph[h][k] - jet_ph[h][l];
+	      if(odph < 0) odph += 2*M_PI;
+	      if(odph > 3*M_PI/4 && odph < 5*M_PI/4)
 		{
-		  h1_AJ[h][8]->Fill(AJ);
-		  if(seedD[h][k] < 0.65) h1_AJ[h][10]->Fill(AJ);
-		  if(ehjet[h][k] < maxeh) h1_AJ[h][9]->Fill(AJ);
-		  if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_AJ[h][11]->Fill(AJ);
+		  h1_AJ[h][0]->Fill(AJ);
+		  if(seedD[h][k] < 0.65) h1_AJ[h][2]->Fill(AJ);
+		  if(ehjet[h][k] < maxeh) h1_AJ[h][1]->Fill(AJ);
+		  if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_AJ[h][3]->Fill(AJ);
+		
+		  if(jet_e[h][k] > 7 && jet_e[h][l] > 4)
+		    {
+		      h1_AJ[h][8]->Fill(AJ);
+		      if(seedD[h][k] < 0.65) h1_AJ[h][10]->Fill(AJ);
+		      if(ehjet[h][k] < maxeh) h1_AJ[h][9]->Fill(AJ);
+		      if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_AJ[h][11]->Fill(AJ);
+		    }
 		}
 	      if(jet_e[h][k] > 10 && jet_e[h][l] > 5)
 		{
-		  h1_AJ[h][4]->Fill(AJ);
-		  if(seedD[h][k] < 0.65) h1_AJ[h][5]->Fill(AJ);
-		  if(ehjet[h][k] < maxeh) h1_AJ[h][6]->Fill(AJ);
-		  if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_AJ[h][7]->Fill(AJ);
+		  if(odph > 3*M_PI/4 && odph < 5*M_PI/4)
+		    {
+		      h1_AJ[h][4]->Fill(AJ);
+		      if(seedD[h][k] < 0.65) h1_AJ[h][5]->Fill(AJ);
+		      if(ehjet[h][k] < maxeh) h1_AJ[h][6]->Fill(AJ);
+		      if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_AJ[h][7]->Fill(AJ);
+		    }
 		  if(abs(jet_et[h][k]) > 0.7 || abs(jet_et[h][l]) > 0.7) continue;
 		  float dphi = jet_ph[h][k] - jet_ph[h][l];
 		  float deta = jet_et[h][k] - jet_et[h][l];
@@ -654,6 +711,10 @@ int quickroot(string filebase="")
 	  //event_sum->Draw("LEGO");
 	  */
 	}
+      h1_mlt[h][0]->Fill(njo5);
+      //if(seedD[h][k] < 0.65) h1_mlt[h][2]->Fill(njo5);
+      //if(ehjet[h][k] < maxeh) h1_mlt[h][1]->Fill(njo5);
+      //if(ehjet[h][k] < maxeh && seedD[h][k] < 0.65) h1_mlt[h][3]->Fill(njo5);
       /*
       c->cd(1);
       drawText(subdet[0].c_str(),0.75,0.9,1,kBlack,0.1);
@@ -803,10 +864,10 @@ int quickroot(string filebase="")
       
       //jetE[0][i]->Scale(1./(nmb[0]));
       //jetE[1][i]->Scale(1./(nmb[1]));
-      jetE[0][i]->SetMarkerColor(kGreen);
-      jetE[0][i]->GetYaxis()->SetRangeUser(0.00000003,1);
-      jetE[0][i]->Draw("P");
-      jetE[1][i]->Draw("SAME P");
+      //jetE[0][i]->SetMarkerColor(kGreen);
+      //jetE[0][i]->GetYaxis()->SetRangeUser(0.00000003,1);
+      //jetE[0][i]->Draw("P");
+      jetE[1][i]->Draw("P");
       if(i==0)
 	{
 	  for(int j=0; j<4; ++j)
@@ -835,8 +896,8 @@ int quickroot(string filebase="")
 	  h1_rej[h][i]->GetXaxis()->SetTitleSize(0.03);
 	  
 	}
-      h1_rej[0][0]->Draw("P");
-      h1_rej[1][0]->Draw("SAME P");
+      //h1_rej[0][0]->Draw("P");
+      h1_rej[1][0]->Draw("P");
       for(int i=1; i<4; ++i)
 	{
 	  for(int h=nosim; h<2; ++h)
@@ -885,16 +946,20 @@ int quickroot(string filebase="")
     }
   outt->Fill();
   outfile->WriteObject(outt,outt->GetName());
-  for(int h=0; h<2; ++h)
+  for(int h=nosim; h<2; ++h)
     {
       for(int i=0; i<12; ++i)
 	{
+	  if(i<3) outfile->WriteObject(jetfrac[h][i],jetfrac[h][i]->GetName());
 	  if(i < 4)
 	    {
 	      outfile->WriteObject(jetE[h][i],jetE[h][i]->GetName());
 	      outfile->WriteObject(h1_dphi[h][i],h1_dphi[h][i]->GetName());
 	      outfile->WriteObject(h1_rej[h][i],h1_rej[h][i]->GetName());
 	      if(h==1) outfile->WriteObject(jetTrigE[i],jetTrigE[i]->GetName());
+	      outfile->WriteObject(h1_eta[h][i],h1_eta[h][i]->GetName());
+	      outfile->WriteObject(h1_phi[h][i],h1_phi[h][i]->GetName());
+	      outfile->WriteObject(h1_mlt[h][i],h1_mlt[h][i]->GetName());
 	    }
 	  outfile->WriteObject(h1_AJ[h][i],h1_AJ[h][i]->GetName());
 	}
