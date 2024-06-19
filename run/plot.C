@@ -116,7 +116,7 @@ void std_hist(TH1D* dathist, TH1D* simhist)
   simhist->SetMarkerStyle(39);
   simhist->SetMarkerColor(kGreen+2);
   dathist->SetMarkerStyle(43);
-  dathist->SetMarkerColor(kMagenta+3);
+  dathist->SetMarkerColor(kMagenta+1);
   dathist->GetXaxis()->SetTitleSize(0.03);
   dathist->GetXaxis()->SetLabelSize(0.02);
   dathist->GetYaxis()->SetTitleSize(0.03);
@@ -207,11 +207,12 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	  runmb += mbevt;
 	  jmb += njmb;
 	}
-      whichrun++;
+      
       effevt[0] += (1.*(1+sds[whichrun][0]))/(1.*(1+sds[whichrun][1]))*runmb;//(nJetTrig[1]+mbevt);
       effevt[1] += (1.*(1+sds[whichrun][0]))/(1.*(1+sds[whichrun][2]))*runmb;//(nJetTrig[2]+mbevt);
       effevt[2] += (1.*(1+sds[whichrun][0]))/(1.*(1+sds[whichrun][3]))*runmb;//(nJetTrig[3]+mbevt);
       runmb = 0;
+      whichrun++;
     }
 
   cout << whichrun << endl;
@@ -236,18 +237,20 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	  if(h==1 && i > 0)
 	    {
 	      jetTrigE[i] = (TH1D*)rootfile[h]->Get(("jetTrigE"+to_string(i)).c_str());
+	      cout << jetTrigE[i]->GetBinContent(100) << endl;
 	      jetTrigE[i]->Scale(1./effevt[i-1]);
 	    }
 	  
 	  h1_dphi[h][i] = (TH1D*)rootfile[h]->Get(("h1_dphi"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_dphi[h][i]->Scale(1./(h==0?10000000:nmb));
-	  h1_dphi[h][i]->Fit("gaus","","",1.,5.);
+	  h1_dphi[h][i]->Fit("gaus","Q","",1.,5.);
 	  dphigaus[h][i] = h1_dphi[h][i]->GetFunction("gaus");
 	  h1_rej[h][i] = (TH1D*)rootfile[h]->Get(("h1_rej"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_rej[h][i]->Rebin(5);
 	  h1_mlt[h][i] = (TH1D*)rootfile[h]->Get(("h1_mlt"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_phi[h][i] = (TH1D*)rootfile[h]->Get(("h1_phi"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_eta[h][i] = (TH1D*)rootfile[h]->Get(("h1_eta"+to_string(1)+"_"+to_string(i)).c_str());
+	  cout <<endl << h1_phi[h][i]->GetEntries() <<" " << h1_eta[h][i]->GetEntries() << endl << endl;
 	  jetfrac[h][i] = (TH1D*)rootfile[h]->Get(("jetfrac"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_mlt[h][i]->Scale(1./(h==0?(10000000):nmb));
 	  h1_phi[h][i]->Scale(1./(h==0?(10000000):nmb));
@@ -265,13 +268,13 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	  h1_AJ[h][i+4] = (TH1D*)rootfile[h]->Get(("h1_AJ"+to_string(1)+"_"+to_string(i+4)).c_str());
 	  cout << h1_AJ[h][i+4] << endl;
 	  h1_AJ[h][i+4]->Scale(1./h1_AJ[h][i+4]->Integral());//1./(h==0?(tree->GetEntries()*10000000):nmb));
-	  h1_AJ[h][i]->Fit("gaus");
+	  h1_AJ[h][i]->Fit("gaus","Q");
 	  ajgaus[h][i] = h1_AJ[h][i]->GetFunction("gaus");
-	  h1_AJ[h][i+4]->Fit("gaus");
+	  h1_AJ[h][i+4]->Fit("gaus","Q");
 	  ajgaus[h][i+4] = h1_AJ[h][i+4]->GetFunction("gaus");
 	  h1_AJ[h][i+8] = (TH1D*)rootfile[h]->Get(("h1_AJ"+to_string(1)+"_"+to_string(i+8)).c_str());
 	  h1_AJ[h][i+8]->Scale(1./h1_AJ[h][i+8]->Integral());//1./(h==0?(tree->GetEntries()*10000000):nmb));
-	  h1_AJ[h][i+8]->Fit("gaus");
+	  h1_AJ[h][i+8]->Fit("gaus","Q");
 	  ajgaus[h][i+8] = h1_AJ[h][i+8]->GetFunction("gaus");
 	}
     }
@@ -281,6 +284,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
       for(int i=0; i<3; ++i)
 	{
 	  jetE[h][i] = (TH1D*)rootfile[h]->Get(("jetE"+to_string(1)+"_"+to_string(i)).c_str());
+	  cout << "jetE" << h << " " << i << " nentries: " << jetE[h][i]->GetEntries() << endl;
 	  jetE[h][i]->Scale(1./(h==0?(10000000):nmb));
 	}
     }
@@ -399,7 +403,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
   for(int i=1; i<4; ++i)
     {
       jetTrigE[i]->SetMarkerStyle(38+i);
-      jetTrigE[i]->SetMarkerColor(kRed+i);
+      jetTrigE[i]->SetMarkerColor(kBlue+i);
       jetTrigE[i]->SetMarkerSize(2);
       jetTrigE[i]->Rebin(10);
     }

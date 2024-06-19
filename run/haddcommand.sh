@@ -8,7 +8,7 @@ TYPE=sim
 if [ $1 -eq 1 ]; then
     TYPE=dat
     for rn in `ls  *.imagelist | awk -F'.' '{print $1}'`; do
-	hadd "output/sumroot/summed_${rn}_${TYPE}_base.root" `ls output/root/*$rn*${1}*`
+	hadd "output/sumroot/summed_${rn}_${TYPE}_base.root" `ls output/root/*$rn*${TYPE}*`
     done
     ls output/sumroot/*dat* > sumdatlist.list
 fi
