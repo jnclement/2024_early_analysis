@@ -183,8 +183,8 @@ int quickroot(string filebase="", int njob=0)
   double stp[ncol] = {0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0};
   TColor::CreateGradientColorTable(ncol, stp, red, grn, blu, ncol);
   TH1D* h1_rej[2][4];
-  TH1D* h1_eta[2][4];
-  TH1D* h1_phi[2][4];
+  TH1D* h1_eta[2][4][5];
+  TH1D* h1_phi[2][4][5];
   TH1D* h1_mlt[2][4];
   for(int h=nosim; h<2; ++h)
     {
@@ -192,8 +192,11 @@ int quickroot(string filebase="", int njob=0)
 	{
 	  h1_rej[h][i] = new TH1D(("h1_rej"+to_string(h)+"_"+to_string(i)).c_str(),"",150,0,15);
 	  h1_rej[h][i]->GetYaxis()->SetRangeUser(0.5,200000);
-	  h1_eta[h][i] = new TH1D(("h1_eta"+to_string(h)+"_"+to_string(i)).c_str(),"",22,-1.1,1.1);
-	  h1_phi[h][i] = new TH1D(("h1_phi"+to_string(h)+"_"+to_string(i)).c_str(),"",30,-M_PI,M_PI);
+	  for(int j=0; j<5; ++j)
+	    {
+	      h1_eta[h][i][j] = new TH1D(("h1_eta"+to_string(h)+"_"+to_string(i)+"_"+to_string(j)).c_str(),"",22,-1.1,1.1);
+	      h1_phi[h][i][j] = new TH1D(("h1_phi"+to_string(h)+"_"+to_string(i)+"_"+to_string(j)).c_str(),"",30,-M_PI,M_PI);
+	    }
 	  h1_mlt[h][i] = new TH1D(("h1_mlt"+to_string(h)+"_"+to_string(i)).c_str(),"",6,-0.5,5.5);
 	}
     }
@@ -615,27 +618,32 @@ int quickroot(string filebase="", int njob=0)
 	  
 	  hejet[h]->Fill(ehjet[h][k]);
 	  jetE[h][0]->Fill(ET);
-	  h1_eta[h][0]->Fill(jet_et[h][k]);
-	  h1_phi[h][0]->Fill(jet_ph[h][k]);
+	  int whichjet = 0;
+	  if(ET < 7) whichjet = 0;
+	  else if(ET < 10) whichjet = 1;
+	  else if(ET < 15) whichjet = 2;
+	  else if(ET < 20) whichjet = 3;
+	  else whichjet = 4;
+	  h1_eta[h][0][whichjet]->Fill(jet_et[h][k]);
+	  h1_phi[h][0][whichjet]->Fill(jet_ph[h][k]);
 	  if(ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
 	      jetE[h][1]->Fill(ET);
-	      h1_eta[h][1]->Fill(jet_et[h][k]);
-	      h1_phi[h][1]->Fill(jet_ph[h][k]);
+	      h1_eta[h][1][whichjet]->Fill(jet_et[h][k]);
+	      h1_phi[h][1][whichjet]->Fill(jet_ph[h][k]);
 	    }
 	  if(seedD[h][k] < 0.65)
 	    {
 	      jetE[h][2]->Fill(ET);
-	      h1_eta[h][2]->Fill(jet_et[h][k]);
-	      h1_phi[h][2]->Fill(jet_ph[h][k]);
+	      h1_eta[h][2][whichjet]->Fill(jet_et[h][k]);
+	      h1_phi[h][2][whichjet]->Fill(jet_ph[h][k]);
 	    }
 	  if(seedD[h][k] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
-	      h1_eta[h][3]->Fill(jet_et[h][k]);
-	      h1_phi[h][3]->Fill(jet_ph[h][k]);
+	      h1_eta[h][3][whichjet]->Fill(jet_et[h][k]);
+	      h1_phi[h][3][whichjet]->Fill(jet_ph[h][k]);
 	      jetE[h][3]->Fill(ET);
 	    }
-
 
 	  for(int l = 0; l<njet[h]; ++l)
 	    {
@@ -957,8 +965,11 @@ int quickroot(string filebase="", int njob=0)
 	      outfile->WriteObject(h1_dphi[h][i],h1_dphi[h][i]->GetName());
 	      outfile->WriteObject(h1_rej[h][i],h1_rej[h][i]->GetName());
 	      if(h==1) outfile->WriteObject(jetTrigE[i],jetTrigE[i]->GetName());
-	      outfile->WriteObject(h1_eta[h][i],h1_eta[h][i]->GetName());
-	      outfile->WriteObject(h1_phi[h][i],h1_phi[h][i]->GetName());
+	      for(int j=0; j<5; ++j)
+		{
+		  outfile->WriteObject(h1_eta[h][i][j],h1_eta[h][i][j]->GetName());
+		  outfile->WriteObject(h1_phi[h][i][j],h1_phi[h][i][j]->GetName());
+		}
 	      outfile->WriteObject(h1_mlt[h][i],h1_mlt[h][i]->GetName());
 	    }
 	  outfile->WriteObject(h1_AJ[h][i],h1_AJ[h][i]->GetName());

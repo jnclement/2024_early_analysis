@@ -210,7 +210,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
       
       effevt[0] += (1.*(1+sds[whichrun][0]))/(1.*(1+sds[whichrun][1]))*runmb;//(nJetTrig[1]+mbevt);
       effevt[1] += (1.*(1+sds[whichrun][0]))/(1.*(1+sds[whichrun][2]))*runmb;//(nJetTrig[2]+mbevt);
-      effevt[2] += (1.*(1+sds[whichrun][0]))/(1.*(1+sds[whichrun][3]))*runmb;//(nJetTrig[3]+mbevt);
+      effevt[2] += (1.*(1+sds[whichrun][0]))/(1.*(1+sds[whichrun][3]))*runmb;//(nJetTrig[3]+mbevt);      
       runmb = 0;
       whichrun++;
     }
@@ -226,8 +226,8 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
   TF1* ajgaus[2][12];
   TF1* dphigaus[2][4];
   TH1D* h1_mlt[2][4];
-  TH1D* h1_phi[2][4];
-  TH1D* h1_eta[2][4];
+  TH1D* h1_phi[2][4][5];
+  TH1D* h1_eta[2][4][5];
   TH1D* jetfrac[2][4];
   TH1D* jetTrigE[4];
   for(int h=0; h<2; ++h)
@@ -248,13 +248,19 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	  h1_rej[h][i] = (TH1D*)rootfile[h]->Get(("h1_rej"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_rej[h][i]->Rebin(5);
 	  h1_mlt[h][i] = (TH1D*)rootfile[h]->Get(("h1_mlt"+to_string(1)+"_"+to_string(i)).c_str());
-	  h1_phi[h][i] = (TH1D*)rootfile[h]->Get(("h1_phi"+to_string(1)+"_"+to_string(i)).c_str());
-	  h1_eta[h][i] = (TH1D*)rootfile[h]->Get(("h1_eta"+to_string(1)+"_"+to_string(i)).c_str());
-	  cout <<endl << h1_phi[h][i]->GetEntries() <<" " << h1_eta[h][i]->GetEntries() << endl << endl;
+	  for(int j=0; j<5; ++j)
+	    {
+	      h1_phi[h][i][j] = (TH1D*)rootfile[h]->Get(("h1_phi"+to_string(1)+"_"+to_string(i)+"_"+to_string(j)).c_str());
+	      h1_eta[h][i][j] = (TH1D*)rootfile[h]->Get(("h1_eta"+to_string(1)+"_"+to_string(i)+"_"+to_string(j)).c_str());
+	    }
+	  cout <<endl << h1_phi[h][i][0]->GetEntries() <<" " << h1_eta[h][i][0]->GetEntries() << endl << endl;
 	  jetfrac[h][i] = (TH1D*)rootfile[h]->Get(("jetfrac"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_mlt[h][i]->Scale(1./(h==0?(10000000):nmb));
-	  h1_phi[h][i]->Scale(1./(h==0?(10000000):nmb));
-	  h1_eta[h][i]->Scale(1./(h==0?(10000000):nmb));
+	  for(int j=0; j<5; ++j)
+	    {
+	      h1_phi[h][i][j]->Scale(1./(h1_phi[h][i][j]->Integral()));
+	      h1_eta[h][i][j]->Scale(1./(h1_eta[h][i][j]->Integral()));
+	    }
 	  if(i<3) jetfrac[h][i]->Scale(1./(h==0?(10000000):nmb));
 	}
     }
@@ -525,63 +531,66 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
       d->SaveAs(("output/rmg/summed_mult"+to_string(i)+".pdf").c_str());
     }
 
-  for(int i=0; i<4; ++i)
-    {
-      for(int j=0; j<ntext; ++j)
-	{
-	  dotext[j] = 0;
-	}
-      if(i%4>1)
-	{
-	  dotext[4] = 1;
-	}
-      if(i%4==1 || i%4==3)
-	{
-	  dotext[5] = 1;
-	}
-      dotext[0] = 1;
-      dotext[8] = 1;
-      fitgdat = 0;
-      fitgsim = 0;
-      std_hist(h1_eta[1][i], h1_eta[0][i]);
-      gPad->SetLogy(0);
-      h1_eta[0][i]->GetYaxis()->SetRangeUser(0,1.1*max(h1_eta[0][i]->GetMaximum(),h1_eta[1][i]->GetMaximum()));
-      h1_eta[0][i]->GetXaxis()->SetTitle("#eta");
-      h1_eta[0][i]->Draw("PE");
-      h1_eta[1][i]->Draw("SAME P E");
-      ajleg->Draw();
-      std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-      d->SaveAs(("output/rmg/summed_eta"+to_string(i)+".pdf").c_str());
-    }
 
-  for(int i=0; i<4; ++i)
+  for(int h=0; h<5; ++h)
     {
-      for(int j=0; j<ntext; ++j)
+      for(int i=0; i<4; ++i)
 	{
-	  dotext[j] = 0;
+	  for(int j=0; j<ntext; ++j)
+	    {
+	      dotext[j] = 0;
+	    }
+	  if(i%4>1)
+	    {
+	      dotext[4] = 1;
+	    }
+	  if(i%4==1 || i%4==3)
+	    {
+	      dotext[5] = 1;
+	    }
+	  dotext[0] = 1;
+	  dotext[8] = 1;
+	  fitgdat = 0;
+	  fitgsim = 0;
+	  std_hist(h1_eta[1][i][h], h1_eta[0][i][h]);
+	  gPad->SetLogy(0);
+	  h1_eta[0][i][h]->GetYaxis()->SetRangeUser(0,1.1*max(h1_eta[0][i][h]->GetMaximum(),h1_eta[1][i][h]->GetMaximum()));
+	  h1_eta[0][i][h]->GetXaxis()->SetTitle("#eta");
+	  h1_eta[0][i][h]->Draw("PE");
+	  h1_eta[1][i][h]->Draw("SAME P E");
+	  ajleg->Draw();
+	  std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
+	  d->SaveAs(("output/rmg/summed_eta"+to_string(i)+"_"+to_string(h)+".pdf").c_str());
 	}
-      if(i%4>1)
-	{
-	  dotext[4] = 1;
-	}
-      if(i%4==1 || i%4==3)
-	{
-	  dotext[5] = 1;
-	}
-      dotext[0] = 1;
-      dotext[8] = 1;
-      fitgdat = 0;
-      fitgsim = 0;
-      std_hist(h1_phi[1][i], h1_phi[0][i]);
-      h1_phi[0][i]->GetYaxis()->SetRangeUser(0,1.1*max(h1_phi[0][i]->GetMaximum(),h1_phi[1][i]->GetMaximum()));
-      h1_phi[0][i]->GetXaxis()->SetTitle("EM Fraction");
-      h1_phi[0][i]->Draw("PE");
-      h1_phi[1][i]->Draw("SAME P E");
-      ajleg->Draw();
-      std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-      d->SaveAs(("output/rmg/summed_phi"+to_string(i)+".pdf").c_str());
-    }
 
+      for(int i=0; i<4; ++i)
+	{
+	  for(int j=0; j<ntext; ++j)
+	    {
+	      dotext[j] = 0;
+	    }
+	  if(i%4>1)
+	    {
+	      dotext[4] = 1;
+	    }
+	  if(i%4==1 || i%4==3)
+	    {
+	      dotext[5] = 1;
+	    }
+	  dotext[0] = 1;
+	  dotext[8] = 1;
+	  fitgdat = 0;
+	  fitgsim = 0;
+	  std_hist(h1_phi[1][i][h], h1_phi[0][i][h]);
+	  h1_phi[0][i][h]->GetYaxis()->SetRangeUser(0,1.1*max(h1_phi[0][i][h]->GetMaximum(),h1_phi[1][i][h]->GetMaximum()));
+	  h1_phi[0][i][h]->GetXaxis()->SetTitle("EM Fraction");
+	  h1_phi[0][i][h]->Draw("PE");
+	  h1_phi[1][i][h]->Draw("SAME P E");
+	  ajleg->Draw();
+	  std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
+	  d->SaveAs(("output/rmg/summed_phi"+to_string(i)+"_"+to_string(h)+".pdf").c_str());
+	}
+    }
   for(int i=0; i<3; ++i)
     {
       for(int j=0; j<ntext; ++j)

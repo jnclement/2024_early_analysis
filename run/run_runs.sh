@@ -18,7 +18,7 @@ for rn in `ls  *.list | awk -F'.' '{print $1}'`; do
     if [ $nfile -gt $nmax ]; then
 	nfile=$nmax
     fi
-    nfile=$(( ($nfile + 9 / 10))
+#    nfile=$(( ($nfile + 9) / 10 ))
     bash run_everything.sh $1 $nfile $rn 1 $evt
 done
 

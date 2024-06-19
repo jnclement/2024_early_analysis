@@ -80,13 +80,13 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   string line1;
   list1.open(datorsim?("./"+to_string(rn)+".list"):"dst_calo_cluster.list", ifstream::in);
   if(!list1) exit(1);
-  for(int i=10*nproc; i<10*(nproc+1); i++)
+  Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
+
+  for(int i=0; i<nproc+1; i++)
     {
       getline(list1, line1);
-      in_1->AddFile(line1);
     }
-  Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
-  
+  in_1->AddFile(line1);
   se->registerInputManager( in_1 );
   // this points to the global tag in the CDB
   rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
@@ -135,7 +135,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //  se->registerSubsystem(ctcih);
   //  se->registerSubsystem(ctcoh);
   Chi2checker* chi2c;
-  if(datorsim) chi2c = new Chi2checker("chi2checker",debug);
+  if(datorsim) chi2c = new Chi2checker("chi2checker",1);
   if(datorsim) se->registerSubsystem(chi2c);
   RetowerCEMC *rcemc = new RetowerCEMC();
   rcemc->set_towerinfo(true);
