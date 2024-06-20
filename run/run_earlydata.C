@@ -78,16 +78,22 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
   ifstream list1;
   string line1;
+  ifstream list2;
+  string line2;
   list1.open(datorsim?("./"+to_string(rn)+".list"):"dst_calo_cluster.list", ifstream::in);
-  if(!list1) exit(1);
+  if(!datorsim) list2.open("dst_global.list",ifstream::in);
+  if(!list1 || !list2) exit(1);
   Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
-
+  Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
   for(int i=0; i<nproc+1; i++)
     {
       getline(list1, line1);
+      if(!datorsim) getline(list2, line2);
     }
   in_1->AddFile(line1);
+  if(!datorsim) in_2->AddFile(line2);
   se->registerInputManager( in_1 );
+  if(!datorsim) se->registerInputManager( in_2 );
   // this points to the global tag in the CDB
   rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
 // The calibrations have a validity range set by the beam clock which is not read out of the prdfs as of now
@@ -135,7 +141,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //  se->registerSubsystem(ctcih);
   //  se->registerSubsystem(ctcoh);
   Chi2checker* chi2c;
-  if(datorsim) chi2c = new Chi2checker("chi2checker",1);
+  if(datorsim) chi2c = new Chi2checker("chi2checker",debug);
   if(datorsim) se->registerSubsystem(chi2c);
   RetowerCEMC *rcemc = new RetowerCEMC();
   rcemc->set_towerinfo(true);

@@ -186,10 +186,14 @@ int quickroot(string filebase="", int njob=0)
   TH1D* h1_eta[2][4][5];
   TH1D* h1_phi[2][4][5];
   TH1D* h1_mlt[2][4];
+  TH2D* h2_jet_eta_phi[2][4];
+  TH2D* h2_cal_eta_phi[2][3];
   for(int h=nosim; h<2; ++h)
     {
       for(int i=0; i<4; ++i)
 	{
+	  if(i<3) h2_cal_eta_phi[h][i] = new TH2D(("h2_cal_eta_phi"+to_string(h)+to_string(i)).c_str(),"",24,-0.5,23.5,64,-0.5,63.5);
+	  h2_jet_eta_phi[h][i] = new TH2D(("h2_jet_eta_phi"+to_string(h)+to_string(i)).c_str(),"",24,-1.1,1.1,64,-M_PI,M_PI);
 	  h1_rej[h][i] = new TH1D(("h1_rej"+to_string(h)+"_"+to_string(i)).c_str(),"",150,0,15);
 	  h1_rej[h][i]->GetYaxis()->SetRangeUser(0.5,200000);
 	  for(int j=0; j<5; ++j)
@@ -454,6 +458,7 @@ int quickroot(string filebase="", int njob=0)
       //{
       for(int j=0; j<njet[h]; ++j)
 	{
+
 	  for(int k=0; k<4; ++k)
 	    {
 	      if(jet_e[h][j] > maxjet[k])
@@ -500,6 +505,14 @@ int quickroot(string filebase="", int njob=0)
 	    {
 	      h1_rej[h][j]->Fill(h1_rej[h][j]->GetBinCenter(it+1));
 	      ++it;
+	    }
+	}
+
+      for(int j=0; j<3; ++j)
+	{
+	  for(int k=0; k<sectorrt[h][j]; ++k)
+	    {
+	      h2_cal_eta_phi[h][j]->Fill(etart[h][j][k],phirt[h][j][k],enrt[h][j][k]);
 	    }
 	}
       //if(breakvar) continue;
@@ -626,20 +639,24 @@ int quickroot(string filebase="", int njob=0)
 	  else whichjet = 4;
 	  h1_eta[h][0][whichjet]->Fill(jet_et[h][k]);
 	  h1_phi[h][0][whichjet]->Fill(jet_ph[h][k]);
+	  h2_jet_eta_phi[h][0]->Fill(jet_et[h][k],jet_ph[h][k]);
 	  if(ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
+	      h2_jet_eta_phi[h][1]->Fill(jet_et[h][k],jet_ph[h][k]);
 	      jetE[h][1]->Fill(ET);
 	      h1_eta[h][1][whichjet]->Fill(jet_et[h][k]);
 	      h1_phi[h][1][whichjet]->Fill(jet_ph[h][k]);
 	    }
 	  if(seedD[h][k] < 0.65)
 	    {
+	      h2_jet_eta_phi[h][2]->Fill(jet_et[h][k],jet_ph[h][k]);
 	      jetE[h][2]->Fill(ET);
 	      h1_eta[h][2][whichjet]->Fill(jet_et[h][k]);
 	      h1_phi[h][2][whichjet]->Fill(jet_ph[h][k]);
 	    }
 	  if(seedD[h][k] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
+	      h2_jet_eta_phi[h][3]->Fill(jet_et[h][k],jet_ph[h][k]);
 	      h1_eta[h][3][whichjet]->Fill(jet_et[h][k]);
 	      h1_phi[h][3][whichjet]->Fill(jet_ph[h][k]);
 	      jetE[h][3]->Fill(ET);
@@ -959,8 +976,10 @@ int quickroot(string filebase="", int njob=0)
       for(int i=0; i<12; ++i)
 	{
 	  if(i<3) outfile->WriteObject(jetfrac[h][i],jetfrac[h][i]->GetName());
+	  if(i<3) outfile->WriteObject(h2_cal_eta_phi[h][i],h2_cal_eta_phi[h][i]->GetName());
 	  if(i < 4)
 	    {
+	      outfile->WriteObject(h2_jet_eta_phi[h][i],h2_jet_eta_phi[h][i]->GetName());
 	      outfile->WriteObject(jetE[h][i],jetE[h][i]->GetName());
 	      outfile->WriteObject(h1_dphi[h][i],h1_dphi[h][i]->GetName());
 	      outfile->WriteObject(h1_rej[h][i],h1_rej[h][i]->GetName());

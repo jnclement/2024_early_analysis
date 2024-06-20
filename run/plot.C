@@ -230,6 +230,8 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
   TH1D* h1_eta[2][4][5];
   TH1D* jetfrac[2][4];
   TH1D* jetTrigE[4];
+  TH2D* h2_jet_eta_phi[2][4];
+  TH2D* h2_cal_eta_phi[2][3];
   for(int h=0; h<2; ++h)
     {
       for(int i=0; i<4; ++i)
@@ -248,6 +250,8 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	  h1_rej[h][i] = (TH1D*)rootfile[h]->Get(("h1_rej"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_rej[h][i]->Rebin(5);
 	  h1_mlt[h][i] = (TH1D*)rootfile[h]->Get(("h1_mlt"+to_string(1)+"_"+to_string(i)).c_str());
+	  h2_jet_eta_phi[h][i] = (TH2D*)rootfile[h]->Get(("h2_jet_eta_phi"+to_string(1)+to_string(i)).c_str());
+	  if(i<3) h2_cal_eta_phi[h][i] = (TH2D*)rootfile[h]->Get(("h2_cal_eta_phi"+to_string(1)+to_string(i)).c_str());
 	  for(int j=0; j<5; ++j)
 	    {
 	      h1_phi[h][i][j] = (TH1D*)rootfile[h]->Get(("h1_phi"+to_string(1)+"_"+to_string(i)+"_"+to_string(j)).c_str());
@@ -569,6 +573,31 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	    {
 	      dotext[j] = 0;
 	    }
+	  fitgdat = 0;
+	  fitgsim = 0;
+	  if(i<3)
+	    {
+	      h2_cal_eta_phi[0][i]->GetZaxis()->SetRangeUser(0,h2_cal_eta_phi[0][i]->GetMaximum());
+	      h2_cal_eta_phi[0][i]->GetXaxis()->SetTitle("#eta");
+	      h2_cal_eta_phi[0][i]->GetYaxis()->SetTitle("#phi [rad]");
+	      h2_cal_eta_phi[0][i]->Draw("COLZ");
+	      d->SaveAs(("output/rmg/cal_eta_phi_"+to_string(0)+"_"+to_string(i)+".pdf").c_str());
+	      h2_cal_eta_phi[1][i]->GetXaxis()->SetTitle("#eta");
+	      h2_cal_eta_phi[1][i]->GetYaxis()->SetTitle("#phi [rad]");
+	      h2_cal_eta_phi[1][i]->GetZaxis()->SetRangeUser(0,h2_cal_eta_phi[1][i]->GetMaximum());
+	      h2_cal_eta_phi[1][i]->Draw("COLZ");
+	      d->SaveAs(("output/rmg/cal_eta_phi_"+to_string(1)+"_"+to_string(i)+".pdf").c_str());
+	    }
+	  h2_jet_eta_phi[0][i]->GetZaxis()->SetRangeUser(0,h2_jet_eta_phi[0][i]->GetMaximum());
+	  h2_jet_eta_phi[0][i]->GetXaxis()->SetTitle("#eta");
+	  h2_jet_eta_phi[0][i]->GetYaxis()->SetTitle("#phi [rad]");
+	  h2_jet_eta_phi[0][i]->Draw("COLZ");
+	  d->SaveAs(("output/rmg/jet_eta_phi_"+to_string(0)+"_"+to_string(i)+".pdf").c_str());
+	  h2_jet_eta_phi[1][i]->GetXaxis()->SetTitle("#eta");
+	  h2_jet_eta_phi[1][i]->GetYaxis()->SetTitle("#phi [rad]");
+	  h2_jet_eta_phi[1][i]->GetZaxis()->SetRangeUser(0,h2_jet_eta_phi[1][i]->GetMaximum());
+	  h2_jet_eta_phi[1][i]->Draw("COLZ");
+	  d->SaveAs(("output/rmg/jet_eta_phi_"+to_string(1)+"_"+to_string(i)+".pdf").c_str());
 	  if(i%4>1)
 	    {
 	      dotext[4] = 1;
