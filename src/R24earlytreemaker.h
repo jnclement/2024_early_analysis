@@ -44,6 +44,7 @@ class R24earlytreemaker : public SubsysReco
   TFile *_f;
   TTree *_tree;
   TTree *_tree2;
+  TTree *_jett;
   std::string _foutname;
   float emetot, ihetot, ohetot;
   int sectorem;
@@ -53,6 +54,7 @@ class R24earlytreemaker : public SubsysReco
   int sectorzd;
   int sectoremuc;
   int njet;
+  int allcomp;
   long long unsigned int triggervec;
   int mbevt;
   int sector_rtem;
@@ -62,6 +64,8 @@ class R24earlytreemaker : public SubsysReco
   float jet_et[1000];
   float jet_ph[1000];
   float ehjet[1000];
+  float aceta[1000];
+  float alcet[24576];
   float rtemen[1536];
   int rtemet[1536];
   int rtemph[1536];

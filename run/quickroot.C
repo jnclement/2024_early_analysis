@@ -92,6 +92,7 @@ int quickroot(string filebase="", int njob=0)
   string filename=filebase;
   TChain* tree[2];
   TChain* tree2[2];
+  TChain* jett[2];
   ifstream list[2];
   string line;
   int nosim = 1;
@@ -114,6 +115,7 @@ int quickroot(string filebase="", int njob=0)
   for(int h=nosim; h < 2; ++h)
     {
       int counter = 0;
+      jett[h] = new TChain("jett");
       tree[h] = new TChain("ttree");
       tree2[h] = new TChain("ttree2");
       if(!list[h])
@@ -137,6 +139,7 @@ int quickroot(string filebase="", int njob=0)
 	  if(list[h].eof()) breakit = 1;
 	  try
 	    {
+	      jett[h]->Add(line.c_str());
 	      tree[h]->Add(line.c_str());
 	      tree2[h]->Add(line.c_str());
 	    }
@@ -166,7 +169,7 @@ int quickroot(string filebase="", int njob=0)
       if(h==0) nmb[h] = nevents[h];
       cout << "with " << nmb[h] << " minbias events." << endl;
     }
-  TFile* outfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+to_string(njob)+".root").c_str(),"RECREATE");
+  TFile* outfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+to_string(njob)+"_fullfile.root").c_str(),"RECREATE");
   TTree* outt = new TTree((runnum==simstr?"st":"outt"),"output tree");
   int outnmb = nmb[1];
   int outevt = nevents[1];
@@ -187,6 +190,7 @@ int quickroot(string filebase="", int njob=0)
   TH1D* h1_phi[2][4][5];
   TH1D* h1_mlt[2][4];
   TH2D* h2_jet_eta_phi[2][4];
+  TH2D* h2_jet_eta_e[2][4];
   TH2D* h2_cal_eta_phi[2][3];
   for(int h=nosim; h<2; ++h)
     {
@@ -194,6 +198,7 @@ int quickroot(string filebase="", int njob=0)
 	{
 	  if(i<3) h2_cal_eta_phi[h][i] = new TH2D(("h2_cal_eta_phi"+to_string(h)+to_string(i)).c_str(),"",24,-0.5,23.5,64,-0.5,63.5);
 	  h2_jet_eta_phi[h][i] = new TH2D(("h2_jet_eta_phi"+to_string(h)+to_string(i)).c_str(),"",24,-1.1,1.1,64,-M_PI,M_PI);
+	  h2_jet_eta_e[h][i] = new TH2D(("h2_jet_eta_e"+to_string(h)+to_string(i)).c_str(),"",24,-1.1,1.1,160,4,20);
 	  h1_rej[h][i] = new TH1D(("h1_rej"+to_string(h)+"_"+to_string(i)).c_str(),"",150,0,15);
 	  h1_rej[h][i]->GetYaxis()->SetRangeUser(0.5,200000);
 	  for(int j=0; j<5; ++j)
@@ -307,8 +312,11 @@ int quickroot(string filebase="", int njob=0)
   int evtnum[2];
   long unsigned int trigvec = 0;
   int ismb[2];
+  float alcet[24000];
+  float aceta[1000];
+  int njetj = 0;
+  int allcomp = 0;
   tree[1]->SetBranchAddress("triggervec",&trigvec);
-
   for(int h=nosim; h<2; ++h)
     {
       tree[h]->SetBranchAddress("ismb",&ismb[h]);
@@ -338,7 +346,34 @@ int quickroot(string filebase="", int njob=0)
       //tree->SetBranchAddress("emcaletabin",etabin);
       //tree->SetBranchAddress("emcalphibin",phibin);
       //tree->SetBranchAddress("emetot",&emetot);
+      jett[h]->SetBranchAddress("alcet",alcet);
+      jett[h]->SetBranchAddress("aceta",aceta);
+      jett[h]->SetBranchAddress("allcomp",&allcomp);
+      jett[h]->SetBranchAddress("njet",&njetj);
     }
+  TFile* jetfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+to_string(njob)+"_jetfile.root").c_str(),"RECREATE");
+  TH1D* alcethist = new TH1D("alcethist","",40,-2,2);
+  TH1D* acetahist = new TH1D("acetahist","",40,-2,2);
+  TTree* ojt = new TTree("ojt","the duplicated jet tree");
+  ojt->Branch("njet",&njet[1],"njet/I");
+  ojt->Branch("jet_e",jet_e[1],"jet_e[njet]/F");
+  ojt->Branch("jet_et",jet_et[1],"jet_et[njet]/F");
+  ojt->Branch("jet_ph",jet_ph[1],"jet_ph[njet]/F");
+  for(int i=0; i<jett[1]->GetEntries(); ++i)
+    {
+      jett[1]->GetEntry(i);
+      for(int j=0; j<njetj; ++j)
+	{
+	  acetahist->Fill(aceta[j]);
+	}
+      for(int j=0; j<allcomp; ++j)
+	{
+	  alcethist->Fill(alcet[j]);
+	}
+    }
+  
+  jetfile->WriteObject(acetahist,acetahist->GetName());
+  jetfile->WriteObject(alcethist,alcethist->GetName());
   int cancount = 0;
   TCanvas* c = new TCanvas("","",800,480);
   TCanvas* d = new TCanvas("","",1000,1000);
@@ -409,6 +444,7 @@ int quickroot(string filebase="", int njob=0)
       int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
       tree[h]->GetEntry(i);
+      ojt->Fill();
       int njo5 = 0;
       if(h==1) 
 	{
@@ -442,7 +478,9 @@ int quickroot(string filebase="", int njob=0)
 	    }
 	}
 	}
-      if(!ismb[h]) continue;
+      int trigvecproxy = 0;
+      if(filename != simliststr) trigvecproxy = (trigvec>>10) & 1;
+      if(!ismb[h] && !trigvecproxy) continue;
       if(evtnum[h] < prevt)
 	{
 	  eventbase[h] += 10000;
@@ -640,8 +678,10 @@ int quickroot(string filebase="", int njob=0)
 	  h1_eta[h][0][whichjet]->Fill(jet_et[h][k]);
 	  h1_phi[h][0][whichjet]->Fill(jet_ph[h][k]);
 	  h2_jet_eta_phi[h][0]->Fill(jet_et[h][k],jet_ph[h][k]);
+	  h2_jet_eta_e[h][0]->Fill(jet_et[h][k],jet_e[h][k]);
 	  if(ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
+	      h2_jet_eta_e[h][1]->Fill(jet_et[h][k],jet_e[h][k]);
 	      h2_jet_eta_phi[h][1]->Fill(jet_et[h][k],jet_ph[h][k]);
 	      jetE[h][1]->Fill(ET);
 	      h1_eta[h][1][whichjet]->Fill(jet_et[h][k]);
@@ -649,6 +689,7 @@ int quickroot(string filebase="", int njob=0)
 	    }
 	  if(seedD[h][k] < 0.65)
 	    {
+	      h2_jet_eta_e[h][2]->Fill(jet_et[h][k],jet_e[h][k]);
 	      h2_jet_eta_phi[h][2]->Fill(jet_et[h][k],jet_ph[h][k]);
 	      jetE[h][2]->Fill(ET);
 	      h1_eta[h][2][whichjet]->Fill(jet_et[h][k]);
@@ -656,6 +697,7 @@ int quickroot(string filebase="", int njob=0)
 	    }
 	  if(seedD[h][k] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
+	      h2_jet_eta_e[h][3]->Fill(jet_et[h][k],jet_e[h][k]);
 	      h2_jet_eta_phi[h][3]->Fill(jet_et[h][k],jet_ph[h][k]);
 	      h1_eta[h][3][whichjet]->Fill(jet_et[h][k]);
 	      h1_phi[h][3][whichjet]->Fill(jet_ph[h][k]);
@@ -969,8 +1011,10 @@ int quickroot(string filebase="", int njob=0)
 	}
       cout << endl;
     }
+  jetfile->WriteObject(ojt,ojt->GetName());
   outt->Fill();
   outfile->WriteObject(outt,outt->GetName());
+  //outfile->WriteObject(jett[1],jett[1]->GetName());
   for(int h=nosim; h<2; ++h)
     {
       for(int i=0; i<12; ++i)
@@ -980,6 +1024,7 @@ int quickroot(string filebase="", int njob=0)
 	  if(i < 4)
 	    {
 	      outfile->WriteObject(h2_jet_eta_phi[h][i],h2_jet_eta_phi[h][i]->GetName());
+	      outfile->WriteObject(h2_jet_eta_e[h][i],h2_jet_eta_e[h][i]->GetName());
 	      outfile->WriteObject(jetE[h][i],jetE[h][i]->GetName());
 	      outfile->WriteObject(h1_dphi[h][i],h1_dphi[h][i]->GetName());
 	      outfile->WriteObject(h1_rej[h][i],h1_rej[h][i]->GetName());

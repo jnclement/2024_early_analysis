@@ -82,12 +82,16 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
 
   if(_debug > 1) cout << "Begin init: " << endl;
   _f = new TFile( _foutname.c_str(), "RECREATE");
+  _jett = new TTree("jett","a tree of jets");
   _tree2 = new TTree("ttree2","another persevering date tree");
   _tree2->Branch("_evtct",&_evtct,"_evtct/I");
   _tree = new TTree("ttree","a persevering date tree");
   _tree->Branch("triggervec",&triggervec,"triggervec/g");
   _tree2->Branch("mbevt",&mbevt,"mbevt/I");
   _tree->Branch("ismb",&ismb,"ismb/I");
+  _jett->Branch("ismb",&ismb,"ismb/I");
+  _jett->Branch("allcomp",&allcomp,"allcomp/I");
+  _jett->Branch("alcet",alcet,"alcet[allcomp]/F");
   //_tree->Branch("emetot",&emetot,"emetot/F");
   //_tree->Branch("ihetot",&ihetot,"ihetot/F");
   //_tree->Branch("ohetot",&ohetot,"ohetot/F");
@@ -116,11 +120,18 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   //_tree->Branch("vtx",vtx,"vtx[3]/F");
   _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
   _tree->Branch("njet",&njet,"njet/I");
+  _jett->Branch("njet",&njet,"njet/I");
+  _jett->Branch("aceta",aceta,"aceta[njet]/F");
   _tree->Branch("seedD",&seedD,"seedD[njet]/F");
   _tree->Branch("jet_e",jet_e,"jet_e[njet]/F");
+  _jett->Branch("jet_e",jet_e,"jet_e[njet]/F");
   //_tree->Branch("jet_r",jet_r,"jet_r[njet]/F");
   _tree->Branch("jet_et",jet_et,"jet_et[njet]/F");
   _tree->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
+
+  _jett->Branch("jet_et",jet_et,"jet_et[njet]/F");
+  _jett->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
+
   _tree->Branch("rtemen",rtemen,"rtemen[sector_rtem]/F");
   _tree->Branch("rtemet",rtemet,"rtemet[sector_rtem]/I");
   _tree->Branch("rtemph",rtemph,"rtemph[sector_rtem]/I");
@@ -164,10 +175,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   TowerInfoContainer *towersIHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALIN");
   TowerInfoContainer *towersOHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALOUT");
   //TowerInfoContainer *towersZD = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_ZDC");
-  TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
-  if(!_datorsim) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
+  TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
+  if(!_datorsim) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
   JetContainer *jets = findNode::getClass<JetContainerv1>(topNode, "AntiKt_Tower_HIRecoSeedsRaw_r04");
   Gl1Packet *gl1;
+  ismb = 0;
   if(_datorsim)
     {
       gl1 = findNode::getClass<Gl1Packetv2>(topNode, "GL1Packet");
@@ -183,10 +195,13 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  ismb = 0;
 	}
     }
+  /*
   else
     {
       ismb = 1;
     }
+  */
+  allcomp = 0;
   if(_debug > 1) cout << "Getting jets: " << endl;
   if(jets)
     {
@@ -202,11 +217,16 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      jet_et[njet] = jet->get_eta();
 	      jet_ph[njet] = jet->get_phi();
 	    }
+	  else
+	    {
+	      continue;
+	    }
 	  if(jet_e[njet] < 4) continue;
 	  if(_debug > 2) cout << "found a good jet!" << endl;
 	  float maxeovertot = 0;
 	  float hcale = 0;
 	  float ecale = 0;
+	  int ncomp = 0;
 	  for(auto comp: jet->get_comp_vec())
 	    {
 	      unsigned int channel = comp.second;
@@ -214,24 +234,37 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      if(_debug > 1) cout << towersIH << " " << towersOH << " " << towersEM << endl;
 	      if(comp.first == 5 || comp.first == 26)
 		{
-		  if(_debug > 1) cout << "ihfail" << endl;
+		  if(_debug > 2) cout << "ihfail" << endl;
 		  tower = towersIH->get_tower_at_channel(channel);
-		  if(_debug > 1) cout << "towerad: " << tower << endl;
+		  if(_debug > 2) cout << "towerad: " << tower << endl;
 		  hcale += tower->get_energy();
+		  int key = towersIH->encode_key(channel);
+		  unsigned int etabin = towersIH->getTowerEtaBin(key);
+		  aceta[njet] += (etabin-11.5)*1.1/12;
+		  alcet[allcomp] = (etabin-11.5)*1.1/12;
 		}
 	      else if(comp.first == 7 || comp.first == 27)
 		{
-		  if(_debug > 1) cout << "ohfail" << endl;
+		  if(_debug > 2) cout << "ohfail" << endl;
 		  tower = towersOH->get_tower_at_channel(channel);
-		  if(_debug > 1) cout << "towerad: " << tower << endl;
+		  if(_debug > 2) cout << "towerad: " << tower << endl;
 		  hcale += tower->get_energy();
+		  int key = towersOH->encode_key(channel);
+		  unsigned int etabin = towersOH->getTowerEtaBin(key);
+		  aceta[njet] += (etabin-11.5)*1.1/12;
+		  alcet[allcomp] = (etabin-11.5)*1.1/12;
 		}
-	      else if(comp.first == 13 || comp.first == 28)
+	      else if(comp.first == 13 || comp.first == 28 || comp.first == 25)
 		{
-		  if(_debug > 1) cout << "emfail" << endl;
+		  if(_debug > 2) cout << "emfail" << endl;
 		  tower = rtem->get_tower_at_channel(channel);
-		  if(_debug > 1) cout << "towerad: " << tower << endl;
+		  if(_debug > 2) cout << "towerad: " << tower << endl;
 		  ecale += tower->get_energy();
+		  int key = rtem->encode_key(channel);
+		  unsigned int etabin = rtem->getTowerEtaBin(key);
+		  aceta[njet] += (etabin-47.5)*1.1/48;
+		  alcet[allcomp] = (etabin-47.5)*1.1/48;
+		  if(_debug > 1) cout << "comp etabin: " << alcet[allcomp] << endl;
 		}
 	      else
 		{
@@ -241,7 +274,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      if(_debug > 1) cout << tower << endl;
 	      float eval = tower->get_energy();
 	      if(eval > maxeovertot) maxeovertot = eval;
+	      allcomp++;
+	      ncomp++;
 	    }
+	  aceta[njet] /= ncomp;
+	  //aceta[njet] /= jet_e[njet];
 	  if(_debug > 2) cout << "Now filling some jet adjacent numbers: " << endl;
 	  if(_debug && jet_e[njet] - ecale - hcale > 0.01) cout << jet_e[njet] << " " << ecale << " " << hcale << endl;
 	  ehjet[njet] = ecale/hcale;
@@ -284,61 +321,6 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       if(_debug > 1) cout << "No retowered towers!" << endl;
     }
 
-  if(towersEMuc)
-    { //get EMCal values
-      int nchannels = 24576; //channels in emcal
-      int nneg = 0;
-      int nover = 0;
-      int nint = 0;
-      for(int i=0; i<nchannels; ++i) //loop over channels 
-	{
-	  TowerInfo *tower = towersEMuc->get_tower_at_channel(i); //get EMCal tower
-	  emcalenuc[sectoremuc] = tower->get_energy(); //actual tower energy (calibrated)
-	  //if(_debug > 1 && (emcalenuc[sectoremuc] > 10)) cout << emcalenuc[sectoremuc] << endl;
-	  if(emcalenuc[sectoremuc] < 0) nneg++;
-	  if(emcalenuc[sectoremuc] > 10) nover++;
-	  if(emcalenuc[sectoremuc] - floor(emcalenuc[sectoremuc]) == 0)
-	    {
-	      nint++;
-	    } 
-	  sectoremuc++;
-	}
-      if(_debug > 1)
-	{
-	  cout << "NNegADC: " << nneg << endl;
-	  cout << "NoverADC: " << nover << endl;
-	  cout << "Nint: " << nint << endl;
-	}
-      if(_debug > 1) cout << sectoremuc << endl;
-    }
-  
-  /*
-  if(towersZD)
-    {
-      int nchannels = 16;
-      for(int i = 0; i < nchannels; ++i)
-	{
-	  TowerInfo *tower = towersZD->get_tower_at_channel(i);
-	  float time = tower->get_time_float(); //get time
-	  if (tower->get_isHot() || tower->get_isBadChi2()) 
-	    { 
-	      continue;
-	    }
-	  zdcalen[sectorzd] = tower->get_energy(); //actual tower energy (calibrated)
-	  zdcalt[sectorzd] = time; //store time value
-	  sectorzd++;
-	}
-      if(_debug > 1) cout << sectorzd << endl;
-    }
-  else
-    {
-      for(int i=0; i<16; ++i)
-	{
-	  zdcalen[i] = -1;
-	  zdcalt[i] = -1;
-	}
-    }
-  */
   emetot = 0;
   ohetot = 0;
   ihetot = 0;
@@ -462,8 +444,10 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(_debug > 1) cout << "Getting MBD info" << endl;
   
   MbdPmtContainer *mbdtow = findNode::getClass<MbdPmtContainer>(topNode, "MbdPmtContainer");
-  if(mbdtow)
+  if(mbdtow && !_datorsim)
   {
+    int northhit = 0;
+    int southhit = 0;
     sectormb = 128;//mbdtow->get_npmt();
     //if(_debug) cout << "Got " << sectormb << " mbd sectors in sim." << endl;
     for(int i=0; i<sectormb; ++i)
@@ -471,8 +455,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	MbdPmtHit *mbdhit = mbdtow->get_pmt(i);
 	//if(_debug > 2) cout << "PMT " << i << " address: " << mbdhit << " charge: " << mbdhit->get_q() << endl;
 	mbenrgy[i] = mbdhit->get_q();
+	if(mbenrgy[i] > 0.4 && i < 64) northhit = 1;
+	if(mbenrgy[i] > 0.4 && i > 63) southhit = 1;
 	mbdq += mbdhit->get_q();
       }
+    if(northhit && southhit) ismb = 1;
   }
   else
     {
@@ -485,6 +472,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(_debug > 1) cout << "Filling" << endl;
   //if(_debug) cout << rtemen[1535] << " " <<rtemen[sector_rtem-1] << endl;
   _tree->Fill();
+  _jett->Fill();
   return Fun4AllReturnCodes::EVENT_OK;
     
 }
@@ -517,6 +505,9 @@ int R24earlytreemaker::End(PHCompositeNode *topNode)
     }
   _tree2->Fill();
   _f->cd();
+  _jett->Write();
+  _tree->Write();
+  _tree2->Write();
   _f->Write();
   _f->Close();
 

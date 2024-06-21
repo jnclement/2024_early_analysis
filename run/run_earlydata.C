@@ -31,10 +31,10 @@
 #include <centrality/CentralityReco.h>
 
 #include <r24earlytreemaker/R24earlytreemaker.h>
-#include <chi2checker/Chi2checker.h>
+//#include <chi2checker/Chi2checker.h>
 //#include <G4Setup_sPHENIX.C>
 using namespace std;
-R__LOAD_LIBRARY(libchi2checker.so)
+//R__LOAD_LIBRARY(libchi2checker.so)
 R__LOAD_LIBRARY(libr24earlytreemaker.so)
 R__LOAD_LIBRARY(libg4centrality.so)
 R__LOAD_LIBRARY(libFROG.so)
@@ -74,8 +74,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   Fun4AllServer *se = Fun4AllServer::instance();
   se->Verbosity( verbosity );
   // just if we set some flags somewhere in this macro
-  recoConsts *rc =  recoConsts::instance();
-  if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
+  //recoConsts *rc =  recoConsts::instance();
+  //if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
   ifstream list1;
   string line1;
   ifstream list2;
@@ -95,64 +95,24 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   se->registerInputManager( in_1 );
   if(!datorsim) se->registerInputManager( in_2 );
   // this points to the global tag in the CDB
-  rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
-// The calibrations have a validity range set by the beam clock which is not read out of the prdfs as of now
+  //rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
+  // The calibrations have a validity range set by the beam clock which is not read out of the prdfs as of now
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
-  /*
-  DansSpecialVertex *dsv;
-  if(!datormc)
-    {
-      dsv = new DansSpecialVertex("DansSpecialVertex", "dump.root");
-      dsv->SetRunNumber(runnumber);
-      dsv->Verbosity(0);
-      se->registerSubsystem(dsv);
-    }
-  */
-  //Fun4AllInputManager *intrue2 = new Fun4AllRunNodeInputManager("DST_GEO");
-
-  //CDBInterface *cdb = CDBInterface::instance();
-  //std::string geoLocation = cdb->getUrl("calo_geo");
-  //intrue2->AddFile(geoLocation);
-  //se->registerInputManager(intrue2);
-  /*
-  CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
-  statusEMC->set_detector_type(CaloTowerDefs::CEMC);
-  statusEMC->set_time_cut(1);
-  se->registerSubsystem(statusEMC);
-
-  CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
-  statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
-  statusHCalIn->set_time_cut(2);
-  se->registerSubsystem(statusHCalIn);
-
-  CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
-  statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
-  statusHCALOUT->set_time_cut(2);
-  se->registerSubsystem(statusHCALOUT);
-  */
-  //  CaloTowerCalib* ctcem = new CaloTowerCalib("EMCALIB");
-  //  ctcem->set_detector_type(CaloTowerDefs::CEMC);
-  //  CaloTowerCalib* ctcih = new CaloTowerCalib("IHCALIB");
-  //  ctcih->set_detector_type(CaloTowerDefs::HCALIN);
-  //  CaloTowerCalib* ctcoh = new CaloTowerCalib("OHCALIB");
-  //  ctcoh->set_detector_type(CaloTowerDefs::HCALOUT);
-  //  se->registerSubsystem(ctcem);
-  //  se->registerSubsystem(ctcih);
-  //  se->registerSubsystem(ctcoh);
-  Chi2checker* chi2c;
-  if(datorsim) chi2c = new Chi2checker("chi2checker",debug);
-  if(datorsim) se->registerSubsystem(chi2c);
-  RetowerCEMC *rcemc = new RetowerCEMC();
-  rcemc->set_towerinfo(true);
-  se->registerSubsystem(rcemc);
+  cout << "test1.5" << endl;
+  //Chi2checker* chi2c;
+  //if(datorsim) chi2c = new Chi2checker("chi2checker",debug);
+  //if(datorsim) se->registerSubsystem(chi2c);
+  //RetowerCEMC *rcemc = new RetowerCEMC();
+  //rcemc->set_towerinfo(true);
+  //se->registerSubsystem(rcemc);
   
   JetReco *towerjetreco = new JetReco();
   //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
-  towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER));
+  towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALIN_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALOUT_TOWERINFO));
-  towerjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
+  towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
   towerjetreco->set_algo_node("ANTIKT");
   towerjetreco->set_input_node("TOWER");
   //towerjetreco->Verbosity(verbosity);

@@ -8,6 +8,6 @@ wait for runs to finish (fast)
 
 bash get_image_lists.sh
 bash run_images_for_all.sh
-bash runhadd.sh
+bash allhadd.sh
 
 bash plot.C

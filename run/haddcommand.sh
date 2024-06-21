@@ -8,11 +8,12 @@ TYPE=sim
 if [ $1 -eq 1 ]; then
     TYPE=dat
     for rn in `ls  *.imagelist | awk -F'.' '{print $1}'`; do
-	hadd "output/sumroot/summed_${rn}_${TYPE}_base.root" `ls output/root/*$rn*${TYPE}*`
+	hadd "output/sumroot/summed_${rn}_${TYPE}_base.root" `ls output/root/*$rn*${TYPE}*fullfile*`
     done
-    ls output/sumroot/*dat* > sumdatlist.list
+    ls output/sumroot/*dat*fullfile* > sumdatlist.list
 fi
 
 
 
-hadd "summed_${TYPE}.root" `ls output/root/*${TYPE}*`
+hadd "summed_${TYPE}.root" `ls output/root/*${TYPE}*fullfile*`
+hadd "summed_jets_${TYPE}.root" `ls output/root/*${TYPE}*jetfile*`
