@@ -10,7 +10,7 @@ if [ $1 -eq 1 ]; then
     for rn in `ls  *.imagelist | awk -F'.' '{print $1}'`; do
 	hadd "output/sumroot/summed_${rn}_${TYPE}_base.root" `ls output/root/*$rn*${TYPE}*fullfile*`
     done
-    ls output/sumroot/*dat*fullfile* > sumdatlist.list
+    ls output/sumroot/*dat* > sumdatlist.list
 fi
 
 

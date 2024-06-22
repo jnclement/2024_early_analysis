@@ -316,9 +316,12 @@ int quickroot(string filebase="", int njob=0)
   float aceta[1000];
   int njetj = 0;
   int allcomp = 0;
+  float mbdq[256];
+  int mbd
   tree[1]->SetBranchAddress("triggervec",&trigvec);
   for(int h=nosim; h<2; ++h)
     {
+      tree[h]->
       tree[h]->SetBranchAddress("ismb",&ismb[h]);
       tree[h]->SetBranchAddress("_evtnum",&evtnum[h]);
       tree[h]->SetBranchAddress("ehjet",ehjet[h]);

@@ -10,7 +10,7 @@
 #include <calobase/TowerInfoContainerv1.h>
 #include <calobase/TowerInfoContainerv2.h>
 #include <calobase/TowerInfoContainerv3.h>
-#include <globalvertex/GlobalVertexMap.h>
+#include <globalvertex/GlobalVertexMapv1.h>
 #include <globalvertex/GlobalVertex.h>
 #include <g4main/PHG4VtxPoint.h>
 #include <g4main/PHG4TruthInfoContainer.h>
@@ -21,7 +21,7 @@
 #include <phool/PHCompositeNode.h>
 #include <phool/PHRandomSeed.h>
 #include <phool/getClass.h>
-#include <globalvertex/MbdVertexMap.h>
+#include <globalvertex/MbdVertexMapv1.h>
 #include <globalvertex/MbdVertex.h>
 #include <phhepmc/PHHepMCGenEventMap.h>
 #include <ffaobjects/EventHeaderv1.h>
@@ -112,12 +112,12 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
   _tree->Branch("ihcalphibin",ihcalphibin,"ihcalphibin[sectorih]/I");
   _tree->Branch("ohcalphibin",ohcalphibin,"ohcalphibin[sectoroh]/I");
-  //_tree->Branch("sectormb",&sectormb,"sectormb/I");
-  //_tree->Branch("mbenrgy",mbenrgy,"mbenrgy[sectormb]/F"); //MBD reported value (could be charge or time)
+  _tree->Branch("sectormb",&sectormb,"sectormb/I");
+  _tree->Branch("mbenrgy",mbenrgy,"mbenrgy[sectormb]/F"); //MBD reported value (could be charge or time)
   //_tree->Branch("emcalt",emcalt,"emcalt[sectorem]/F"); //time value of EMCal sector
   //_tree->Branch("ihcalt",ihcalt,"ihcalt[sectorih]/F");
   //_tree->Branch("ohcalt",ohcalt,"ohcalt[sectoroh]/F");
-  //_tree->Branch("vtx",vtx,"vtx[3]/F");
+  _tree->Branch("vtx",vtx,"vtx[3]/F");
   _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
   _tree->Branch("njet",&njet,"njet/I");
   _jett->Branch("njet",&njet,"njet/I");
@@ -178,6 +178,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
   if(!_datorsim) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
   JetContainer *jets = findNode::getClass<JetContainerv1>(topNode, "AntiKt_Tower_HIRecoSeedsRaw_r04");
+  MbdVertexMap* mbdvtxmap = findNode::getClass<MbdVertexMapv1>(topNode, "MbdVertexMap");
+  GlobalVertexMap* gvtxmap = findNode::getClass<GlobalVertexMapv1>(topNode, "GlobalVertexMap");
   Gl1Packet *gl1;
   ismb = 0;
   if(_datorsim)
@@ -193,6 +195,31 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       else
 	{
 	  ismb = 0;
+	}
+    }
+  vtx[0] = 0;
+  vtx[1] = 0;
+  vtx[2] = -99;
+  if(_datorsim)
+    {
+      for(auto iter = mbdvtxmap->begin(); iter != mbdvtxmap->end(); ++iter)
+	{
+	  MbdVertex* mbdvtx = iter->second;
+	  vtx[2] = mbdvtx->get_z();
+	  break;
+	}
+    }
+  else
+    {
+      auto iter = gvtxmap->begin();
+      while(iter != gvtxmap->end())
+	{
+	  GlobalVertex* gvtx = iter->second;
+	  vtx[2] = gvtx->get_z();
+	  vtx[0] = gvtx->get_x();
+	  vtx[1] = gvtx->get_y();
+	  iter++;
+	  break;
 	}
     }
   /*
@@ -459,7 +486,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	if(mbenrgy[i] > 0.4 && i > 63) southhit = 1;
 	mbdq += mbdhit->get_q();
       }
-    if(northhit && southhit) ismb = 1;
+    if(northhit && southhit)
+      {
+	ismb = 1;
+	++mbevt;
+      }
   }
   else
     {

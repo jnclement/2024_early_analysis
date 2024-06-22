@@ -180,7 +180,15 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
   TFile* rootfile[3];
   rootfile[0] = TFile::Open(sfilebase.c_str());
   rootfile[1] = TFile::Open(filebase.c_str());
-  
+  TTree* simt = (TTree*)rootfile[0]->Get("st");
+  int nsimmb = 0;
+  int simmb = 0;
+  simt->SetBranchAddress("outnmb",&simmb);
+  for(int i=0; i<simt->GetEntries(); i++)
+    {
+      simt->GetEntry(i);
+      nsimmb += simmb;
+    }
   long long unsigned int nevents = 0;
   int evtct = 0;
   int mbevt = 0;
@@ -224,7 +232,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
   //effevt[0];
   //effevt[1];
   //effevt[2];
-  cout << nmb  << " " << nevents << " " << 10000000 << " " << effevt[0] << " " << nJetTrig[1] << endl;
+  cout << nmb  << " " << nevents << " " << nsimmb << " " << effevt[0] << " " << nJetTrig[1] << endl;
   
   TH1D* h1_dphi[2][4];
   TH1D* h1_rej[2][4];
@@ -250,7 +258,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	    }
 	  
 	  h1_dphi[h][i] = (TH1D*)rootfile[h]->Get(("h1_dphi"+to_string(1)+"_"+to_string(i)).c_str());
-	  h1_dphi[h][i]->Scale(1./(h==0?10000000:nmb));
+	  h1_dphi[h][i]->Scale(1./(h==0?nsimmb:nmb));
 	  h1_dphi[h][i]->Fit("gaus","Q","",1.,5.);
 	  dphigaus[h][i] = h1_dphi[h][i]->GetFunction("gaus");
 	  h1_rej[h][i] = (TH1D*)rootfile[h]->Get(("h1_rej"+to_string(1)+"_"+to_string(i)).c_str());
@@ -266,13 +274,13 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	    }
 	  cout <<endl << h1_phi[h][i][0]->GetEntries() <<" " << h1_eta[h][i][0]->GetEntries() << endl << endl;
 	  jetfrac[h][i] = (TH1D*)rootfile[h]->Get(("jetfrac"+to_string(1)+"_"+to_string(i)).c_str());
-	  h1_mlt[h][i]->Scale(1./(h==0?(10000000):nmb));
+	  h1_mlt[h][i]->Scale(1./(h==0?(nsimmb):nmb));
 	  for(int j=0; j<5; ++j)
 	    {
 	      h1_phi[h][i][j]->Scale(1./(h1_phi[h][i][j]->Integral()));
 	      h1_eta[h][i][j]->Scale(1./(h1_eta[h][i][j]->Integral()));
 	    }
-	  if(i<3) jetfrac[h][i]->Scale(1./(h==0?(10000000):nmb));
+	  if(i<3) jetfrac[h][i]->Scale(1./(h==0?(nsimmb):nmb));
 	}
     }
   TH1D* h1_AJ[2][12];
@@ -281,16 +289,16 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
       for(int i=0; i<4; ++i)
 	{
 	  h1_AJ[h][i] = (TH1D*)rootfile[h]->Get(("h1_AJ"+to_string(1)+"_"+to_string(i)).c_str());
-	  h1_AJ[h][i]->Scale(1./h1_AJ[h][i]->Integral());//1./(h==0?(tree->GetEntries()*10000000):nmb));
+	  h1_AJ[h][i]->Scale(1./h1_AJ[h][i]->Integral());//1./(h==0?(tree->GetEntries()*nsimmb):nmb));
 	  h1_AJ[h][i+4] = (TH1D*)rootfile[h]->Get(("h1_AJ"+to_string(1)+"_"+to_string(i+4)).c_str());
 	  cout << h1_AJ[h][i+4] << endl;
-	  h1_AJ[h][i+4]->Scale(1./h1_AJ[h][i+4]->Integral());//1./(h==0?(tree->GetEntries()*10000000):nmb));
+	  h1_AJ[h][i+4]->Scale(1./h1_AJ[h][i+4]->Integral());//1./(h==0?(tree->GetEntries()*nsimmb):nmb));
 	  h1_AJ[h][i]->Fit("gaus","Q");
 	  ajgaus[h][i] = h1_AJ[h][i]->GetFunction("gaus");
 	  h1_AJ[h][i+4]->Fit("gaus","Q");
 	  ajgaus[h][i+4] = h1_AJ[h][i+4]->GetFunction("gaus");
 	  h1_AJ[h][i+8] = (TH1D*)rootfile[h]->Get(("h1_AJ"+to_string(1)+"_"+to_string(i+8)).c_str());
-	  h1_AJ[h][i+8]->Scale(1./h1_AJ[h][i+8]->Integral());//1./(h==0?(tree->GetEntries()*10000000):nmb));
+	  h1_AJ[h][i+8]->Scale(1./h1_AJ[h][i+8]->Integral());//1./(h==0?(tree->GetEntries()*nsimmb):nmb));
 	  h1_AJ[h][i+8]->Fit("gaus","Q");
 	  ajgaus[h][i+8] = h1_AJ[h][i+8]->GetFunction("gaus");
 	}
@@ -302,7 +310,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	{
 	  jetE[h][i] = (TH1D*)rootfile[h]->Get(("jetE"+to_string(1)+"_"+to_string(i)).c_str());
 	  cout << "jetE" << h << " " << i << " nentries: " << jetE[h][i]->GetEntries() << endl;
-	  jetE[h][i]->Scale(1./(h==0?(10000000):nmb));
+	  jetE[h][i]->Scale(1./(h==0?(nsimmb):nmb));
 	}
     }
   TCanvas* d = new TCanvas("","",1000,1000);
@@ -324,18 +332,18 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
       "E_{EM} < "+to_string(maxeh)+" E_{HAD}",
       "Leading Jet E > 7 GeV",
       "Subleading Jet E > 4 GeV",
-      "E_{jet} > 4 GeV",
-      "E_{jet} < 7 GeV",
-      "7 GeV < E_{jet} < 10 GeV",
-      "E_{jet} > 10 GeV"
+      "E_{T,jet} > 4 GeV",
+      "4 GeV < E_{T,jet} < 7 GeV",
+      "7 GeV < E_{T,jet} < 10 GeV",
+      "E_{T,jet} > 10 GeV"
     };
 
-  int dotext[ntext] = {1,1,1,1,1,1,1,1};
+  int dotext[ntext] = {0};
   float stdsize = 0.02;
   float stdx = 0.87;
   float stdy = 0.88-stdsize;
   int stdright = 1;
-  int nevtsim = 10000000;
+  int nevtsim = nsimmb;
   int nevtdat = nmb;
   int fitgdat = 1;
   int fitgsim = 0;
@@ -566,7 +574,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	      dotext[5] = 1;
 	    }
 	  dotext[0] = 1;
-	  dotext[8] = 1;
+	  dotext[8+i] = 1;
 	  fitgdat = 0;
 	  fitgsim = 0;
 	  std_hist(h1_eta[1][i][h], h1_eta[0][i][h]);
@@ -579,7 +587,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	  std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
 	  d->SaveAs(("output/rmg/summed_eta"+to_string(i)+"_"+to_string(h)+".png").c_str());
 	}
-      gPad->SetRightMargin(0.2);
+      //gPad->SetRightMargin(0.2);
       for(int i=0; i<4; ++i)
 	{
 	  for(int j=0; j<ntext; ++j)
@@ -633,7 +641,7 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
 	      dotext[5] = 1;
 	    }
 	  dotext[0] = 1;
-	  dotext[8] = 1;
+	  dotext[8+i] = 1;
 	  fitgdat = 0;
 	  fitgsim = 0;
 	  std_hist(h1_phi[1][i][h], h1_phi[0][i][h]);
