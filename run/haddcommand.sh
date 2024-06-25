@@ -16,4 +16,4 @@ fi
 
 
 hadd "summed_${TYPE}.root" `ls output/root/*${TYPE}*fullfile*`
-hadd "summed_jets_${TYPE}.root" `ls output/root/*${TYPE}*jetfile*`
+#hadd "summed_jets_${TYPE}.root" `ls output/root/*${TYPE}*jetfile*`

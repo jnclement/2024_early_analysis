@@ -316,12 +316,13 @@ int quickroot(string filebase="", int njob=0)
   float aceta[1000];
   int njetj = 0;
   int allcomp = 0;
-  float mbdq[256];
-  int mbd
+  float vtx[3];
+  float mbdq[128];
   tree[1]->SetBranchAddress("triggervec",&trigvec);
   for(int h=nosim; h<2; ++h)
     {
-      tree[h]->
+      tree[h]->SetBranchAddress("mbenrgy",mbdq);
+      tree[h]->SetBranchAddress("vtx",vtx);
       tree[h]->SetBranchAddress("ismb",&ismb[h]);
       tree[h]->SetBranchAddress("_evtnum",&evtnum[h]);
       tree[h]->SetBranchAddress("ehjet",ehjet[h]);
@@ -436,18 +437,26 @@ int quickroot(string filebase="", int njob=0)
       jetTrigE[i] = new TH1D(("jetTrigE"+to_string(i)).c_str(),"",400,0,40);
 	  //}
     }
+  TH1D* h1_zdist = new TH1D("h1_zdist","",200,-100,100);
+  TH1D* h1_mbdq = new TH1D("h1_mbdq","",1000,0,(idstr=="sim"?1000:10));
   for(int h=nosim; h<2; ++h)
     {
       cancount = 0;
   for(int i=0; i<tree[h]->GetEntries(); ++i)
     {
+      tree[h]->GetEntry(i);
+      h1_zdist->Fill(vtx[2]);
+      for(int j=0; j<128; ++j)
+	{
+	  h1_mbdq->Fill(mbdq[j]);
+	}
       highejet = 0;
       shighe = 0;
       sshighe = 0;
       int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
-      tree[h]->GetEntry(i);
-      ojt->Fill();
+
+
       int njo5 = 0;
       if(h==1) 
 	{
@@ -481,9 +490,11 @@ int quickroot(string filebase="", int njob=0)
 	    }
 	}
 	}
+      ojt->Fill();
       int trigvecproxy = 0;
       if(filename != simliststr) trigvecproxy = (trigvec>>10) & 1;
       if(!ismb[h] && !trigvecproxy) continue;
+      if(vtx[2] > 30) continue;
       if(evtnum[h] < prevt)
 	{
 	  eventbase[h] += 10000;
@@ -1017,6 +1028,8 @@ int quickroot(string filebase="", int njob=0)
   jetfile->WriteObject(ojt,ojt->GetName());
   outt->Fill();
   outfile->WriteObject(outt,outt->GetName());
+  outfile->WriteObject(h1_zdist,h1_zdist->GetName());
+  outfile->WriteObject(h1_mbdq,h1_mbdq->GetName());
   //outfile->WriteObject(jett[1],jett[1]->GetName());
   for(int h=nosim; h<2; ++h)
     {

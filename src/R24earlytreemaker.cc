@@ -16,6 +16,8 @@
 #include <g4main/PHG4TruthInfoContainer.h>
 #include <g4main/PHG4Particle.h>
 #include <mbd/MbdPmtContainer.h>
+#include <mbd/MbdPmtContainerV1.h>
+#include <mbd/MbdPmtSimContainerV1.h>
 #include <fun4all/Fun4AllReturnCodes.h>
 #include <phhepmc/PHHepMCGenEvent.h>
 #include <phool/PHCompositeNode.h>
@@ -182,6 +184,42 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   GlobalVertexMap* gvtxmap = findNode::getClass<GlobalVertexMapv1>(topNode, "GlobalVertexMap");
   Gl1Packet *gl1;
   ismb = 0;
+
+    MbdPmtContainer *mbdtow = findNode::getClass<MbdPmtContainer>(topNode, "MbdPmtContainer");
+  if(!mbdtow) mbdtow = findNode::getClass<MbdPmtContainerV1>(topNode, "MbdPmtContainer");
+  if(!mbdtow) mbdtow = findNode::getClass<MbdPmtSimContainerV1>(topNode, "MbdPmtContainer");
+  if(mbdtow)
+    {
+      int northhit = 0;
+      int southhit = 0;
+      sectormb = 128;//mbdtow->get_npmt();
+      //if(_debug) cout << "Got " << sectormb << " mbd sectors in sim." << endl;
+      for(int i=0; i<sectormb; ++i)
+	{
+	  MbdPmtHit *mbdhit = mbdtow->get_pmt(i);
+	  //if(_debug > 2) cout << "PMT " << i << " address: " << mbdhit << " charge: " << mbdhit->get_q() << endl;
+	  mbenrgy[i] = mbdhit->get_q();
+	  if(mbenrgy[i] > 100 && i < 64) northhit = 1;
+	  if(mbenrgy[i] > 100 && i > 63) southhit = 1;
+	  
+	  mbdq += mbdhit->get_q();
+	}
+      // if(_debug) cout << "n/s: " << northhit << "/" << southhit << endl;
+      if(northhit && southhit && !_datorsim)
+	{
+	  ismb = 1;
+	  ++mbevt;
+	}
+    }
+  else
+    {
+      for(int i=0; i<128; ++i)
+	{
+	  mbenrgy[i] = -1;
+	  
+	}
+      //if(_debug) cout << "No MBD info!" << endl;
+    }
   if(_datorsim)
     {
       gl1 = findNode::getClass<Gl1Packetv2>(topNode, "GL1Packet");
@@ -470,36 +508,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     }
   if(_debug > 1) cout << "Getting MBD info" << endl;
   
-  MbdPmtContainer *mbdtow = findNode::getClass<MbdPmtContainer>(topNode, "MbdPmtContainer");
-  if(mbdtow && !_datorsim)
-  {
-    int northhit = 0;
-    int southhit = 0;
-    sectormb = 128;//mbdtow->get_npmt();
-    //if(_debug) cout << "Got " << sectormb << " mbd sectors in sim." << endl;
-    for(int i=0; i<sectormb; ++i)
-      {
-	MbdPmtHit *mbdhit = mbdtow->get_pmt(i);
-	//if(_debug > 2) cout << "PMT " << i << " address: " << mbdhit << " charge: " << mbdhit->get_q() << endl;
-	mbenrgy[i] = mbdhit->get_q();
-	if(mbenrgy[i] > 0.4 && i < 64) northhit = 1;
-	if(mbenrgy[i] > 0.4 && i > 63) southhit = 1;
-	mbdq += mbdhit->get_q();
-      }
-    if(northhit && southhit)
-      {
-	ismb = 1;
-	++mbevt;
-      }
-  }
-  else
-    {
-      for(int i=0; i<128; ++i)
-	{
-	  mbenrgy[i] = -1;
-	  if(_debug > 1) cout << "No MBD info!" << endl;
-	}
-    }
+
   if(_debug > 1) cout << "Filling" << endl;
   //if(_debug) cout << rtemen[1535] << " " <<rtemen[sector_rtem-1] << endl;
   _tree->Fill();
