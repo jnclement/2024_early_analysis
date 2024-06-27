@@ -147,11 +147,13 @@ int plot(string filebase = "summed_dat.root", string filelist="sumdatlist.list",
   TTree* simt = (TTree*)rootfile[0]->Get("st");
   int nsimmb = 0;
   int simmb = 0;
+  int simevt = 0;
   simt->SetBranchAddress("outnmb",&simmb);
+  simt->SetBranchAddress("outevt",&simevt);
   for(int i=0; i<simt->GetEntries(); i++)
     {
       simt->GetEntry(i);
-      nsimmb += simmb;
+      nsimmb += simevt;
     }
   long long unsigned int nevents = 0;
   int evtct = 0;

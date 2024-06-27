@@ -4,7 +4,7 @@
 #done
 
 if [ $# -lt 2 ]; then
-    echo "need arguments run number for range of 100, physics or commissioning (anything or 0, respectively)"
+    echo "need arguments run number for range of 100 (e.g., enter 45255, get 45200-45300), physics or commissioning (anything or 0, respectively)"
     exit 1
 fi
 

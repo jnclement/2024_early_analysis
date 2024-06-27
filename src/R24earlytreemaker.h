@@ -66,9 +66,9 @@ class R24earlytreemaker : public SubsysReco
   float ehjet[1000];
   float aceta[1000];
   float alcet[24576];
-  float rtemen[1536];
-  int rtemet[1536];
-  int rtemph[1536];
+  float rtemen[24576];
+  int rtemet[24576];
+  int rtemph[24576];
   float emcalen[24576];
   float ihcalen[1536];
   float ohcalen[1536];

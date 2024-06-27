@@ -81,9 +81,9 @@ int quickroot(string filebase="", int njob=0)
   int sectorrt[2][3];
   int sectorem[2];
   int njet[2];
-  float enrt[2][3][1536];
-  int etart[2][3][1536];
-  int phirt[2][3][1536];
+  float enrt[2][3][24576];
+  int etart[2][3][24576];
+  int phirt[2][3][24576];
   int etabin[2][25000];
   int phibin[2][25000];
   float jet_e[2][1000];
@@ -96,6 +96,7 @@ int quickroot(string filebase="", int njob=0)
   ifstream list[2];
   string line;
   int nosim = 1;
+  //cout << "test-2" << endl;
   //list[0].open("sim.list",ifstream::in);
   list[1].open(filename,ifstream::in);
   string runnum = filename.substr(0,5);
@@ -150,6 +151,7 @@ int quickroot(string filebase="", int njob=0)
 	  if(breakit) break;
 	}
     }
+  //cout << "test-1" << endl;
   long long unsigned int nevents[2] = {0};
   int evtct[2];
   int mbevt[2];
@@ -180,6 +182,7 @@ int quickroot(string filebase="", int njob=0)
   outt->Branch("njmb",&njmb,"njmb/I");
   outt->Branch("nJetTrig",nJetTrig,"nJetTrig[4]/I");
   const int ncol = 9;
+  //cout << "test0" << endl;
   double red[ncol] = {1, 1, 1, 1, 1, 1, 1, 1};
   double grn[ncol] = {1, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125, 0};
   double blu[ncol] = {1, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125, 0};
@@ -196,7 +199,8 @@ int quickroot(string filebase="", int njob=0)
     {
       for(int i=0; i<4; ++i)
 	{
-	  if(i<3) h2_cal_eta_phi[h][i] = new TH2D(("h2_cal_eta_phi"+to_string(h)+to_string(i)).c_str(),"",24,-0.5,23.5,64,-0.5,63.5);
+	  if(i<3 && i>0) h2_cal_eta_phi[h][i] = new TH2D(("h2_cal_eta_phi"+to_string(h)+to_string(i)).c_str(),"",24,-0.5,23.5,64,-0.5,63.5);
+	  if(i==0) h2_cal_eta_phi[h][i] = new TH2D(("h2_cal_eta_phi"+to_string(h)+to_string(i)).c_str(),"",96,-0.5,95.5,256,-0.5,255.5);
 	  h2_jet_eta_phi[h][i] = new TH2D(("h2_jet_eta_phi"+to_string(h)+to_string(i)).c_str(),"",24,-1.1,1.1,64,-M_PI,M_PI);
 	  h2_jet_eta_e[h][i] = new TH2D(("h2_jet_eta_e"+to_string(h)+to_string(i)).c_str(),"",24,-1.1,1.1,160,4,20);
 	  h1_rej[h][i] = new TH1D(("h1_rej"+to_string(h)+"_"+to_string(i)).c_str(),"",150,0,15);
@@ -359,6 +363,7 @@ int quickroot(string filebase="", int njob=0)
   TH1D* alcethist = new TH1D("alcethist","",40,-2,2);
   TH1D* acetahist = new TH1D("acetahist","",40,-2,2);
   TTree* ojt = new TTree("ojt","the duplicated jet tree");
+  ojt->Branch("ismb",&ismb[1],"ismb/I");
   ojt->Branch("njet",&njet[1],"njet/I");
   ojt->Branch("jet_e",jet_e[1],"jet_e[njet]/F");
   ojt->Branch("jet_et",jet_et[1],"jet_et[njet]/F");
@@ -493,7 +498,11 @@ int quickroot(string filebase="", int njob=0)
       ojt->Fill();
       int trigvecproxy = 0;
       if(filename != simliststr) trigvecproxy = (trigvec>>10) & 1;
-      if(!ismb[h] && !trigvecproxy) continue;
+      if(!ismb[h] && !trigvecproxy && filename != simliststr)
+	{
+	  //cout << filename << " " << simliststr << " " << to_string(ismb[h]) << endl;
+	  continue;
+	}
       if(vtx[2] > 30) continue;
       if(evtnum[h] < prevt)
 	{
@@ -567,95 +576,7 @@ int quickroot(string filebase="", int njob=0)
 	      h2_cal_eta_phi[h][j]->Fill(etart[h][j][k],phirt[h][j][k],enrt[h][j][k]);
 	    }
 	}
-      //if(breakvar) continue;
-      /*
-      event_sum->Reset();
-      for(int j=0; j<3; ++j)
-	{
-	  event_disrt[j]->Reset();
-	  for(int k=0; k<sectorrt[h][j]; ++k)
-	    {
-	      event_disrt[j]->Fill(etart[h][j][k],phirt[h][j][k],enrt[h][j][k]);
-	      event_sum->Fill(etart[h][j][k],phirt[h][j][k],enrt[h][j][k]);
-	      //if(enrt[j][k] > 0.1) cout << j << " " << k << " " << etart[j][k] << " " << phirt[j][k] << " " << enrt[j][k] << endl;
-	    }
 
-	  //gPad->SetFrameFillColor(kBlack);
-	  c->cd(j+1);
-	  gPad->SetLogz();
-	  gPad->SetLeftMargin(0.165);
-	  gPad->SetRightMargin(0.19);
-	  //gPad->SetLeftMargin(0.2);
-	  //gPad->SetTopMargin(0);
-	  //gPad->SetBottomMargin(0);
-	  //cout << (12*((dispcount%18)/3)+2*(dispcount%3)+(j==2?7:j+1)) << endl;
-	  //c->cd(12*((dispcount%18)/3)+2*(dispcount%3)+(j==2?7:j+1));
-	  event_disrt[j]->SetTitle(("Event "+to_string(i)).c_str());
-	  event_disrt[j]->Draw("COLZ");
-	  TMarker* jets[1000];
-	  for(int k=0; k<njet[h]; ++k)
-	    {
-	      
-	      if(get_phi(jet_ph[k]) > 29.5 && get_phi(jet_ph[k]) < 37.5)
-		{
-		  continue;
-		}
-	      
-	      if(ehjet[h][k] > maxeh || ehjet[h][k] < 0) continue;
-	      if(seedD[h][k] > 0.65) continue;
-	      
-	      if(jet_e[h][k] > 10)
-		{
-		  highejet = 1;
-		}
-	      
-	      if(jet_e[h][k] > 20) shighe = 1;
-	      if(jet_e[h][k] > 25)
-		{
-		  sshighe = 1;
-		  save_etaphiE(etart[h][0], phirt[h][0], enrt[h][0], sectorrt[h][0], "output/json/"+runnum+"_"+to_string(h)+"_"+to_string(eventbase[h]+evtnum[h])+"_em.txt", 0);
-		  save_etaphiE(etart[h][1], phirt[h][1], enrt[h][1], sectorrt[h][1], "output/json/"+runnum+"_"+to_string(h)+"_"+to_string(eventbase[h]+evtnum[h])+"_ih.txt", 0);
-		  save_etaphiE(etart[h][2], phirt[h][2], enrt[h][2], sectorrt[h][2], "output/json/"+runnum+"_"+to_string(h)+"_"+to_string(eventbase[h]+evtnum[h])+"_oh.txt", 0);
-		}
-	      jets[k] = new TMarker(get_eta(jet_et[h][k]),get_phi(jet_ph[h][k]),43);
-	      jets[k]->SetMarkerSize(jet_e[h][k]/3);
-	      jets[k]->SetMarkerColor(kRed);
-	      //jets[k]->Draw();
-	      for(int l=0; l<ncircle; ++l)
-		{
-		  float eta = get_eta(jet_et[h][k]+0.4*cos(2*l*M_PI/ncircle));
-		  float phi = get_phi(jet_ph[h][k]+0.4*sin(2*l*M_PI/ncircle));
-		  if(eta > 24 || eta < 0) continue;
-		  if(phi > 64) phi -= 64;
-		  if(phi < 0) phi += 64;
-		  TMarker* circlemarker = new TMarker(eta,phi,20);
-		  circlemarker->SetMarkerSize(0.3);
-		  circlemarker->SetMarkerColor(kBlue);
-		  circlemarker->Draw();
-		}
-	    }
-	}
-      c->cd(4);
-      gPad->SetLogz();
-      gPad->SetRightMargin(0.19);
-      gPad->SetLeftMargin(0.165);
-      //gPad->SetTopMargin(0);
-      //gPad->SetBottomMargin(0);
-      //gPad->SetFrameFillColor(kBlack);
-      //c->cd(12*((dispcount%18)/3)+2*(dispcount%3)+8);
-      event_sum->SetTitle(("Event "+to_string(i)).c_str());
-      event_sum->Draw("COLZ");
-      for(int j=0; j<24; ++j)
-	{
-	  for(int k=0; k<64; ++k)
-	    {
-	      float val = event_sum->GetBinContent(j+1,k+1);
-	      //if(val > 0.5) cout << j << " " << k << " " << val << endl;
-	    }
-	}
-      */
-      //      TMarker* jets[1000];
-      int dodraw = 0;
       for(int k=0; k<njet[h]; ++k)
 	{
 	  float ET = jet_e[h][k]/cosh(jet_et[h][k]);
@@ -754,7 +675,7 @@ int quickroot(string filebase="", int njob=0)
 		  if(abs(jet_et[h][k]) > 0.7 || abs(jet_et[h][l]) > 0.7) continue;
 		  float dphi = jet_ph[h][k] - jet_ph[h][l];
 		  float deta = jet_et[h][k] - jet_et[h][l];
-		  if(sqrt(dphi*dphi+deta*deta) < 0.4 && seedD[h][k] < 0.65 && seedD[h][l] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0 && ehjet[h][l] > 0 && ehjet[h][l] < maxeh) dodraw = 1;
+		  //if(sqrt(dphi*dphi+deta*deta) < 0.4 && seedD[h][k] < 0.65 && seedD[h][l] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0 && ehjet[h][l] > 0 && ehjet[h][l] < maxeh) dodraw = 1;
 		  if(dphi < 0) dphi+=2*M_PI;
 		  //cout << dphi << endl;
 		  h1_dphi[h][0]->Fill(dphi);

@@ -31,10 +31,10 @@
 #include <centrality/CentralityReco.h>
 
 #include <r24earlytreemaker/R24earlytreemaker.h>
-//#include <chi2checker/Chi2checker.h>
+#include <chi2checker/Chi2checker.h>
 //#include <G4Setup_sPHENIX.C>
 using namespace std;
-//R__LOAD_LIBRARY(libchi2checker.so)
+R__LOAD_LIBRARY(libchi2checker.so)
 R__LOAD_LIBRARY(libr24earlytreemaker.so)
 R__LOAD_LIBRARY(libg4centrality.so)
 R__LOAD_LIBRARY(libFROG.so)
@@ -54,7 +54,7 @@ bool file_exists(const char* filename)
   std::ifstream infile(filename);
   return infile.good();
 }
-int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1)
+int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0)
 {
   cout << "test0" << endl;
   int verbosity = 0;
@@ -100,9 +100,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
   cout << "test1.5" << endl;
-  //Chi2checker* chi2c;
-  //if(datorsim) chi2c = new Chi2checker("chi2checker",debug);
-  //if(datorsim) se->registerSubsystem(chi2c);
+  Chi2checker* chi2c;
+  if(chi2check) chi2c = new Chi2checker("chi2checker",debug);
+  if(chi2check) se->registerSubsystem(chi2c);
   //RetowerCEMC *rcemc = new RetowerCEMC();
   //rcemc->set_towerinfo(true);
   //se->registerSubsystem(rcemc);
@@ -112,7 +112,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALIN_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALOUT_TOWERINFO));
-  towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
+  towerjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
   towerjetreco->set_algo_node("ANTIKT");
   towerjetreco->set_input_node("TOWER");
   //towerjetreco->Verbosity(verbosity);
@@ -124,8 +124,10 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   cout << "test4" << endl;
   se->Print("NODETREE");
   se->run(nevt);
+  se->Print("NODETREE");
   cout << "Ran all events" << endl;
   se->End();
+  se->Print("NODETREE");
   cout << "Ended server" << endl;
   delete se;
   cout << "Deleted server" << endl;

@@ -367,7 +367,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 
   if(rtem)
     { //get EMCal values
-      int nchannels = 1536; //channels in emcal
+      int nchannels = 24576; //channels in emcal
       for(int i=0; i<nchannels; ++i) //loop over channels 
 	{
 	  TowerInfo *tower = rtem->get_tower_at_channel(i); //get EMCal tower
