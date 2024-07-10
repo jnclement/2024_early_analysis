@@ -19,3 +19,4 @@ run/sPhenixStyle.h
 run/summed.root
 run/*.root
 run/*.sub
+run/backup/
