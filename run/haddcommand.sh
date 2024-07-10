@@ -3,17 +3,21 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-TYPE=sim    
-
 if [ $1 -eq 1 ]; then
     TYPE=dat
-    for rn in `ls  *.imagelist | awk -F'.' '{print $1}'`; do
-	hadd "output/sumroot/summed_${rn}_${TYPE}_base.root" `ls output/root/*$rn*${TYPE}*fullfile*`
+    for rn in `ls  lists/*.imagelist | awk -F'.' '{print $1}' | awk -F'/' '{print $2}'`; do
+	BASENAME="condor_${rn}_hadd"
+
+	SUBNAME="${BASENAME}.sub"
+	
+	echo "executable = haddsingle.sh" > $SUBNAME
+	echo "arguments = ${rn} ${TYPE}" >> $SUBNAME
+	echo "output = /sphenix/tg/tg01/jets/jocl/out/output_${BASENAME}.out" >> $SUBNAME
+	echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME
+	echo "when_to_transfer_output = ON_EXIT" >> $SUBNAME
+	echo "error = /sphenix/tg/tg01/jets/jocl/err/error_${BASENAME}.err" >> $SUBNAME
+	echo "log = /tmp/jocl_${BASENAME}.log" >> $SUBNAME
+	echo "queue 1" >> $SUBNAME
+	condor_submit $SUBNAME
     done
-    ls output/sumroot/*dat* > sumdatlist.list
 fi
-
-
-
-hadd "summed_${TYPE}.root" `ls output/root/*${TYPE}*fullfile*`
-#hadd "summed_jets_${TYPE}.root" `ls output/root/*${TYPE}*jetfile*`

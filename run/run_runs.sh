@@ -12,21 +12,17 @@ if [ $evt -gt 10000 ]; then
     evt=0
 fi
 echo $evt
-for rn in `ls  *.list | awk -F'.' '{print $1}'`; do
+for rn in `ls  lists/*.list | awk -F'.' '{print $1}' | awk -F'/' '{print $2}'`; do
     rn=$(expr $rn + 0)
-    nfile=`wc -l ${rn}.list | awk '{print $1}'`
+    nfile=`wc -l lists/${rn}.list | awk '{print $1}'`
     if [ $nfile -gt $nmax ]; then
 	nfile=$nmax
     fi
 #    nfile=$(( ($nfile + 9) / 10 ))
+    mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$rn
+    mkdir -p /sphenix/tg/tg01/jets/jocl/err/$rn
+    mkdir -p /sphenix/tg/tg01/jets/jocl/out/$rn
     bash run_everything.sh $1 $nfile $rn 1 $evt $c2c
 done
 
-#for rn in `ls  /sphenix/tg/tg01/commissioning/CaloCalibWG/bseidlitz/tempDEST_noSZS/*0000* | awk -F'-' '{print $2}'`; do
-#    rn=$(expr $rn + 0)
-#    nfile=`wc -l ${rn}_noZS.list | awk '{print $1}'`
-#    if [ $nfile -gt $nmax ]; then
-#	nfile=$nmax
-#    fi
-#    bash run_everything.sh $1 $nfile $rn 0
-#done
+

@@ -58,10 +58,11 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 {
   cout << "test0" << endl;
   int verbosity = 0;
-  string filename = "output/evt/events_"+tag+(tag==""?"":"_");
+  string filename = "/sphenix/tg/tg01/jets/jocl/evt/"+to_string((datorsim?rn:nproc))+"/events_"+tag+(tag==""?"":"_");
   //filename += (szs?"yszs_":"nszs_")+to_string(szs)+"_"+
   filename += to_string(rn)+"_";
-  filename += to_string(nproc);
+  filename += to_string(nproc)+"_";
+  filename += to_string(nevt);
   filename += ".root";
   FROG *fr = new FROG();
   cout << "test0.5" << endl;
@@ -80,20 +81,31 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   string line1;
   ifstream list2;
   string line2;
-  list1.open(datorsim?("./"+to_string(rn)+".list"):"dst_calo_cluster.list", ifstream::in);
-  if(!datorsim) list2.open("dst_global.list",ifstream::in);
-  if(!list1 || !list2) exit(1);
+  ifstream list3;
+  string line3;
+  list1.open(datorsim?("./lists/"+to_string(rn)+".list"):"lists/dst_calo_cluster.list", ifstream::in);
+  if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
+  if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
+  if(!list1)
+    {
+      cout << "nolist!" << endl;
+      exit(1);
+    }
   Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
   Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
+  Fun4AllInputManager *in_3 = new Fun4AllDstInputManager("DSTin3");
   for(int i=0; i<nproc+1; i++)
     {
       getline(list1, line1);
       if(!datorsim) getline(list2, line2);
+      if(!datorsim) getline(list3, line3);
     }
   in_1->AddFile(line1);
   if(!datorsim) in_2->AddFile(line2);
+  if(!datorsim) in_3->AddFile(line3);
   se->registerInputManager( in_1 );
   if(!datorsim) se->registerInputManager( in_2 );
+  if(!datorsim) se->registerInputManager( in_3 );
   // this points to the global tag in the CDB
   //rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
   // The calibrations have a validity range set by the beam clock which is not read out of the prdfs as of now
@@ -112,13 +124,13 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALIN_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALOUT_TOWERINFO));
-  towerjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
+  towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
   towerjetreco->set_algo_node("ANTIKT");
   towerjetreco->set_input_node("TOWER");
   //towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
   cout << "test2" << endl;
-  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim);
+  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
   cout << "test3" << endl;
   se->registerSubsystem( tt );
   cout << "test4" << endl;
