@@ -14,7 +14,7 @@ class R24earlytreemaker : public SubsysReco
 {
  public:
 
-  R24earlytreemaker(const std::string &name = "R24earlytreemaker", const int debug = 0, int datorsim = 1);
+  R24earlytreemaker(const std::string &name = "R24earlytreemaker", const int debug = 0, int datorsim = 1, int dotow = 0);
 
   virtual ~R24earlytreemaker();
 
@@ -37,6 +37,13 @@ class R24earlytreemaker : public SubsysReco
 
  private:
   int ismb = 0;
+  int _cluster_n;
+  int _cluster_nTower[10000];
+  float _cluster_Ecore[10000];
+  float _cluster_E[10000];
+  float _cluster_phi[10000];
+  float _cluster_eta[10000];
+  int _dotow;
   int _datorsim;
   int _evtnum;
   int _evtct;
@@ -63,6 +70,10 @@ class R24earlytreemaker : public SubsysReco
   float jet_r[1000];
   float jet_et[1000];
   float jet_ph[1000];
+  int ntj;
+  float tjet_e[1000];
+  float tjet_eta[1000];
+  float tjet_phi[1000];
   float ehjet[1000];
   float aceta[1000];
   float alcet[24576];

@@ -59,11 +59,14 @@
 #include <centrality/CentralityInfo.h>
 #include <calotrigger/MinimumBiasInfo.h>
 #include <ffarawobjects/Gl1Packetv2.h>
+#include <jetbase/JetMapv1.h>
+#include <jetbase/JetMap.h>
 using namespace std;
 //____________________________________________________________________________..
-R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim):
+R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim, int dotow):
   SubsysReco("test")//).c_str())
 {
+  _dotow = dotow;
   _evtnum = 0;
   _evtct = 0;
   _foutname = name;
@@ -94,33 +97,36 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _jett->Branch("ismb",&ismb,"ismb/I");
   _jett->Branch("allcomp",&allcomp,"allcomp/I");
   _jett->Branch("alcet",alcet,"alcet[allcomp]/F");
-  //_tree->Branch("emetot",&emetot,"emetot/F");
-  //_tree->Branch("ihetot",&ihetot,"ihetot/F");
-  //_tree->Branch("ohetot",&ohetot,"ohetot/F");
-  _tree->Branch("sectorem",&sectorem,"sectorem/I"); //Number of hit sectors in the emcal
-  _tree->Branch("sectorih",&sectorih,"sectorih/I"); // IHcal etc.
-  _tree->Branch("sectoroh",&sectoroh,"sectoroh/I");
-  //_tree->Branch("sectoremuc",&sectoremuc,"sectoremuc/I");
-  _tree->Branch("emcalen",emcalen,"emcalen[sectorem]/F"); //energy per EMCal sector
-  _tree->Branch("ihcalen",ihcalen,"ihcalen[sectorih]/F"); // per IHCal sector (etc.)
-  _tree->Branch("ohcalen",ohcalen,"ohcalen[sectoroh]/F");
-  //_tree->Branch("emcalchi2",emcalchi2,"emcalchi2[sectorem]/F"); //energy per EMCal sector
-  //_tree->Branch("ihcalchi2",ihcalchi2,"ihcalchi2[sectorih]/F"); // per IHCal sector (etc.)
-  //_tree->Branch("ohcalchi2",ohcalchi2,"ohcalchi2[sectoroh]/F");
-  //_tree->Branch("emcalenuc",emcalenuc,"emcalenuc[sectoremuc]/F");
-  _tree->Branch("emcaletabin",emcaletabin,"emcaletabin[sectorem]/I"); //eta of EMCal sector
-  _tree->Branch("ihcaletabin",ihcaletabin,"ihcaletabin[sectorih]/I");
-  _tree->Branch("ohcaletabin",ohcaletabin,"ohcaletabin[sectoroh]/I");
-  _tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
-  _tree->Branch("ihcalphibin",ihcalphibin,"ihcalphibin[sectorih]/I");
-  _tree->Branch("ohcalphibin",ohcalphibin,"ohcalphibin[sectoroh]/I");
+  _tree->Branch("emetot",&emetot,"emetot/F");
+  _tree->Branch("ihetot",&ihetot,"ihetot/F");
+  _tree->Branch("ohetot",&ohetot,"ohetot/F");
+  if(_dotow) 
+    {
+      //_tree->Branch("sectorem",&sectorem,"sectorem/I"); //Number of hit sectors in the emcal
+      _tree->Branch("sectorih",&sectorih,"sectorih/I"); // IHcal etc.
+      _tree->Branch("sectoroh",&sectoroh,"sectoroh/I");
+      //_tree->Branch("sectoremuc",&sectoremuc,"sectoremuc/I");
+      //_tree->Branch("emcalen",emcalen,"emcalen[sectorem]/F"); //energy per EMCal sector
+      _tree->Branch("ihcalen",ihcalen,"ihcalen[sectorih]/F"); // per IHCal sector (etc.)
+      _tree->Branch("ohcalen",ohcalen,"ohcalen[sectoroh]/F");
+      //_tree->Branch("emcalchi2",emcalchi2,"emcalchi2[sectorem]/F"); //energy per EMCal sector
+      //_tree->Branch("ihcalchi2",ihcalchi2,"ihcalchi2[sectorih]/F"); // per IHCal sector (etc.)
+      //_tree->Branch("ohcalchi2",ohcalchi2,"ohcalchi2[sectoroh]/F");
+      //_tree->Branch("emcalenuc",emcalenuc,"emcalenuc[sectoremuc]/F");
+      //_tree->Branch("emcaletabin",emcaletabin,"emcaletabin[sectorem]/I"); //eta of EMCal sector
+      _tree->Branch("ihcaletabin",ihcaletabin,"ihcaletabin[sectorih]/I");
+      _tree->Branch("ohcaletabin",ohcaletabin,"ohcaletabin[sectoroh]/I");
+      //_tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
+      _tree->Branch("ihcalphibin",ihcalphibin,"ihcalphibin[sectorih]/I");
+      _tree->Branch("ohcalphibin",ohcalphibin,"ohcalphibin[sectoroh]/I");
+    }
   _tree->Branch("sectormb",&sectormb,"sectormb/I");
   _tree->Branch("mbenrgy",mbenrgy,"mbenrgy[sectormb]/F"); //MBD reported value (could be charge or time)
   //_tree->Branch("emcalt",emcalt,"emcalt[sectorem]/F"); //time value of EMCal sector
   //_tree->Branch("ihcalt",ihcalt,"ihcalt[sectorih]/F");
   //_tree->Branch("ohcalt",ohcalt,"ohcalt[sectoroh]/F");
   _tree->Branch("vtx",vtx,"vtx[3]/F");
-  _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
+  if(_dotow) _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
   _tree->Branch("njet",&njet,"njet/I");
   _jett->Branch("njet",&njet,"njet/I");
   _jett->Branch("aceta",aceta,"aceta[njet]/F");
@@ -134,12 +140,29 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _jett->Branch("jet_et",jet_et,"jet_et[njet]/F");
   _jett->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
 
-  _tree->Branch("rtemen",rtemen,"rtemen[sector_rtem]/F");
-  _tree->Branch("rtemet",rtemet,"rtemet[sector_rtem]/I");
-  _tree->Branch("rtemph",rtemph,"rtemph[sector_rtem]/I");
+  if(_dotow)
+    {
+      _tree->Branch("rtemen",rtemen,"rtemen[sector_rtem]/F");
+      _tree->Branch("rtemet",rtemet,"rtemet[sector_rtem]/I");
+      _tree->Branch("rtemph",rtemph,"rtemph[sector_rtem]/I");
+    }
   _tree->Branch("ehjet",ehjet,"ehjet[njet]/F");
   _tree->Branch("_evtnum",&_evtnum,"_evtnum/I");
+  _tree->Branch("cluster_n",&_cluster_n,"cluster_n/I");
+  _tree->Branch("cluster_E",_cluster_E,"cluster_E[cluster_n]/F");
+  _tree->Branch("cluster_Ecore",_cluster_Ecore,"cluster_Ecore[cluster_n]/F");
+  _tree->Branch("cluster_phi",_cluster_phi,"cluster_phi[cluster_n]/F");
+  _tree->Branch("cluster_eta",_cluster_eta,"cluster_eta[cluster_n]/F");
+  //_tree->Branch("cluster_r",_cluster_r,"cluster_r[cluster_n]/F");
+  //_tree->Branch("cluster_chi2",_cluster_chi2,"cluster_chi2[cluster_n]/F");
+  //_tree->Branch("cluster_template_chi2",_cluster_template_chi2,"cluster_template_chi2[cluster_n]/F");
+  _tree->Branch("cluster_nTower",_cluster_nTower,"cluster_nTower[cluster_n]/I");
+  if(!_datorsim) _tree->Branch("ntj",&ntj,"ntj/I");
+  if(!_datorsim) _tree->Branch("tjet_e",tjet_e,"tjet_e[ntj]/F");
+  if(!_datorsim) _tree->Branch("tjet_eta",tjet_eta,"tjet_eta[ntj]/F");
+  if(!_datorsim) _tree->Branch("tjet_phi",tjet_phi,"tjet_phi[ntj]/F");
   if(_debug > 1) cout << "Init done"  << endl;
+  
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -158,6 +181,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(_debug > 1) cout << "Event " << _evtct << "Event " << _evtnum << endl;
   float mbdq = 0;
   //reset lengths to all zero
+  allcomp = 0;
+  ntj = 0;
   sectorem = 0;
   sectorih = 0;
   sectoroh = 0;
@@ -185,9 +210,13 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   Gl1Packet *gl1;
   ismb = 0;
 
-    MbdPmtContainer *mbdtow = findNode::getClass<MbdPmtContainer>(topNode, "MbdPmtContainer");
+  MbdPmtContainer *mbdtow = findNode::getClass<MbdPmtContainer>(topNode, "MbdPmtContainer");
   if(!mbdtow) mbdtow = findNode::getClass<MbdPmtContainerV1>(topNode, "MbdPmtContainer");
   if(!mbdtow) mbdtow = findNode::getClass<MbdPmtSimContainerV1>(topNode, "MbdPmtContainer");
+  RawClusterContainer *clusters = findNode::getClass<RawClusterContainer>(topNode, "CLUSTERINFO_CEMC");
+  if(!clusters) clusters = findNode::getClass<RawClusterContainer>(topNode, "CLUSTER_CEMC");       
+  JetMap* truthjets = findNode::getClass<JetMapv1>(topNode, "AntiKt_Truth_r04");
+
   if(mbdtow)
     {
       int northhit = 0;
@@ -199,8 +228,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  MbdPmtHit *mbdhit = mbdtow->get_pmt(i);
 	  //if(_debug > 2) cout << "PMT " << i << " address: " << mbdhit << " charge: " << mbdhit->get_q() << endl;
 	  mbenrgy[i] = mbdhit->get_q();
-	  if(mbenrgy[i] > 100 && i < 64) northhit = 1;
-	  if(mbenrgy[i] > 100 && i > 63) southhit = 1;
+	  if(mbenrgy[i] > 40 && i < 64) northhit = 1;
+	  if(mbenrgy[i] > 40 && i > 63) southhit = 1;
 	  
 	  mbdq += mbdhit->get_q();
 	}
@@ -235,9 +264,25 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  ismb = 0;
 	}
     }
+  int isjettrig = ((triggervec >> 16) & 1) | ((triggervec >> 17) & 1) | ((triggervec >> 18) & 1) | ((triggervec >> 19) & 1);
+  //if(!ismb &! isjettrig) return Fun4AllReturnCodes::EVENT_OK;
+  ntj = 0;
+  if(truthjets && !_datorsim)
+    {
+      for(auto iter = truthjets->begin(); iter != truthjets->end(); ++iter)
+	{
+	  Jet* jet = iter->second;
+	  tjet_e[ntj] = jet->get_e();
+	  if(tjet_e[ntj] < 4) continue;
+	  tjet_eta[ntj] = jet->get_eta();
+	  tjet_phi[ntj] = jet->get_phi();
+	  ntj++;
+	}
+    }
+
   vtx[0] = 0;
   vtx[1] = 0;
-  vtx[2] = -99;
+  vtx[2] = NAN;
   if(_datorsim)
     {
       for(auto iter = mbdvtxmap->begin(); iter != mbdvtxmap->end(); ++iter)
@@ -259,6 +304,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  iter++;
 	  break;
 	}
+    }
+  if(std::isnan(vtx[2]) || vtx[2] > 1000)
+    {
+      if(ismb) mbevt--;
+      return Fun4AllReturnCodes::EVENT_OK;
     }
   /*
   else
@@ -361,35 +411,96 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     }
   //int jetfired = ((1 & triggervec >> 20) | (1 & triggervec >> 21) | (1 & triggervec >> 22) | (1 & triggervec >> 23));
   //int phtfired = ((1 & triggervec >> 28) | (1 & triggervec >> 29) | (1 & triggervec >> 30) | (1 & triggervec >> 31));
-  if(!njet) return Fun4AllReturnCodes::EVENT_OK;
+  //if(!njet)return Fun4AllReturnCodes::EVENT_OK;
 
   if(_debug > 1) cout << "Getting retowered EMCal towers: " << endl;
-
-  if(rtem)
-    { //get EMCal values
-      int nchannels = 24576; //channels in emcal
-      for(int i=0; i<nchannels; ++i) //loop over channels 
-	{
-	  TowerInfo *tower = rtem->get_tower_at_channel(i); //get EMCal tower
-	  rtemen[sector_rtem] = tower->get_energy(); //actual tower energy (calibrated)
-	  //cout << rtemen[sector_rtem] << " " << tower->get_energy() << endl;
-	  int key = rtem->encode_key(i);
-	  rtemet[sector_rtem] = rtem->getTowerEtaBin(key);
-	  rtemph[sector_rtem] = rtem->getTowerPhiBin(key);
-	  sector_rtem++;
-	  //cout << sector_rtem << endl;
-	}
-      if(_debug > 1) cout << sector_rtem << endl;
-    }
-  else
+  if(_dotow) 
     {
-      if(_debug > 1) cout << "No retowered towers!" << endl;
+      if(rtem)
+	{ //get EMCal values
+	  int nchannels = 24576; //channels in emcal
+	  for(int i=0; i<nchannels; ++i) //loop over channels 
+	    {
+	      TowerInfo *tower = rtem->get_tower_at_channel(i); //get EMCal tower
+	      rtemen[sector_rtem] = tower->get_energy(); //actual tower energy (calibrated)
+	      //cout << rtemen[sector_rtem] << " " << tower->get_energy() << endl;
+	      int key = rtem->encode_key(i);
+	      rtemet[sector_rtem] = rtem->getTowerEtaBin(key);
+	      rtemph[sector_rtem] = rtem->getTowerPhiBin(key);
+	      sector_rtem++;
+	      //cout << sector_rtem << endl;
+	    }
+	  if(_debug > 1) cout << sector_rtem << endl;
+	}
+      else
+	{
+	  if(_debug > 1) cout << "No retowered towers!" << endl;
+	}
     }
 
   emetot = 0;
   ohetot = 0;
   ihetot = 0;
   if(_debug > 1) cout << "Getting EMCal info" << endl;
+
+  if(clusters)
+    {
+      RawClusterContainer::ConstRange begin_end = clusters->getClusters();
+      _cluster_n = 0;
+      for (RawClusterContainer::ConstIterator rtiter = begin_end.first; rtiter != begin_end.second; ++rtiter)
+	{
+	  RawCluster *cluster = rtiter->second;
+	  if (cluster->get_energy() < 0.5) continue;
+	  //if (cluster->get_chi2() > 10) continue;                                                                                                                                                             
+	  /*
+	    float best_E = -1;
+	    float best_chi2 = -1;
+	    
+	    RawCluster::TowerConstRange begin_end_Towers = cluster->get_towers();
+	    for (RawCluster::TowerConstIterator iter = begin_end_Towers.first; iter != begin_end_Towers.second; ++iter) {
+	    
+	    int index1 = RawTowerDefs::decode_index1( iter->first );
+	    int index2 = RawTowerDefs::decode_index2( iter->first );
+	    unsigned int key = TowerInfoDefs::encode_emcal( index1, index2 );
+	    TowerInfo* tower = towers_EM->get_tower_at_key( key );
+	    
+	    if ( tower->get_energy() > best_E ) {
+	    best_E = tower->get_energy();
+	    best_chi2 = tower->get_chi2();
+	    }
+	    
+	    }
+	  */
+	  //if (best_chi2 > 1e+5) continue;                                                                                                                                                                     
+	  
+	  //float theta = atan2( cluster->get_r() , cluster->get_z() );                                                                                                                                         
+	  //float eta = -1 * log( tan( theta / 2.0 ) );                                                                                                                                                         
+	  
+	  //std::cout << " -> cluster with E / eta / phi = " << cluster->get_energy() << " / " << eta << " / " << cluster->get_phi() << std::endl;                                                              
+	  
+	  //_cluster_template_chi2[ _cluster_n ] = best_chi2;
+	  
+	  //_cluster_chi2[_cluster_n] = cluster->get_chi2();
+	  _cluster_nTower[_cluster_n] = cluster->getNTowers();
+	  
+	  _cluster_Ecore[_cluster_n] = cluster->get_ecore();
+	  _cluster_E[_cluster_n] = cluster->get_energy();
+	  
+	  _cluster_phi[_cluster_n] = cluster->get_phi();
+	  _cluster_eta[_cluster_n] = asinh((cluster->get_z()-vtx[2])/cluster->get_r());
+	  
+	  
+	  //std::cout << _cluster_z[_cluster_n] << " " << _cluster_r[_cluster_n] << " " << _cluster_E[_cluster_n] << std::endl;                                                                                 
+	  
+	  _cluster_n++;
+	  
+	}
+      
+    }
+  else
+    {
+      if(_debug > 0) cout << "No cluster info!" << endl;
+    }
   if(towersEM)
     { //get EMCal values
       int nchannels = 24576; //channels in emcal
@@ -401,29 +512,41 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	{
 	  TowerInfo *tower = towersEM->get_tower_at_channel(i); //get EMCal tower
 	  int key = towersEM->encode_key(i);
-	  int etabin = towersEM->getTowerEtaBin(key);
-	  int phibin = towersEM->getTowerPhiBin(key);
-	  float time = towersEM->get_tower_at_channel(i)->get_time_float(); //get time
-	  if (tower->get_isHot() || tower->get_isBadChi2()) { 
-	    //if(_debug) cout << etabin << " " << phibin << " " << tower->get_isBadChi2() << tower->get_energy() << endl;
-	    continue;
-	  }
+	  int etabin, phibin;
+	  if(_dotow)
+	    {
+	      etabin = towersEM->getTowerEtaBin(key);
+	      phibin = towersEM->getTowerPhiBin(key);
+	    }
+	  //float time = towersEM->get_tower_at_channel(i)->get_time_float(); //get time
+	  if (tower->get_isHot() || tower->get_isBadChi2())
+	    { 
+	      //if(_debug) cout << etabin << " " << phibin << " " << tower->get_isBadChi2() << tower->get_energy() << endl;
+	      continue;
+	    }
 	  emcalen[sectorem] = tower->get_energy(); //actual tower energy (calibrated)
-	  emcalchi2[sectorem] = tower->get_chi2();
+	  //emcalchi2[sectorem] = tower->get_chi2();
+	  /*
 	  if(emcalen[sectorem] == 0) nzero++;
 	  if(emcalen[sectorem] > 0.1)
 	    {
 	      //if(_debug > 1) cout << emcalen[sectorem] << endl;
 	      nlarge++;
 	    }
+	  
 	  if(emcalen[sectorem] > 0.005) nover++;
 	  if(emcalen[sectorem] < -0.005) nneg++;
+	  */
 	  emetot += emcalen[sectorem];
-	  emcalt[sectorem] = time; //store time value
-	  emcaletabin[sectorem] = etabin; //get eta and phi of towers
-	  emcalphibin[sectorem] = phibin;
-	  sectorem++;
+	  //emcalt[sectorem] = time; //store time value
+	  if(_dotow) 
+	    {
+	      emcaletabin[sectorem] = etabin; //get eta and phi of towers
+	      emcalphibin[sectorem] = phibin;
+	      sectorem++;
+	    }
 	}
+      /*
       if(_debug > 1)
 	{
 	  cout << "Nlarge: " << nlarge << endl;
@@ -432,6 +555,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  cout << "Nzero: " <<nzero << endl;
 	}
       if(_debug > 1) cout << sectorem << endl;
+      */
     }
   else
     {
@@ -450,19 +574,29 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	{
 	  TowerInfo *tower = towersIH->get_tower_at_channel(i); //get IHCal tower
 	  int key = towersIH->encode_key(i);
-	  int etabin = towersIH->getTowerEtaBin(key);
-	  int phibin = towersIH->getTowerPhiBin(key);
-	  float time = towersIH->get_tower_at_channel(i)->get_time_float(); //get time
-	  if (tower->get_isHot() || tower->get_isBadChi2()) { 
-	    continue;
-	  }
+	  int etabin, phibin;
+	  if(_dotow) 
+	    {
+	      etabin = towersIH->getTowerEtaBin(key);
+	      phibin = towersIH->getTowerPhiBin(key);
+	    }
+	  //float time = towersIH->get_tower_at_channel(i)->get_time_float(); //get time
+	  if (tower->get_isHot() || tower->get_isBadChi2())
+	    { 
+	      continue;
+	    }
 	  ihcalen[sectorih] = tower->get_energy(); //actual tower energy (calibrated)
 	  ihetot += ihcalen[sectorih];
+	  /*
 	  ihcalchi2[sectorih] = tower->get_chi2();
 	  ihcalt[sectorih] = time; //store time value
-	  ihcaletabin[sectorih] = etabin; //get eta and phi of towers
-	  ihcalphibin[sectorih] = phibin;
-	  sectorih++;
+	  */
+	  if(_dotow)
+	    {
+	      ihcaletabin[sectorih] = etabin; //get eta and phi of towers
+	      ihcalphibin[sectorih] = phibin;
+	      sectorih++;
+	    }
 	}
       if(_debug > 1) cout << sectorih << endl;
     }
@@ -482,19 +616,27 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	{
 	  TowerInfo *tower = towersOH->get_tower_at_channel(i); //get OHCal tower
 	  int key = towersOH->encode_key(i);
-	  int etabin = towersOH->getTowerEtaBin(key);
-	  int phibin = towersOH->getTowerPhiBin(key);
-	  float time = towersOH->get_tower_at_channel(i)->get_time_float(); //get time
-	  if (tower->get_isHot() || tower->get_isBadChi2()) { 
-	    continue;
-	  }
+	  int etabin, phibin;
+	  if(_dotow) 
+	    {
+	      etabin = towersOH->getTowerEtaBin(key);
+	      phibin = towersOH->getTowerPhiBin(key);
+	    }
+	  //float time = towersOH->get_tower_at_channel(i)->get_time_float(); //get time
+	  if (tower->get_isHot() || tower->get_isBadChi2())
+	    { 
+	      continue;
+	    }
 	  ohcalen[sectoroh] = tower->get_energy(); //actual tower energy (calibrated)
 	  ohetot += ohcalen[sectoroh];
-	  ohcalchi2[sectoroh] = tower->get_chi2();
-	  ohcalt[sectoroh] = time; //store time value
-	  ohcaletabin[sectoroh] = etabin; //get eta and phi of towers
-	  ohcalphibin[sectoroh] = phibin;
-	  sectoroh++;
+	  //ohcalchi2[sectoroh] = tower->get_chi2();
+	  //ohcalt[sectoroh] = time; //store time value
+	  if(_dotow) 
+	    {
+	      ohcaletabin[sectoroh] = etabin; //get eta and phi of towers
+	      ohcalphibin[sectoroh] = phibin;
+	      sectoroh++;
+	    }
 	}
       if(_debug > 1) cout << sectoroh << endl;
     }
@@ -506,7 +648,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  ohcalt[i] = -1;
 	}
     }
-  if(_debug > 1) cout << "Getting MBD info" << endl;
+  //if(_debug > 1) cout << "Getting MBD info" << endl;
   
 
   if(_debug > 1) cout << "Filling" << endl;
