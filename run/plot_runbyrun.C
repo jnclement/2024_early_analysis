@@ -151,6 +151,7 @@ int plot_runbyrun()
     {
       tinty[i] = new TH1D(("tinty"+to_string(i)).c_str(),"",(uut-lut),lut,uut);
       tinty[i]->GetXaxis()->SetTimeDisplay(1);
+      tinty[i]->GetXaxis()->SetNdivisions(-10);
       tinty[i]->GetXaxis()->SetTimeFormat("%m\/%d");
     }
   for(int i=0; i<nruns; ++i)
@@ -181,12 +182,12 @@ int plot_runbyrun()
 	  jetE[i] = (TH1D*)rootfile->Get(("jetE"+to_string(1)+"_"+to_string(i)).c_str());
 	  jetE[i]->GetXaxis()->SetTitle("E_{T,jet} [GeV]");
 
-	  jetTrigE[i] = (TH1D*)rootfile->Get(("jetTrigE"+to_string(i)).c_str());
-	  if(effevt[i] != 0) jetTrigE[i]->Scale(1./effevt[i]);
-	  else jetTrigE[i]->Scale(0);
+	  jetTrigE[i] = (TH1D*)rootfile->Get(("jetTrigE"+to_string(i+1)).c_str());
+	  
 	}
+      int lowintbin = 130;
       //cout << jetE[0] << endl;
-      float njet = jetE[0]->Integral(100,400);
+      float njet = jetE[0]->Integral(lowintbin,400);
       //cout << njet << endl;
       //for(int i=0; i<njet; ++i)
       //{
@@ -194,21 +195,27 @@ int plot_runbyrun()
       tinty[0]->SetBinContent(timestamps[whichrun]-lut+1,njet/nmb);
       tinty[0]->SetBinError(timestamps[whichrun]-lut+1,sqrt(njet)/nmb);
       //}
-      /*
+      
       for(int i=0; i<3; ++i)
 	{
-	  int njet2 = jetTrigE[i]->Integral();
-	  for(int j=0; j<njet2; ++j)
+	  int njet2 = jetTrigE[i]->Integral(lowintbin,400);
+	  if(effevt[i] != 0)
 	    {
-	      tinty[i]->Fill(timestamps[whichrun]);
+	      tinty[i+1]->SetBinContent(timestamps[whichrun]-lut+1,njet2/effevt[i]);
+	      tinty[i+1]->SetBinError(timestamps[whichrun]-lut+1,sqrt(njet2)/effevt[i]);
 	    }
 	}
-      */
+      
       whichrun++;
       ++nfile;
       nmb = 0;
+      for(int i=0; i<3; ++i)
+	{
+	  effevt[i] = 0;
+	}
     }
   tinty[0]->GetXaxis()->SetRangeUser(lut,uut);
+  
   int colors[4] = {kBlack, kMagenta+2, kBlue+2, kGreen+3};
   int mstyle[4] = {20,21,24,25};
   tinty[0]->GetXaxis()->SetTitle("Date [month/day of 2024]");
@@ -220,25 +227,25 @@ int plot_runbyrun()
       tinty[i]->SetMarkerStyle(mstyle[i]);
       tinty[i]->SetLineWidth(2);
     }
-  TLegend* leg = new TLegend(0.5,0.7,0.8,0.9);
+  TLegend* leg = new TLegend(0.2,0.7,0.5,0.9);
   leg->SetFillStyle(0);
   leg->SetFillColor(0);
   leg->SetTextFont(42);
   leg->SetBorderSize(0);
   leg->AddEntry(tinty[0],"MBD N/S >= 1");
-  tinty[0]->GetYaxis()->SetRangeUser(0,0.06e-3);
+  tinty[0]->GetYaxis()->SetRangeUser(0,0.03e-3);
   tinty[0]->GetXaxis()->SetLabelSize(0.02);
   tinty[0]->GetYaxis()->SetLabelSize(0.02);
   tinty[0]->GetYaxis()->SetTitleOffset(2.0);
-  //leg->AddEntry(tinty[1],"Jet 8 GeV \& MBD N/S >= 1");
-  //leg->AddEntry(tinty[2],"Jet 10 GeV \& MBD N/S >= 1");
-  //leg->AddEntry(tinty[3],"Jet 12 GeV \& MBD N/S >= 1");
+  leg->AddEntry(tinty[1],"Jet 8 GeV \& MBD N/S >= 1");
+  leg->AddEntry(tinty[2],"Jet 10 GeV \& MBD N/S >= 1");
+  leg->AddEntry(tinty[3],"Jet 12 GeV \& MBD N/S >= 1");
   gPad->SetLeftMargin(0.2);
   tinty[0]->Draw("PE");
-  //tinty[1]->Draw("SAME P HIST");
-  //tinty[2]->Draw("SAME P HIST");
-  //tinty[3]->Draw("SAME P HIST");
-  //leg->Draw();
+  tinty[1]->Draw("SAME PE");
+  tinty[2]->Draw("SAME PE");
+  tinty[3]->Draw("SAME PE");
+  leg->Draw();
   gPad->SaveAs("output/rmg/tinty.pdf");
   return 0;
 }
