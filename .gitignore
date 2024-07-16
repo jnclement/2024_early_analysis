@@ -20,3 +20,5 @@ run/summed.root
 run/*.root
 run/*.sub
 run/backup/
+run/shortrunlist.txt
+run/runlist.txt
