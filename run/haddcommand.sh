@@ -3,8 +3,7 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-TYPE=sim    
-
+TYPE=sim
 if [ $1 -eq 1 ]; then
     TYPE=dat
     for rn in `ls  *.imagelist | awk -F'.' '{print $1}'`; do

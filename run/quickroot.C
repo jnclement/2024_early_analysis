@@ -496,6 +496,11 @@ int quickroot(string filebase="", int njob=0)
       //int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
 
+      if(vtx[2] > 100)
+	{
+	  if(ismb[h]) outnmb--;
+	  continue;
+	}
 
       if(h==1) 
 	{
@@ -544,11 +549,10 @@ int quickroot(string filebase="", int njob=0)
 	  h1_mbdq->Fill(mbdq[j]);
 	}
 
-      if(vtx[2] > 100) continue;
       for(int j=0; j<cluster_n; ++j)
 	{
 	  h1_cluster_E->Fill(clusterE[j]);
-	  h1_cluster_eta->Fill(clustereta[j]);
+	  if(abs(clusterphi[j]) > 0.25) h1_cluster_eta->Fill(clustereta[j]);
 	  h2_cluster_eta_E->Fill(clustereta[j],clusterE[j]);
 	  h2_cluster_eta_phi->Fill(clustereta[j],clusterphi[j]);
 	}

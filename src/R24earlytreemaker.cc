@@ -305,7 +305,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  break;
 	}
     }
-  if(std::isnan(vtx[2]) || vtx[2] > 1000)
+  if(std::isnan(vtx[2]) || abs(vtx[2]) > 1000)
     {
       if(ismb) mbevt--;
       return Fun4AllReturnCodes::EVENT_OK;
