@@ -5,7 +5,7 @@ if [ $# -lt 3 ]; then
     exit 1
 fi
 
-nmax=1500
+nmax=350
 evt=$2
 c2c=$3
 if [ $evt -gt 10000 ]; then
@@ -19,6 +19,9 @@ for rn in `ls  *.list | awk -F'.' '{print $1}'`; do
 	nfile=$nmax
     fi
 #    nfile=$(( ($nfile + 9) / 10 ))
+    mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$rn
+    mkdir -p /sphenix/tg/tg01/jets/jocl/err/$rn
+    mkdir -p /sphenix/tg/tg01/jets/jocl/out/$rn
     bash run_everything.sh $1 $nfile $rn 1 $evt $c2c
 done
 

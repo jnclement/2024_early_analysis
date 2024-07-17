@@ -12,10 +12,10 @@ if [ $1 -eq 1 ]; then
 	
 	echo "executable = haddsingle.sh" > $SUBNAME
 	echo "arguments = ${rn} ${TYPE}" >> $SUBNAME
-	echo "output = output/out/output_${BASENAME}.out" >> $SUBNAME
+	echo "output = /sphenix/tg/tg01/jets/jocl/out/output_${BASENAME}.out" >> $SUBNAME
 	echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME
 	echo "when_to_transfer_output = ON_EXIT" >> $SUBNAME
-	echo "error = output/err/error_${BASENAME}.err" >> $SUBNAME
+	echo "error = /sphenix/tg/tg01/jets/jocl/err/error_${BASENAME}.err" >> $SUBNAME
 	echo "log = /tmp/jocl_${BASENAME}.log" >> $SUBNAME
 	echo "queue 1" >> $SUBNAME
 	condor_submit $SUBNAME
