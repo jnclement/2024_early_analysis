@@ -155,7 +155,7 @@ float max(float a, float b)
   return b;
 }
 
-int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root", string filelist="sumdatlist.list",int therun = -1)
+int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root", string filelist="lists/sumdatlist.list",int therun = -1)
 {
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
   const int nruns = 10;//94

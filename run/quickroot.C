@@ -97,11 +97,10 @@ int quickroot(string filebase="", int njob=0)
   ifstream list[2];
   string line;
   int nosim = 1;
-  //cout << "test-2" << endl;
-  //list[0].open("sim.list",ifstream::in);
+
   list[1].open(filename,ifstream::in);
   string runnum = filename.substr(0,5);
-  string simliststr = "sim.imagelist";
+  string simliststr = "lists/sim.imagelist";
   string simstr = "sim";
   string datstr = "dat";
   string idstr;

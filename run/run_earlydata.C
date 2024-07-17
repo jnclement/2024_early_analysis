@@ -83,9 +83,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   string line2;
   ifstream list3;
   string line3;
-  list1.open(datorsim?("./"+to_string(rn)+".list"):"dst_calo_cluster.list", ifstream::in);
-  if(!datorsim) list2.open("dst_global.list",ifstream::in);
-  if(!datorsim) list3.open("dst_truth_jet.list",ifstream::in);
+  list1.open(datorsim?("./lists/"+to_string(rn)+".list"):"lists/dst_calo_cluster.list", ifstream::in);
+  if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
+  if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
   if(!list1)
     {
       cout << "nolist!" << endl;
