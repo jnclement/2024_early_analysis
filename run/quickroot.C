@@ -99,7 +99,7 @@ int quickroot(string filebase="", int njob=0)
   int nosim = 1;
 
   list[1].open(filename,ifstream::in);
-  string runnum = filename.substr(0,5);
+  string runnum = filename.substr(6,5);
   string simliststr = "lists/sim.imagelist";
   string simstr = "sim";
   string datstr = "dat";
@@ -172,6 +172,7 @@ int quickroot(string filebase="", int njob=0)
       cout << "with " << nmb[h] << " minbias events." << endl;
     }
   TFile* outfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+to_string(njob)+"_fullfile.root").c_str(),"RECREATE");
+  cout << outfile->GetName() << endl;
   TTree* outt = new TTree((runnum==simstr?"st":"outt"),"output tree");
   int outnmb = nmb[1];
   int outevt = nevents[1];
@@ -1098,5 +1099,6 @@ int quickroot(string filebase="", int njob=0)
 	  outfile->WriteObject(h1_AJ[h][i],h1_AJ[h][i]->GetName());
 	}
     }
+  outfile->Write();
   return 0;
 }

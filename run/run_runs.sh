@@ -12,7 +12,7 @@ if [ $evt -gt 10000 ]; then
     evt=0
 fi
 echo $evt
-for rn in `ls  lists/*.list | awk -F'.' '{print $1}'`; do
+for rn in `ls  lists/*.list | awk -F'.' '{print $1}' | awk -F'/' '{print $2}'`; do
     rn=$(expr $rn + 0)
     nfile=`wc -l lists/${rn}.list | awk '{print $1}'`
     if [ $nfile -gt $nmax ]; then

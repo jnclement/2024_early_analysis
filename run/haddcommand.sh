@@ -5,7 +5,7 @@ fi
 
 if [ $1 -eq 1 ]; then
     TYPE=dat
-    for rn in `ls  lists/*.imagelist | awk -F'.' '{print $1}'`; do
+    for rn in `ls  lists/*.imagelist | awk -F'.' '{print $1}' | awk -F'/' '{print $2}'`; do
 	BASENAME="condor_${rn}_hadd"
 
 	SUBNAME="${BASENAME}.sub"

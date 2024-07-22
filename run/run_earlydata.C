@@ -130,7 +130,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
   cout << "test2" << endl;
-  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, nevt);
+  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
   cout << "test3" << endl;
   se->registerSubsystem( tt );
   cout << "test4" << endl;
