@@ -79,14 +79,14 @@ int quickroot(string filebase="", int njob=0)
   float emcalen[2][25000];
   float emcalchi2[2][25000];
   float emcalt[2][25000];
-  //int sectorrt[2][3];
-  //int sectorem[2];
+  int sectorrt[2][3];
+  int sectorem[2];
   int njet[2];
-  //float enrt[2][3][24576];
-  //int etart[2][3][24576];
-  //int phirt[2][3][24576];
-  //int etabin[2][25000];
-  //int phibin[2][25000];
+  float enrt[2][3][24576];
+  int etart[2][3][24576];
+  int phirt[2][3][24576];
+  int etabin[2][25000];
+  int phibin[2][25000];
   float jet_e[2][1000];
   float jet_et[2][1000];
   float jet_ph[2][1000];
@@ -212,7 +212,7 @@ int quickroot(string filebase="", int njob=0)
 	    {
 	      h1_calo_occ[i] = new TH1D(("h1_calo_occ"+to_string(i)).c_str(),"",100,0,0.1);
 	      h1_tower_E[i] = new TH1D(("h1_tower_E"+to_string(i)).c_str(),"",100,-5,(i==1?5:20));
-	      h1_calo_E[i] = new TH1D(("h1_calo_E"+to_string(i)).c_str(),"",100,-1,(i==1?10:50));
+	      h1_calo_E[i] = new TH1D(("h1_calo_E"+to_string(i)).c_str(),"",100,-5,(i==1?10:50));
 	      h2_occ_E[i] = new TH2D(("h2_occ_E"+to_string(i)).c_str(),"",100,0,0.1,100,0,(i==1?10:50));
 	    }
 	  if(i<3 && i>0) h2_cal_eta_phi[h][i] = new TH2D(("h2_cal_eta_phi"+to_string(h)+to_string(i)).c_str(),"",24,-0.5,23.5,64,-0.5,63.5);
@@ -242,6 +242,7 @@ int quickroot(string filebase="", int njob=0)
     }
   TH2D* h2_dphi_deta[2];
   TH1D* h1_AJ[2][12];
+  TH2D* h2_tjet_eta_phi = new TH2D("h2_tjet_eta_phi","",22,-1.1,1.1,64,-M_PI,M_PI);
     for(int h=nosim; h<2; ++h)
     {
       h2_dphi_deta[h] = new TH2D(("h2_dphi_deta"+to_string(h)).c_str(),"",20,-2.2,2.2,32,0,2*M_PI);
@@ -368,21 +369,21 @@ int quickroot(string filebase="", int njob=0)
       tree[h]->SetBranchAddress("ehjet",ehjet[h]);
       tree[h]->SetBranchAddress("seedD",seedD[h]);
       tree[h]->SetBranchAddress("njet",&njet[h]);
-      //tree[h]->SetBranchAddress("sectoroh",&sectorrt[h][2]);
-      //tree[h]->SetBranchAddress("ohcaletabin",etart[h][2]);
-      //tree[h]->SetBranchAddress("ohcalphibin",phirt[h][2]);
-      //tree[h]->SetBranchAddress("ohcalen",enrt[h][2]);
-      //tree[h]->SetBranchAddress("sectorih",&sectorrt[h][1]);
-      //tree[h]->SetBranchAddress("sector_rtem",&sectorrt[h][0]);
-      //tree[h]->SetBranchAddress("rtemen",enrt[h][0]);
-      //tree[h]->SetBranchAddress("rtemet",etart[h][0]);
-      //tree[h]->SetBranchAddress("rtemph",phirt[h][0]);
+      tree[h]->SetBranchAddress("sectoroh",&sectorrt[h][2]);
+      tree[h]->SetBranchAddress("ohcaletabin",etart[h][2]);
+      tree[h]->SetBranchAddress("ohcalphibin",phirt[h][2]);
+      tree[h]->SetBranchAddress("ohcalen",enrt[h][2]);
+      tree[h]->SetBranchAddress("sectorih",&sectorrt[h][1]);
+      tree[h]->SetBranchAddress("sector_rtem",&sectorrt[h][0]);
+      tree[h]->SetBranchAddress("rtemen",enrt[h][0]);
+      tree[h]->SetBranchAddress("rtemet",etart[h][0]);
+      tree[h]->SetBranchAddress("rtemph",phirt[h][0]);
       tree[h]->SetBranchAddress("jet_e",jet_e[h]);
       tree[h]->SetBranchAddress("jet_et",jet_et[h]);
       tree[h]->SetBranchAddress("jet_ph",jet_ph[h]);
-      //tree[h]->SetBranchAddress("ihcaletabin",etart[h][1]);
-      //tree[h]->SetBranchAddress("ihcalphibin",phirt[h][1]);
-      //tree[h]->SetBranchAddress("ihcalen",enrt[h][1]);
+      tree[h]->SetBranchAddress("ihcaletabin",etart[h][1]);
+      tree[h]->SetBranchAddress("ihcalphibin",phirt[h][1]);
+      tree[h]->SetBranchAddress("ihcalen",enrt[h][1]);
       tree[h]->SetBranchAddress("ntj",&ntj);
       tree[h]->SetBranchAddress("tjet_e",tjet_e);
       tree[h]->SetBranchAddress("tjet_eta",tjet_eta);
@@ -483,7 +484,7 @@ int quickroot(string filebase="", int njob=0)
 	  //}
     }
   TH1D* h1_zdist = new TH1D("h1_zdist","",200,-100,100);
-  TH1D* h1_mbdq = new TH1D("h1_mbdq","",1000,0,(idstr=="sim"?1000:10));
+  TH1D* h1_mbdq = new TH1D("h1_mbdq","",1000,0,10);
   for(int h=nosim; h<2; ++h)
     {
       cancount = 0;
@@ -565,24 +566,25 @@ int quickroot(string filebase="", int njob=0)
 	      if(ET < 4) continue;
 	      if(abs(tjet_eta[j]) > 1.1) continue;
 	      tjetE->Fill(ET);
+	      h2_tjet_eta_phi->Fill(tjet_eta[j],tjet_phi[j]);
 	    }
 	}
       for(int j=0; j<3; ++j)
 	{
 	  float calo_E = 0;
 	  float occ = 0;
-	  /*
+	  
 	  for(int k=0; k<sectorrt[h][j]; ++k)
 	    {
 	      h1_tower_E[j]->Fill(enrt[h][j][k]);
 	      calo_E += enrt[h][j][k];
 	      if(enrt[h][j][k] > 0.03) occ+=1;
 	    }
-	  */
+	  
 	  calo_E = caloE[j];
 	  h1_calo_E[j]->Fill(calo_E);
-	  //h1_calo_occ[j]->Fill(occ/sectorrt[h][j]);
-	  //h2_occ_E[j]->Fill(occ/sectorrt[h][j],calo_E);
+	  h1_calo_occ[j]->Fill(occ/(j==0?24576:1536));
+	  h2_occ_E[j]->Fill(occ/(j==0?24576:1536),calo_E);
 	}
       if(evtnum[h] < prevt)
 	{
@@ -648,7 +650,7 @@ int quickroot(string filebase="", int njob=0)
 	      ++it;
 	    }
 	}
-      /*
+      
       for(int j=0; j<3; ++j)
 	{
 	  for(int k=0; k<sectorrt[h][j]; ++k)
@@ -656,7 +658,7 @@ int quickroot(string filebase="", int njob=0)
 	      h2_cal_eta_phi[h][j]->Fill(etart[h][j][k],phirt[h][j][k],enrt[h][j][k]);
 	    }
 	}
-      */
+      
       int njo[4] = {0};	    
       float leadjetET = 0;
       float leadjetEta = -2;
@@ -1061,6 +1063,7 @@ int quickroot(string filebase="", int njob=0)
       outfile->WriteObject(h1_tower_E[i],h1_tower_E[i]->GetName());
       outfile->WriteObject(h2_occ_E[i],h2_occ_E[i]->GetName());
     }
+  outfile->WriteObject(h2_tjet_eta_phi,h2_tjet_eta_phi->GetName());
   outfile->WriteObject(h1_cluster_E,h1_cluster_E->GetName());
   outfile->WriteObject(h1_cluster_eta,h1_cluster_eta->GetName());
   outfile->WriteObject(h2_cluster_eta_E,h2_cluster_eta_E->GetName());

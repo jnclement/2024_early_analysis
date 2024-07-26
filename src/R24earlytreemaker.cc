@@ -193,17 +193,17 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   sector_rtem = 0;
   //Get towerinfocontainer objects from nodetree
   TowerInfoContainer *towersEM = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
-  if(!_datorsim) towersEM = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
+  if(!towersEM) towersEM = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
   TowerInfoContainer *towersIH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALIN");
-  if(!_datorsim) towersIH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALIN");
+  if(!towersIH) towersIH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALIN");
   TowerInfoContainer *towersOH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALOUT");
-  if(!_datorsim) towersOH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
+  if(!towersOH) towersOH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
   TowerInfoContainer *towersEMuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_CEMC");
   TowerInfoContainer *towersIHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALIN");
   TowerInfoContainer *towersOHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALOUT");
   //TowerInfoContainer *towersZD = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_ZDC");
   TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
-  if(!_datorsim) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
+  if(!rtem) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
   JetContainer *jets = findNode::getClass<JetContainerv1>(topNode, "AntiKt_Tower_HIRecoSeedsRaw_r04");
   MbdVertexMap* mbdvtxmap = findNode::getClass<MbdVertexMapv1>(topNode, "MbdVertexMap");
   GlobalVertexMap* gvtxmap = findNode::getClass<GlobalVertexMapv1>(topNode, "GlobalVertexMap");
@@ -215,7 +215,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(!mbdtow) mbdtow = findNode::getClass<MbdPmtSimContainerV1>(topNode, "MbdPmtContainer");
   RawClusterContainer *clusters = findNode::getClass<RawClusterContainer>(topNode, "CLUSTERINFO_CEMC");
   if(!clusters) clusters = findNode::getClass<RawClusterContainer>(topNode, "CLUSTER_CEMC");       
-  JetMap* truthjets = findNode::getClass<JetMapv1>(topNode, "AntiKt_Truth_r04");
+  JetContainer* truthjets = findNode::getClass<JetContainerv1>(topNode, "AntiKt_Truth_r04");
 
   if(mbdtow)
     {
@@ -228,8 +228,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  MbdPmtHit *mbdhit = mbdtow->get_pmt(i);
 	  //if(_debug > 2) cout << "PMT " << i << " address: " << mbdhit << " charge: " << mbdhit->get_q() << endl;
 	  mbenrgy[i] = mbdhit->get_q();
-	  if(mbenrgy[i] > 40 && i < 64) northhit = 1;
-	  if(mbenrgy[i] > 40 && i > 63) southhit = 1;
+	  if(mbenrgy[i] > 0.4 && i < 64) northhit = 1;
+	  if(mbenrgy[i] > 0.4 && i > 63) southhit = 1;
 	  
 	  mbdq += mbdhit->get_q();
 	}
@@ -269,9 +269,9 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   ntj = 0;
   if(truthjets && !_datorsim)
     {
-      for(auto iter = truthjets->begin(); iter != truthjets->end(); ++iter)
+      for(int i=0; i<truthjets->size(); ++i)
 	{
-	  Jet* jet = iter->second;
+	  Jet* jet = truthjets->get_jet(i);
 	  tjet_e[ntj] = jet->get_e();
 	  if(tjet_e[ntj] < 4) continue;
 	  tjet_eta[ntj] = jet->get_eta();

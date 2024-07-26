@@ -14,10 +14,10 @@ SUBNAME="${BASENAME}.sub"
 
 echo "executable = quickroot.sh" > $SUBNAME
 echo "arguments = ${1} \$(Process)" >> $SUBNAME
-echo "output = /sphenix/tg/tg01/jets/jocl/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
+echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME
 echo "when_to_transfer_output = ON_EXIT" >> $SUBNAME
-echo "error = /sphenix/tg/tg01/jets/jocl/err/error_${BASENAME}_\$(Process).err" >> $SUBNAME
+echo "error = /sphenix/user/jocl/projects/run2024_earlydata/run/output/err/error_${BASENAME}_\$(Process).err" >> $SUBNAME
 echo "log = /tmp/jocl_${BASENAME}_\$(Process).log" >> $SUBNAME
 echo "queue ${NJOB}" >> $SUBNAME
 
