@@ -7,7 +7,7 @@
 #include <jetbase/JetReco.h>
 #include <jetbase/TowerJetInput.h>
 #include <g4jets/TruthJetInput.h>
-#include <caloreco/CaloTowerStatus.h>
+//#include <caloreco/CaloTowerStatus.h>
 #include <jetbackground/CopyAndSubtractJets.h>
 #include <jetbackground/DetermineTowerBackground.h>
 #include <jetbackground/FastJetAlgoSub.h>
@@ -21,7 +21,7 @@
 #include <fstream>
 #include <phool/recoConsts.h>
 #include <TSystem.h>
-#include <caloreco/CaloTowerCalib.h>
+//#include <caloreco/CaloTowerCalib.h>
 #include <g4mbd/MbdDigitization.h>
 #include <mbd/MbdReco.h>
 #include <frog/FROG.h>
@@ -114,9 +114,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   // this points to the global tag in the CDB
   //rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
   // The calibrations have a validity range set by the beam clock which is not read out of the prdfs as of now
-  //Process_Calo_Calib();
+  Process_Calo_Calib();
   /////////////////////////////////////////////////////////////////////////////////////////////////
-
+  /*
   std::cout << "status setters" << std::endl;
   CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
   statusEMC->set_detector_type(CaloTowerDefs::CEMC);
@@ -134,7 +134,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   se->registerSubsystem(statusHCALOUT);
 
   ////////////////////                                                                                                               
-  // Calibrate towers                                                                                                                
+  // Calibrate towers                                                                                                  
   std::cout << "Calibrating EMCal" << std::endl;
   CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
   cout << "setting detector type for EMCal" << endl;
@@ -175,7 +175,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   se->registerSubsystem(ClusterBuilder);
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+  */
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
   cout << "test1.5" << endl;
