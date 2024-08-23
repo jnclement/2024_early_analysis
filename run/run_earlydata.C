@@ -31,12 +31,12 @@
 #include <centrality/CentralityReco.h>
 
 #include <r24earlytreemaker/R24earlytreemaker.h>
-#include <chi2checker/Chi2checker.h>
+//#include <chi2checker/Chi2checker.h>
 #include </sphenix/user/jocl/projects/macros/common/Calo_Calib.C>
 #include <CaloTowerCalib.h>
 //#include <G4Setup_sPHENIX.C>
 using namespace std;
-R__LOAD_LIBRARY(libchi2checker.so)
+//R__LOAD_LIBRARY(libchi2checker.so)
 R__LOAD_LIBRARY(libr24earlytreemaker.so)
 R__LOAD_LIBRARY(libg4centrality.so)
 R__LOAD_LIBRARY(libFROG.so)
@@ -179,9 +179,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
   cout << "test1.5" << endl;
-  Chi2checker* chi2c;
-  if(chi2check) chi2c = new Chi2checker("chi2checker",debug);
-  if(chi2check) se->registerSubsystem(chi2c);
+  //Chi2checker* chi2c;
+  //if(chi2check) chi2c = new Chi2checker("chi2checker",debug);
+  //if(chi2check) se->registerSubsystem(chi2c);
   //RetowerCEMC *rcemc = new RetowerCEMC();
   //rcemc->set_towerinfo(true);
   //se->registerSubsystem(rcemc);
