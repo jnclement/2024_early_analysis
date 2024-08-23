@@ -2,10 +2,11 @@ mkdir -p output
 mkdir -p output/evt
 mkdir -p output/err
 mkdir -p output/out
-mkdir -p output/gmg
 mkdir -p output/rmg
 mkdir -p output/root
 mkdir -p output/sumroot
+
+edit all scripts to use your directories/paths (grep jocl ./* to find my paths and edit them)
 
 bash getlists.sh (will ask for args)
 bash createfilelistcommand.sh
@@ -21,4 +22,4 @@ bash get_image_lists.sh
 bash run_images_for_all.sh
 bash allhadd.sh
 
-root -b -q plot.C
+root -b -q plot.C or other plotting macros
