@@ -16,6 +16,7 @@ BASENAME="condor_${TAG}_${NFILE}_${RN}_${ZS}_${EVT}"
 SUBNAME="${BASENAME}.sub"
 
 echo "executable = earlydata.sh" > $SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:1000" >> $SUBNAME
 echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C}" >> $SUBNAME
 echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME

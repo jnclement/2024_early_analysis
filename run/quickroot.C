@@ -497,12 +497,13 @@ int quickroot(string filebase="", int njob=0)
       //int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
 
+      
       if(vtx[2] > 100)
 	{
 	  if(ismb[h]) outnmb--;
 	  continue;
 	}
-
+      
       if(h==1) 
 	{
       if((trigvec >> 16) & 1 || (trigvec >> 17) & 1 || (trigvec >> 18) & 1 || (trigvec >> 19) & 1)

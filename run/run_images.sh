@@ -13,6 +13,7 @@ BASENAME="condor_${TAG}_${NJOB}_imagemaker"
 SUBNAME="${BASENAME}.sub"
 
 echo "executable = quickroot.sh" > $SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:1000" >> $SUBNAME
 echo "arguments = ${1} \$(Process)" >> $SUBNAME
 echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME
