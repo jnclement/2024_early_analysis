@@ -86,7 +86,7 @@ float min(float a, float b)
   if(a<b) return a;
   return b;
 }
-void std_text(TCanvas* thecan, string* texts, int* dotext, int ntext, float textsize, float textx, float texty, int rightalign, int nevtsim, int nevtdat, int fitgdat, float gmd, float ged, int fitgsim, float gms, float ges, int run = -1)
+void std_text(TCanvas* thecan, string* texts, int* dotext, int ntext, float textsize, float textx, float texty, int rightalign, int nevtsim, int nevtdat, int fitgdat, float gmd, float ged, int fitgsim, float gms, float ges, int run = -1, int donevt = 1)
 {
   std::stringstream stream[6];
   if(fitgdat)
@@ -103,7 +103,7 @@ void std_text(TCanvas* thecan, string* texts, int* dotext, int ntext, float text
   stream[5] << std::setprecision(1) << std::scientific << (float)nevtdat;
   thecan->cd();
   sphenixtext(0.9,0.91,1);
-  drawText(("n_{MB evt,PYTHIA} = "+stream[4].str()+"  n_{MB evt,data} = "+stream[5].str()).c_str(),0.1,0.96,0,kBlack,0.03);
+  if(donevt) drawText(("n_{MB evt,PYTHIA} = "+stream[4].str()+"  n_{MB evt,data} = "+stream[5].str()).c_str(),0.1,0.96,0,kBlack,0.03);
   //if(run == -1) drawText("Good runs 47002-47060",0.2,0.91,0,kBlack,0.03);
   //else drawText(("Run "+to_string(run)).c_str(),0.2,0.91,0,kBlack,0.03);
   float drawy = texty;
@@ -154,11 +154,17 @@ float max(float a, float b)
   if(a>b) return a;
   return b;
 }
-
+double mygaus(double *x, double* par)
+{
+  float meanterm = (x[0]-par[1])/par[2];
+  float expterm = -0.5*meanterm*meanterm;
+  float fullgaus = par[0]*exp(expterm);
+  return (fullgaus+par[3]);
+}
 int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root", string filelist="lists/sumdatlist.list",int therun = -1)
 {
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
-  const int nruns = 10;//286;//33;//72//10;//94
+  const int nruns = 94;//286;//33;//72//10;//94
   const int nsd = 64;
   int sds[nruns][nsd] = {0};
 
@@ -180,7 +186,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       simt->GetEntry(i);
       nsimmb += simmb;
     }
-  int runnumbers[nruns] = {47002,47005,47007,47009,47017,47019,47032,47037,47056,47060};//{47002,47003,47004,47005,47006,47007,47009,47010,47013,47014,47015,47016,47017,47018,47019,47020,47021,47022,47032,47033,47034,47035,47036,47037,47038,47039,47040,47041,47042,47043,47050,47051,47052,47053,47054,47055,47056,47057,47058,47059,47060,47061,47064,47066,47068,47079,47080,47081,47082,47086,47089,47090,47098,47099,47100,47101,47102,47104,47105,47106,47114,47115,47116,47117,47118,47119,47120,47121,47122,47123,47124,47125,47126,47127,47128,47129,47130,47131,47132,47133,47135,47136,47137,47138,47139,47140,47141,47142,47143,47153,47154,47155,47156,47157,47158,47160,47161,47162,47182,47187,47197,47198,47201,47202,47203,47204,47208,47211,47216,47217,47218,47219,47220,47222,47229,47230,47286,47287,47288,47289,47291,47293,47296,47297,47298,47300,47301,47303,47305,47306,47308,47309,47310,47311,47312,47313,47314,47315,47316,47323,47325,47329,47330,47332,47333,47334,47357,47359,47360,47361,47362,47363,47375,47376,47377,47378,47379,47380,47381,47382,47389,47391,47392,47393,47394,47395,47396,47397,47398,47399,47403,47406,47439,47440,47441,47442,47443,47444,47445,47450,47451,47452,47453,47454,47455,47456,47457,47458,47459,47460,47461,47462,47463,47464,47474,47475,47476,47477,47478,47479,47480,47481,47482,47483,47484,47485,47486,47487,47488,47489,47490,47491,47492,47494,47495,47496,47497,47501,47502,47503,47505,47506,47507,47508,47509,47513,47514,47515,47516,47517,47519,47520,47521,47522,47523,47524,47525,47531,47532,47538,47539,47540,47547,47548,47549,47550,47551,47552,47557,47558,47559,47566,47567,47568,47570,47611,47617,47634,47635,47636,47637,47638,47647,47649,47650,47651,47652,47653,47654,47656,47657,47658,47659,47660,47661,47662,47663,47664,47665,47666,47667,47698,47715,47722,47724,47725}; //{47474,47476,47480,47481,47484,47485,47491,47492,47494,47495,47503,47505,47506,47507,47513,47514,47516,47522,47524,47525,47540,47548,47552,47557,47568,47634,47636,47638,47657,47658,47659,47661,47662}; //{47002,47006,47013,47017,47021,47034,47038,47042,47052,47056,47060,47068,47082,47098,47102,47114,47118,47122,47126,47130,47135,47139,47143,47156,47161,47197,47203,47216,47220,47286,47291,47298,47305,47310,47314,47325,47333,47360,47375,47379,47389,47394,47398,47439,47443,47451,47455,47459,47463,47476,47480,47484,47488,47492,47497,47505,47509,47516,47521,47525,47539,47549,47557,47567,47617,47637,47650,47654,47659,47663,47667,47724}; ////{47289,47293,47297,47298,47303,47305,47306,47308,47309,47310,47315,47316,47323,47325,47330,47334,47360,47377,47378,47379,47381,47382,47391,47393,47394,47395,47396,47397,47398,47399,47443,47445,47451,47455,47456,47457,47458,47459,47460,47464,47474,47480,47481,47484,47485,47491,47492,47494,47495,47497,47502,47503,47505,47506,47507,47508,47513,47514,47516,47522,47524,47525,47540,47548,47552,47557,47558,47568,47634,47636,47657,47658,47659,47661,47662,47666,47667,/*47698,*/47715,47716,47717,47718,47720,47722,47723,47724,47725,47726,47727,47728,47729,47730,47731,47732,47733};//,47741,47745,47746,47747,47748,47749,47751,47752,47753,47757,47758};
+  int runnumbers[nruns] = {47289,47293,47297,47298,47303,47305,47306,47308,47309,47310,47315,47316,47323,47325,47330,47334,47360,47377,47378,47379,47381,47382,47391,47393,47394,47395,47396,47397,47398,47399,47443,47445,47451,47455,47456,47457,47458,47459,47460,47464,47474,47480,47481,47484,47485,47491,47492,47494,47495,47497,47502,47503,47505,47506,47507,47508,47513,47514,47516,47522,47524,47525,47540,47548,47552,47557,47558,47568,47634,47636,47657,47658,47659,47661,47662,47666,47667,47715,47716,47717,47718,47720,47722,47723,47724,47725,47726,47727,47728,47729,47730,47731,47732,47733};// {47002,47005,47007,47009,47017,47019,47032,47037,47056,47060};//{47002,47003,47004,47005,47006,47007,47009,47010,47013,47014,47015,47016,47017,47018,47019,47020,47021,47022,47032,47033,47034,47035,47036,47037,47038,47039,47040,47041,47042,47043,47050,47051,47052,47053,47054,47055,47056,47057,47058,47059,47060,47061,47064,47066,47068,47079,47080,47081,47082,47086,47089,47090,47098,47099,47100,47101,47102,47104,47105,47106,47114,47115,47116,47117,47118,47119,47120,47121,47122,47123,47124,47125,47126,47127,47128,47129,47130,47131,47132,47133,47135,47136,47137,47138,47139,47140,47141,47142,47143,47153,47154,47155,47156,47157,47158,47160,47161,47162,47182,47187,47197,47198,47201,47202,47203,47204,47208,47211,47216,47217,47218,47219,47220,47222,47229,47230,47286,47287,47288,47289,47291,47293,47296,47297,47298,47300,47301,47303,47305,47306,47308,47309,47310,47311,47312,47313,47314,47315,47316,47323,47325,47329,47330,47332,47333,47334,47357,47359,47360,47361,47362,47363,47375,47376,47377,47378,47379,47380,47381,47382,47389,47391,47392,47393,47394,47395,47396,47397,47398,47399,47403,47406,47439,47440,47441,47442,47443,47444,47445,47450,47451,47452,47453,47454,47455,47456,47457,47458,47459,47460,47461,47462,47463,47464,47474,47475,47476,47477,47478,47479,47480,47481,47482,47483,47484,47485,47486,47487,47488,47489,47490,47491,47492,47494,47495,47496,47497,47501,47502,47503,47505,47506,47507,47508,47509,47513,47514,47515,47516,47517,47519,47520,47521,47522,47523,47524,47525,47531,47532,47538,47539,47540,47547,47548,47549,47550,47551,47552,47557,47558,47559,47566,47567,47568,47570,47611,47617,47634,47635,47636,47637,47638,47647,47649,47650,47651,47652,47653,47654,47656,47657,47658,47659,47660,47661,47662,47663,47664,47665,47666,47667,47698,47715,47722,47724,47725}; //{47474,47476,47480,47481,47484,47485,47491,47492,47494,47495,47503,47505,47506,47507,47513,47514,47516,47522,47524,47525,47540,47548,47552,47557,47568,47634,47636,47638,47657,47658,47659,47661,47662}; //{47002,47006,47013,47017,47021,47034,47038,47042,47052,47056,47060,47068,47082,47098,47102,47114,47118,47122,47126,47130,47135,47139,47143,47156,47161,47197,47203,47216,47220,47286,47291,47298,47305,47310,47314,47325,47333,47360,47375,47379,47389,47394,47398,47439,47443,47451,47455,47459,47463,47476,47480,47484,47488,47492,47497,47505,47509,47516,47521,47525,47539,47549,47557,47567,47617,47637,47650,47654,47659,47663,47667,47724}; ////{47289,47293,47297,47298,47303,47305,47306,47308,47309,47310,47315,47316,47323,47325,47330,47334,47360,47377,47378,47379,47381,47382,47391,47393,47394,47395,47396,47397,47398,47399,47443,47445,47451,47455,47456,47457,47458,47459,47460,47464,47474,47480,47481,47484,47485,47491,47492,47494,47495,47497,47502,47503,47505,47506,47507,47508,47513,47514,47516,47522,47524,47525,47540,47548,47552,47557,47558,47568,47634,47636,47657,47658,47659,47661,47662,47666,47667,/*47698,*/47715,47716,47717,47718,47720,47722,47723,47724,47725,47726,47727,47728,47729,47730,47731,47732,47733};//,47741,47745,47746,47747,47748,47749,47751,47752,47753,47757,47758};
   long long unsigned int nevents = 0;
   int evtct = 0;
   int mbevt = 0;
@@ -277,8 +283,38 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   TH1D* h1_cluster_eta[2];
   TH2D* h2_cluster_eta_E[2];
   TH2D* h2_cluster_eta_phi[2];
+  TH1D* h1_trigturn[4];
+  TH1D* h1_trigrat[3];
+  
+  TCanvas* d = new TCanvas("","",1000,1000);
+
+  for(int i=0; i<3; ++i)
+    {
+      h1_trigrat[i] = new TH1D(("trigrat_"+to_string(i)).c_str(),"",26,4,30);
+    }
   tjetE = (TH1D*)rootfile[0]->Get("tjetE");
   tjetE->Scale(1./nsimmb);
+  int mcol[4] = {kMagenta,kBlue,kBlue-7,kBlue+3};
+  for(int i=0; i<4; ++i)
+    {
+      h1_trigturn[i] = (TH1D*)rootfile[1]->Get(("trigturn_"+to_string(i)).c_str());
+      h1_trigturn[i]->GetYaxis()->SetTitle("Prescale Counts");
+      h1_trigturn[i]->GetYaxis()->SetTitle("Max E_{jet} [GeV]");
+      h1_trigturn[i]->SetMarkerColor(mcol[i]);
+      h1_trigturn[i]->SetMarkerStyle((i==2?21:(i==1?24:20)));
+      h1_trigturn[i]->SetMarkerSize(2);
+      if(i==0) h1_trigturn[0]->Scale(1./nmb);
+      if(i>0)
+	{
+	  h1_trigturn[i]->Scale(1./effevt[i-1]);
+	  h1_trigrat[i-1]->Divide(h1_trigturn[i],h1_trigturn[0]);
+	  h1_trigrat[i-1]->GetYaxis()->SetTitle("Jet / MBD Ratio");
+	  h1_trigrat[i-1]->GetXaxis()->SetTitle("Max E_{jet} [GeV]");
+	  h1_trigrat[i-1]->SetMarkerColor(mcol[i]);
+	  h1_trigrat[i-1]->SetMarkerSize(2);
+	  h1_trigrat[i-1]->SetMarkerStyle((i==2?21:(i==1?24:20)));
+	}
+    }
   for(int h=0; h<2; ++h)
     {
       h1_cluster_E[h] = (TH1D*)rootfile[h]->Get("h1_cluster_E");
@@ -320,16 +356,25 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	    }
 	  
 	  h1_dphi[h][i] = (TH1D*)rootfile[h]->Get(("h1_dphi"+to_string(1)+"_"+to_string(i)).c_str());
+	  h1_dphi[h][i]->GetXaxis()->SetLabelSize(0.02);
+	  h1_dphi[h][i]->GetYaxis()->SetLabelSize(0.02);
+	  h1_dphi[h][i]->GetYaxis()->SetTitle("Scaled Counts");
 	  h1_dphi[h][i]->Scale(1./(h==0?nsimmb:nmb));
-	  h1_dphi[h][i]->Fit("gaus","QS","",1.,5.);
-	  dphigaus[h][i] = h1_dphi[h][i]->GetFunction("gaus");
+	  TF1* newgaus = new TF1("mygaus",mygaus,M_PI/2,3*M_PI/2,4);
+	  newgaus->SetParameter(1,M_PI);
+	  newgaus->SetParameter(0,0.0025);
+	  newgaus->SetParameter(3,0.0002);
+	  newgaus->SetParameter(2,M_PI/8);
+	  h1_dphi[h][i]->Fit("mygaus","QS","",M_PI/2,3*M_PI/2);
+	  dphigaus[h][i] = h1_dphi[h][i]->GetFunction("mygaus");
 	  h1_rej[h][i] = (TH1D*)rootfile[h]->Get(("h1_rej"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_rej[h][i]->Rebin(5);
 	  h1_mlt[h][i] = (TH1D*)rootfile[h]->Get(("h1_mlt"+to_string(1)+"_"+to_string(i)).c_str());
 	  
 	  h2_jet_eta_e[h][i] = (TH2D*)rootfile[h]->Get(("h2_jet_eta_e"+to_string(1)+to_string(i)).c_str());
 	  h2_jet_eta_e[h][i]->Scale(1./(h==0?nsimmb:nmb));
-	  if(h==0) h2_tjet_eta_phi = (TH2D*)rootfile[h]->Get("h2_tjet_eta_phi");
+	  if(h==0 && i==0) h2_tjet_eta_phi = (TH2D*)rootfile[h]->Get("h2_tjet_eta_phi");
+	  if(h==0 && i==0) h2_tjet_eta_phi->Scale(1./nsimmb);
 	  if(i<3)
 	    {
 	      h2_cal_eta_phi[h][i] = (TH2D*)rootfile[h]->Get(("h2_cal_eta_phi"+to_string(1)+to_string(i)).c_str());
@@ -359,11 +404,23 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	}
     }
   TH1D* h1_AJ[2][12];
+  TH1D* h1_tAJ[12];
+  TF1* tajgaus[12];
   for(int h=0; h<2; ++h)
     {
       for(int i=0; i<4; ++i)
 	{
+	  if(h==0 && i<3)
+	    {
+	      h1_tAJ[i] = (TH1D*)rootfile[h]->Get(("h1_tAJ_"+to_string(i)).c_str());
+	      cout << "tAJ int/bin0/binmax+1: " << h1_tAJ[i]->Integral() << "/" << h1_tAJ[i]->GetBinContent(0) << "/" << h1_tAJ[i]->GetBinContent(51) << endl;
+	      h1_tAJ[i]->Scale(1./h1_tAJ[i]->Integral());
+	      h1_tAJ[i]->Fit("gaus","S");
+	      tajgaus[i] = h1_tAJ[i]->GetFunction("gaus");
+	      tajgaus[i]->SetLineColor(kRed+2);
+	    }
 	  h1_AJ[h][i] = (TH1D*)rootfile[h]->Get(("h1_AJ"+to_string(1)+"_"+to_string(i)).c_str());
+	  cout << "h1_aj bincontent 0: " << h1_AJ[h][i]->GetBinContent(0) << endl;
 	  h1_AJ[h][i]->Scale(1./h1_AJ[h][i]->Integral());//1./(h==0?(tree->GetEntries()*nsimmb):nmb));
 	  h1_AJ[h][i+4] = (TH1D*)rootfile[h]->Get(("h1_AJ"+to_string(1)+"_"+to_string(i+4)).c_str());
 	  //cout << h1_AJ[h][i+4] << endl;
@@ -376,6 +433,9 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  h1_AJ[h][i+8]->Scale(1./h1_AJ[h][i+8]->Integral());//1./(h==0?(tree->GetEntries()*nsimmb):nmb));
 	  h1_AJ[h][i+8]->Fit("gaus","QS");
 	  ajgaus[h][i+8] = h1_AJ[h][i+8]->GetFunction("gaus");
+	  cout << "h1_aj+4 bincontent 0: " << h1_AJ[h][i+4]->GetBinContent(0) << endl;
+	  cout << "h1_aj+8 bincontent 0: " << h1_AJ[h][i+8]->GetBinContent(0) << endl;
+
 	}
     }
   TH1D* jetE[2][4];
@@ -386,13 +446,28 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  jetE[h][i] = (TH1D*)rootfile[h]->Get(("jetE"+to_string(1)+"_"+to_string(i)).c_str());
 	  //cout << "jetE" << h << " " << i << " nentries: " << jetE[h][i]->GetEntries() << endl;
 	  cout << "jetE integral/effevt "<< jetE[h][i]->Integral(130,400) << " " << (h==0?(nsimmb):nmb) << endl;
+	  if(h==1 && i==0)
+	    {
+	      gPad->SetLogy();
+	      TF1* f1 = new TF1("f1","[0]*pow(x,-[1])",5,40);
+	      f1->SetParameter(0,100);
+	      f1->SetParameter(1,6);
+	      jetE[1][i]->Fit(f1,"L I S","",5,20);
+	      jetE[1][i]->Draw("PE");
+	      //fitgdat = 0;
+	      //fitgsim = 0;
+	      //std_text(d, texts, dotext, ntext, 0.03, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, 0, 0,(therun==-1?-1:runnumbers[therun]));
+	      d->SaveAs(("output/rmg/spectrum_justdat"+to_string(i)+".png").c_str());
+	      jetE[1][i]->GetFunction("f1")->SetBit(TF1::kNotDraw);
+	      gPad->SetLogy(0);
+	    }
 	  jetE[h][i]->Scale(1./(h==0?(nsimmb):nmb));
 	  jetE[h][i]->GetXaxis()->SetTitle("E_{T,jet} [GeV]");
 	}
       ljetE[h]->Scale(1./(h==0?nsimmb:nmb));
       ljetEta[h]->Scale(1./ljetEta[h]->Integral());
     }
-  TCanvas* d = new TCanvas("","",1000,1000);
+
   //  TH1D* jetTrigE[4];
   /*
   for(int i=0; i<4; i++)
@@ -430,7 +505,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   int fitgdat = 1;
   int fitgsim = 0;
   float gmd, ged, gms, ges;
-      
+  gPad->SetLeftMargin(0.15);
   for(int h=0; h<2; ++h)
     {
       gPad->SetLogy(0);
@@ -449,24 +524,47 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	      gmd = dphigaus[h][i]->GetParameter(1);
 	      ged = dphigaus[h][i]->GetParameter(2);
 	    }
-	  std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
+	  //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges,(therun==-1?-1:runnumbers[therun]),0);
+	  //sphenixtext(0.96,0.96,1);
+	  sphenixtext();
+	  drawText("Anti-k_{T} R=0.4",stdx,stdy,1);
+	  //drawText(("E_{T,jet1} > "+(i==0?)+" GeV").c_str(),stdx,stdy-0.05,1);
+	  //drawText(("E_{T,jet2} > "+ajlocut[i]+" GeV").c_str(),stdx,stdy-0.1,1);
+	  //drawText("#it{E}_{jet,1} > 10 GeV", 0.87, 0.8, 1, kBlack, 0.025);
+          //drawText("#it{E}_{jet,2} > 5 GeV",0.87,0.77,1,kBlack,0.025);
+          //drawText("Anti-#it{k}_{T} #it{R}=0.4",0.87,0.74,1,kBlack,0.025);
+          //drawText("Calorimeter towers",0.87,0.71,1,kBlack,0.025);
+	  //drawText("at EM scale",0.87,0.68,1,kBlack,0.025);
 	  d->SaveAs(("output/rmg/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(h)+"_"+to_string(i)+"_dphi_1d.png").c_str());
 	}
     }
+  gPad->SetLeftMargin(0.1);
   TLegend* ajleg = new TLegend(0,0,0.4,0.08);
+  TLegend* ajleg2 = new TLegend(0,0,0.4,0.08);
   ajleg->SetFillStyle(0);
   ajleg->SetFillColor(0);
   ajleg->SetTextFont(42);
   ajleg->SetBorderSize(0);
+  ajleg2->SetFillStyle(0);
+  ajleg2->SetFillColor(0);
+  ajleg2->SetTextFont(42);
+  ajleg2->SetBorderSize(0);
   h1_AJ[0][0]->SetMarkerSize(2);
   h1_AJ[1][0]->SetMarkerSize(2);
   h1_AJ[0][0]->SetMarkerStyle(25);
   h1_AJ[0][0]->SetMarkerColor(kGreen+2);
   h1_AJ[1][0]->SetMarkerStyle(20);
   h1_AJ[1][0]->SetMarkerColor(kMagenta+1);
+  h1_tAJ[0]->SetMarkerSize(2);
+  h1_tAJ[0]->SetMarkerColor(kRed+2);
+  h1_tAJ[0]->SetMarkerStyle(21);
   ajleg->AddEntry(h1_AJ[0][0],"MBD N/S>=1 PYTHIA","p");
   ajleg->AddEntry(h1_AJ[1][0],"MBD N/S>=1 Data","p");
-
+  string ajlocut[12] = {"4","7","10","15","10","7","15,","12","8","12","10","15"};
+  string ajhicut[12] = {"4","15","20","25","20","15","25","30","20","20","20","30"};
+  ajleg2->AddEntry(h1_AJ[0][0],"MBD N/S>=1 PYTHIA Reco","p");
+  ajleg2->AddEntry(h1_AJ[1][0],"MBD N/S>=1 Data","p");
+  ajleg2->AddEntry(h1_tAJ[0],"MBD N/S>=1 PYTHIA Truth","p");
   for(int i=0; i<3; ++i)
     {
       std_hist(h1_calo_E[1][i],h1_calo_E[0][i]);
@@ -549,6 +647,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   h2_cluster_eta_phi[0]->GetXaxis()->SetTitle("Cluster #eta");
   h2_cluster_eta_phi[0]->GetYaxis()->SetTitle("Cluster #phi [rad]");
   h2_cluster_eta_phi[0]->GetZaxis()->SetTitle("Event Normalized Counts");
+  h2_cluster_eta_phi[0]->GetZaxis()->SetTitleOffset(1.7);
   h2_cluster_eta_E[0]->Draw("COLZ");
   gPad->SaveAs(("output/rmg/clusteretaE"+to_string((therun==-1?-1:runnumbers[therun]))+"_0.png").c_str());
   h2_cluster_eta_phi[0]->Draw("COLZ");
@@ -566,6 +665,12 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   gPad->SetRightMargin(0.1);
   for(int i=0; i<12; ++i)
     {
+      if(i<3)
+	{
+	  h1_tAJ[i]->SetMarkerSize(2);
+	  h1_tAJ[i]->SetMarkerColor(kRed+2);
+	  h1_tAJ[i]->SetMarkerStyle(21);
+	}
       h1_AJ[0][i]->GetYaxis()->SetTitle("Integral Normalized Counts");
       h1_AJ[0][i]->SetMarkerSize(2);
       h1_AJ[1][i]->SetMarkerSize(2);
@@ -574,7 +679,8 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       h1_AJ[1][i]->SetMarkerStyle(20);
       h1_AJ[1][i]->SetMarkerColor(kMagenta+1);
       h1_AJ[0][i]->Draw("PE");
-      h1_AJ[1][i]->Draw("SAME P E");
+      h1_AJ[1][i]->Draw("SAME PE");
+      if(i%4 == 0 && i<10) h1_tAJ[i/4]->Draw("SAME PE");
       sphenixtext(0.9,0.91,1);
       fitgdat = 1;
       fitgsim = 1;
@@ -619,8 +725,21 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  ajgaus[1][i]->SetLineColor(kMagenta+1);
 	  ajgaus[1][i]->Draw("SAME");
 	}
-      ajleg->Draw();
-      std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
+      if(i%4==0) ajleg2->Draw();
+      else ajleg->Draw();
+      //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges,(therun==-1?-1:runnumbers[therun]));
+      sphenixtext();
+      drawText("Anti-k_{T} R=0.4",stdx,stdy,1);
+      drawText(("E_{T,jet1} > "+ajhicut[i]+" GeV").c_str(),stdx,stdy-0.05,1);
+      drawText(("E_{T,jet2} > "+ajlocut[i]+" GeV").c_str(),stdx,stdy-0.1,1);
+      if(i<8 && i>3)
+	{
+	  drawText("5#pi/4 > #Delta#phi > 3#pi/4",stdx,stdy-0.15,1);
+	}
+      else
+	{
+	  drawText("9#pi/8 > #Delta#phi > 7#pi/8",stdx,stdy-0.15,1);
+	}
       d->SaveAs(("output/rmg/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_AJ_1d.png").c_str());
     }
   d->SetLogy();
@@ -641,12 +760,9 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   jetTrigE[1]->SetMarkerColor(kBlue);
   jetTrigE[2]->SetMarkerColor(kBlue-7);
   jetTrigE[3]->SetMarkerColor(kBlue+3);
-  jetEleg->AddEntry(jetE[0][0],"MBD N/S>=1 PYTHIA/Geant","p");
+  //jetEleg->AddEntry(jetE[0][0],"MBD N/S>=1 PYTHIA/Geant","p");
   jetEleg->AddEntry(jetE[1][0],"MBD N/S>=1 Data","p");
-  jetEleg->AddEntry(jetTrigE[1],"MBD N/S>=1 \& Jet 8 GeV","p");
-  jetEleg->AddEntry(jetTrigE[2],"MBD N/S>=1 \& Jet 10 GeV","p");
-  jetEleg->AddEntry(jetTrigE[3],"MBD N/S>=1 \& Jet 12 GeV","p");
-  jetEleg->AddEntry(tjetE,"MBD N/S >= 1 Truth Jets","p");
+  //jetEleg->AddEntry(tjetE,"MBD N/S>=1 Truth Jets","p");
   jetEleg->SetFillStyle(0);
   jetEleg->SetBorderSize(0);
   jetEleg->SetFillColor(0);
@@ -661,7 +777,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   pubjet->SetMarkerStyle(43);
   pubjet->SetMarkerColor(kCyan+2);
   pubjet->SetMarkerSize(3);
-  jetEleg->AddEntry(pubjet,"Datathiefed STAR result","p");
+  //jetEleg->AddEntry(pubjet,"Datathiefed STAR result","p");
   tjetE->Rebin(10);
   for(int i=0; i<3; ++i)
     {
@@ -693,11 +809,23 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  minimum = min(minimum, testval);
 	}
       //cout << minimum << endl;
-      jetE[0][i]->GetYaxis()->SetRangeUser(0.5*minimum, 2*jetE[0][i]->GetMaximum());
+      jetE[1][i]->GetYaxis()->SetRangeUser(0.5*minimum, 2*jetE[0][i]->GetMaximum());
       std_hist(jetE[1][i], jetE[0][i]);
-      jetE[0][i]->Draw("PE");
-      jetE[1][i]->Draw("SAME P E");
-      if(i==0) tjetE->Draw("SAME P E");
+
+
+      jetE[1][i]->Draw("PE");
+      fitgsim = 0;
+      fitgdat = 0;
+      std_text(d, texts, dotext, ntext, 0.03, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges,(therun==-1?-1:runnumbers[therun]));
+      
+      if(i==0) d->SaveAs("output/rmg/justdat_nofit.png");
+      //jetE[0][i]->Draw("SAME PE");
+      //if(i==0) tjetE->Draw("SAME PE");
+      //jetEleg->Draw();
+
+      jetE[0][i]->Draw("SAME PE");
+      //jetE[1][i]->Draw("SAME PE");
+      //if(i==0) tjetE->Draw("SAME P E");
       cout << "tjetE integral: " << tjetE->Integral() << endl;
       if(i==0)
 	{
@@ -705,7 +833,13 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  jetTrigE[2]->Draw("SAME P E");
 	  jetTrigE[3]->Draw("SAME P E");
 	}
-      pubjet->Draw("SAME P");
+      //pubjet->Draw("SAME P");
+      if(i==0)
+	{
+	  jetEleg->AddEntry(jetTrigE[1],"MBD N/S>=1 \& Jet 8 GeV","p");
+	  jetEleg->AddEntry(jetTrigE[2],"MBD N/S>=1 \& Jet 10 GeV","p");
+	  jetEleg->AddEntry(jetTrigE[3],"MBD N/S>=1 \& Jet 12 GeV","p");
+	}
       jetEleg->Draw();
       fitgdat = 0;
       fitgsim = 0;
@@ -713,10 +847,50 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       d->SaveAs(("output/rmg/summed_jetE"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
     }
 
+
+  float minval = min(h1_trigturn[0]->GetBinContent(h1_trigturn[0]->FindLastBinAbove()),h1_trigturn[1]->GetBinContent(h1_trigturn[1]->FindLastBinAbove()));
+  minval = min(minval,h1_trigturn[2]->GetBinContent(h1_trigturn[2]->FindLastBinAbove()));
+  minval = min(minval,h1_trigturn[3]->GetBinContent(h1_trigturn[3]->FindLastBinAbove()));
+  //minval = max(minval,0);
+  h1_trigturn[0]->GetYaxis()->SetRangeUser(0.5*minval,2*h1_trigturn[0]->GetMaximum());
+
+  gPad->SetLogy();
+  gPad->SetLeftMargin(0.15);
+  h1_trigturn[0]->GetYaxis()->SetTitleOffset(1.5);
+  h1_trigturn[0]->Draw("PE");
+  for(int i=1; i<4; ++i)
+    {
+      h1_trigturn[i]->Draw("SAME PE");
+    }
+  jetEleg->Draw();
+  sphenixtext();
+  d->SaveAs(("output/rmg/trigturn"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
+  
+  gPad->SetLogy(0);
+  
+  h1_trigrat[0]->GetYaxis()->SetTitleOffset(1.5);
+
+  h1_trigrat[0]->Draw("PE");
+  for(int i=1; i<3; ++i)
+    {
+      h1_trigrat[i]->Draw("SAME PE");
+    }
+  jetEleg->Draw();
+  sphenixtext();
+  d->SaveAs(("output/rmg/trigrat"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
+  gPad->SetLeftMargin(0.1);      
+  //h1_trigrat[0]->Draw("PE");
+  //h1_trigrat[1]->Draw("SAME PE");
+  //h1_trigrat[2]->Draw("SAME PE");
+  //d->SaveAs(("output/rmg/trigrat"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
+
+  gPad->SetLogy();
+
   for(int j=0; j<ntext; ++j)
     {
       dotext[j] = 0;
     }
+
 
   dotext[0] = 1;
   dotext[8] = 1;
@@ -902,7 +1076,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  h1_eta[0][i][h]->Draw("PE");
 	  h1_eta[1][i][h]->Draw("SAME P E");
 	  ajleg->Draw();
-	  std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
+	  std_text(d, texts, dotext, ntext, stdsize, 0.13, stdy, 0, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
 	  d->SaveAs(("output/rmg/summed_eta"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_"+to_string(h)+".png").c_str());
 	}
       

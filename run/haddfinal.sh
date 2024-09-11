@@ -14,4 +14,4 @@ if [ $1 -eq 1 ]; then
     TYPE=dat
 fi
 
-hadd -f "summed_${TYPE}.root" `ls output/root/*${TYPE}*fullfile*`
+hadd -f -j 4 "summed_${TYPE}.root" `ls output/root/*${TYPE}*fullfile*`

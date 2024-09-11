@@ -102,21 +102,21 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree->Branch("ohetot",&ohetot,"ohetot/F");
   if(_dotow) 
     {
-      //_tree->Branch("sectorem",&sectorem,"sectorem/I"); //Number of hit sectors in the emcal
+      _tree->Branch("sectorem",&sectorem,"sectorem/I"); //Number of hit sectors in the emcal
       _tree->Branch("sectorih",&sectorih,"sectorih/I"); // IHcal etc.
       _tree->Branch("sectoroh",&sectoroh,"sectoroh/I");
       //_tree->Branch("sectoremuc",&sectoremuc,"sectoremuc/I");
-      //_tree->Branch("emcalen",emcalen,"emcalen[sectorem]/F"); //energy per EMCal sector
+      _tree->Branch("emcalen",emcalen,"emcalen[sectorem]/F"); //energy per EMCal sector
       _tree->Branch("ihcalen",ihcalen,"ihcalen[sectorih]/F"); // per IHCal sector (etc.)
       _tree->Branch("ohcalen",ohcalen,"ohcalen[sectoroh]/F");
       //_tree->Branch("emcalchi2",emcalchi2,"emcalchi2[sectorem]/F"); //energy per EMCal sector
       //_tree->Branch("ihcalchi2",ihcalchi2,"ihcalchi2[sectorih]/F"); // per IHCal sector (etc.)
       //_tree->Branch("ohcalchi2",ohcalchi2,"ohcalchi2[sectoroh]/F");
       //_tree->Branch("emcalenuc",emcalenuc,"emcalenuc[sectoremuc]/F");
-      //_tree->Branch("emcaletabin",emcaletabin,"emcaletabin[sectorem]/I"); //eta of EMCal sector
+      _tree->Branch("emcaletabin",emcaletabin,"emcaletabin[sectorem]/I"); //eta of EMCal sector
       _tree->Branch("ihcaletabin",ihcaletabin,"ihcaletabin[sectorih]/I");
       _tree->Branch("ohcaletabin",ohcaletabin,"ohcaletabin[sectoroh]/I");
-      //_tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
+      _tree->Branch("emcalphibin",emcalphibin,"emcalphibin[sectorem]/I"); //phi of EMCal sector
       _tree->Branch("ihcalphibin",ihcalphibin,"ihcalphibin[sectorih]/I");
       _tree->Branch("ohcalphibin",ohcalphibin,"ohcalphibin[sectoroh]/I");
     }
@@ -126,7 +126,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   //_tree->Branch("ihcalt",ihcalt,"ihcalt[sectorih]/F");
   //_tree->Branch("ohcalt",ohcalt,"ohcalt[sectoroh]/F");
   _tree->Branch("vtx",vtx,"vtx[3]/F");
-  if(_dotow) _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
+  //if(_dotow) _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
   _tree->Branch("njet",&njet,"njet/I");
   _jett->Branch("njet",&njet,"njet/I");
   _jett->Branch("aceta",aceta,"aceta[njet]/F");
@@ -139,13 +139,14 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
 
   _jett->Branch("jet_et",jet_et,"jet_et[njet]/F");
   _jett->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
-
+  /*
   if(_dotow)
     {
       _tree->Branch("rtemen",rtemen,"rtemen[sector_rtem]/F");
       _tree->Branch("rtemet",rtemet,"rtemet[sector_rtem]/I");
       _tree->Branch("rtemph",rtemph,"rtemph[sector_rtem]/I");
     }
+  */
   _tree->Branch("ehjet",ehjet,"ehjet[njet]/F");
   _tree->Branch("_evtnum",&_evtnum,"_evtnum/I");
   _tree->Branch("cluster_n",&_cluster_n,"cluster_n/I");
@@ -238,6 +239,10 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	{
 	  ismb = 1;
 	  ++mbevt;
+	}
+      else if(!datorsim && (!northit || !southit))
+	{
+	  return Fun4AllReturnCodes::ABORT_EVENT;
 	}
     }
   else
@@ -412,7 +417,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   //int jetfired = ((1 & triggervec >> 20) | (1 & triggervec >> 21) | (1 & triggervec >> 22) | (1 & triggervec >> 23));
   //int phtfired = ((1 & triggervec >> 28) | (1 & triggervec >> 29) | (1 & triggervec >> 30) | (1 & triggervec >> 31));
   //if(!njet)return Fun4AllReturnCodes::EVENT_OK;
-
+  /*
   if(_debug > 1) cout << "Getting retowered EMCal towers: " << endl;
   if(_dotow) 
     {
@@ -437,7 +442,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  if(_debug > 1) cout << "No retowered towers!" << endl;
 	}
     }
-
+  */
   emetot = 0;
   ohetot = 0;
   ihetot = 0;

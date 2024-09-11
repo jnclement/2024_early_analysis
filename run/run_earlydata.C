@@ -1,4 +1,6 @@
-
+#include <calowaveformsim/EliminateBackground.h>
+//#include <trigger/TriggerRunInfo.h>
+//#include <trigger/TriggerRunInfoReco.h>
 #include <fun4all/Fun4AllServer.h>
 #include <fun4all/Fun4AllInputManager.h>
 #include <fun4all/Fun4AllDstInputManager.h>
@@ -51,6 +53,7 @@ R__LOAD_LIBRARY(libmbd.so)
 R__LOAD_LIBRARY(libffamodules.so)
 R__LOAD_LIBRARY(libg4jets.so)
 R__LOAD_LIBRARY(libjetbackground.so)
+R__LOAD_LIBRARY(libemulatortreemaker.so)
 bool file_exists(const char* filename)
 {
   std::ifstream infile(filename);
@@ -115,67 +118,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
   // The calibrations have a validity range set by the beam clock which is not read out of the prdfs as of now
   Process_Calo_Calib();
-  /////////////////////////////////////////////////////////////////////////////////////////////////
-  /*
-  std::cout << "status setters" << std::endl;
-  CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
-  statusEMC->set_detector_type(CaloTowerDefs::CEMC);
-  statusEMC->set_time_cut(1);
-  se->registerSubsystem(statusEMC);
 
-  CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
-  statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
-  statusHCalIn->set_time_cut(2);
-  se->registerSubsystem(statusHCalIn);
-
-  CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
-  statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
-  statusHCALOUT->set_time_cut(2);
-  se->registerSubsystem(statusHCALOUT);
-
-  ////////////////////                                                                                                               
-  // Calibrate towers                                                                                                  
-  std::cout << "Calibrating EMCal" << std::endl;
-  CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
-  cout << "setting detector type for EMCal" << endl;
-  calibEMC->set_detector_type(CaloTowerDefs::CEMC);
-  cout << "setting output prefix for EMCal" << endl;
-  //calibEMC->set_outputNodePrefix("TOWERINFO_CALIB_");
-  cout << "registering calibEMC" << endl;
-  se->registerSubsystem(calibEMC);
-
-  std::cout << "Calibrating OHcal" << std::endl;
-  CaloTowerCalib *calibOHCal = new CaloTowerCalib("HCALOUT");
-  calibOHCal->set_detector_type(CaloTowerDefs::HCALOUT);
-  calibOHCal->set_outputNodePrefix("TOWERINFO_CALIB_");
-  se->registerSubsystem(calibOHCal);
-
-  std::cout << "Calibrating IHcal" << std::endl;
-  CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
-  calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
-  calibIHCal->set_outputNodePrefix("TOWERINFO_CALIB_");
-  se->registerSubsystem(calibIHCal);
-
-  std::cout << "Calibrating ZDC" << std::endl;
-  CaloTowerCalib *calibZDC = new CaloTowerCalib("ZDC");
-  calibZDC->set_detector_type(CaloTowerDefs::ZDC);
-  se->registerSubsystem(calibZDC);
-
-  //////////////////                                                                                                                 
-  // Clusters                                                                                                                        
-
-  std::cout << "Building clusters" << std::endl;
-  RawClusterBuilderTemplate *ClusterBuilder = new RawClusterBuilderTemplate("EmcRawClusterBuilderTemplate");
-  ClusterBuilder->Detector("CEMC");
-  ClusterBuilder->set_threshold_energy(0.030);  // for when using basic calibration                                                  
-  std::string emc_prof = getenv("CALIBRATIONROOT");
-  emc_prof += "/EmcProfile/CEMCprof_Thresh30MeV.root";
-  ClusterBuilder->LoadProfile(emc_prof);
-  ClusterBuilder->set_UseTowerInfo(1);  // to use towerinfo objects rather than old RawTower                                         
-  se->registerSubsystem(ClusterBuilder);
-
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  */
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
   cout << "test1.5" << endl;
@@ -185,6 +128,12 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //RetowerCEMC *rcemc = new RetowerCEMC();
   //rcemc->set_towerinfo(true);
   //se->registerSubsystem(rcemc);
+
+  EliminateBackground* bgelim = new EliminateBackground("bgelim");
+  se->registerSubsystem(bgelim);
+
+  //TriggerRunInfoReco* tana = new TriggerRunInfoReco("tana");
+  //se->registerSubsystem(tana);
   
   JetReco *towerjetreco = new JetReco();
   //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
