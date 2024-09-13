@@ -718,12 +718,26 @@ int quickroot(string filebase="", int njob=0)
 		  if(AJ < 0) cout << ET << " " << ET2 << " " << AJ << endl;
 		  float odph = tjet_phi[j]-tjet_phi[k];
 		  if(odph < 0) odph += 2*M_PI;
-		  if(odph > 7*M_PI/8 && odph < 9*M_PI/8)
+		  if(odph > M_PI) odph -= 2*(odph-M_PI);
+		  if(odph > 7*M_PI/8)
 		    {
 		      h1_tAJ[0]->Fill(AJ);
-		      if(tjet_e[j] > 20 && tjet_e[k] > 10) h1_tAJ[1]->Fill(AJ);
-		      if(tjet_e[j] > 30 && tjet_e[k] > 15) h1_tAJ[2]->Fill(AJ);
+		      if(tjet_e[k] > 20 && tjet_e[k] > 10) h1_AJ[h][2]->Fill(AJ);
+		      if(tjet_e[k] > 15 && tjet_e[k] > 7) h1_AJ[h][1]->Fill(AJ);
+		      if(tjet_e[k] > 25 && tjet_e[k] > 15) h1_AJ[h][3]->Fill(AJ);
 		      
+		      if(tjet_e[k] > 20 && tjet_e[k] > 8) h1_AJ[h][8]->Fill(AJ);
+		      if(tjet_e[k] > 20 && tjet_e[k] > 10) h1_AJ[h][10]->Fill(AJ);
+		      if(tjet_e[k] > 20 && tjet_e[k] > 12) h1_AJ[h][9]->Fill(AJ);
+		      if(tjet_e[k] > 30 && tjet_e[k] > 15) h1_AJ[h][11]->Fill(AJ);
+		      
+		    }
+		  if(odph > 3*M_PI/4)
+		    {
+		      if(tjet_e[k] > 20 && tjet_e[k] > 10) h1_AJ[h][4]->Fill(AJ);
+		      if(tjet_e[k] > 15 && tjet_e[k] > 7) h1_AJ[h][5]->Fill(AJ);
+		      if(tjet_e[k] > 25 && tjet_e[k] > 15) h1_AJ[h][6]->Fill(AJ);
+		      if(tjet_e[k] > 30 && tjet_e[k] > 12) h1_AJ[h][7]->Fill(AJ);
 		    }
 		  tjet_dphi[0]->Fill(odph);
 		  if(tjet_e[j] > 20 && tjet_e[k] > 10) tjet_dphi[1]->Fill(odph);
@@ -1203,7 +1217,7 @@ int quickroot(string filebase="", int njob=0)
       for(int i=0; i<12; ++i)
 	{
 	  if(i<4) outfile->WriteObject(trigturn[i],trigturn[i]->GetName());
-	  if(i<3 && h==1) outfile->WriteObject(h1_tAJ[i],h1_tAJ[i]->GetName());
+	  outfile->WriteObject(h1_tAJ[i],h1_tAJ[i]->GetName());
 	  if(i<3) outfile->WriteObject(jetfrac[h][i],jetfrac[h][i]->GetName());
 	  if(i<3) outfile->WriteObject(h2_cal_eta_phi[h][i],h2_cal_eta_phi[h][i]->GetName());
 	  if(i<5) outfile->WriteObject(h2_jet_eta_phi[h][i],h2_jet_eta_phi[h][i]->GetName());

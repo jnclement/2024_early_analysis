@@ -61,7 +61,7 @@ bool file_exists(const char* filename)
 }
 int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0)
 {
-  cout << "test0" << endl;
+  //cout << "test0" << endl;
   int verbosity = 0;
   string filename = "/sphenix/tg/tg01/jets/jocl/evt/"+to_string((datorsim?rn:nproc))+"/events_"+tag+(tag==""?"":"_");
   //filename += (szs?"yszs_":"nszs_")+to_string(szs)+"_"+
@@ -70,19 +70,21 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   filename += to_string(nevt);
   filename += ".root";
   FROG *fr = new FROG();
-  cout << "test0.5" << endl;
+  //cout << "test0.5" << endl;
   gSystem->Load("libfun4all.so");
   gSystem->Load("libg4detectors.so");
   gSystem->Load("libjetbackground.so");
   gSystem->Load("libcalo_io.so");
   gSystem->Load("libg4dst.so");
-  cout << "test1" << endl;
+  //cout << "test1" << endl;
   Fun4AllServer *se = Fun4AllServer::instance();
   se->Verbosity( verbosity );
   // just if we set some flags somewhere in this macro
   recoConsts *rc =  recoConsts::instance();
   if(datorsim) rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2024");
+  else rc->set_StringFlag("CDB_GLOBALTAG","MDC2");
   if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
+  else rc->set_uint64Flag("TIMESTAMP",0);
   ifstream list1;
   string line1;
   ifstream list2;
@@ -104,7 +106,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   for(int i=0; i<nproc+1; i++)
     {
       getline(list1, line1);
-      cout << line1 << endl;
+      //cout << line1 << endl;
       if(!datorsim) getline(list2, line2);
       if(!datorsim) getline(list3, line3);
     }
@@ -117,11 +119,64 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   // this points to the global tag in the CDB
   //rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
   // The calibrations have a validity range set by the beam clock which is not read out of the prdfs as of now
-  Process_Calo_Calib();
+  //Process_Calo_Calib();
+
+
+  std::cout << "status setters" << std::endl;
+  CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
+  statusEMC->set_detector_type(CaloTowerDefs::CEMC);
+  statusEMC->set_time_cut(1);
+  se->registerSubsystem(statusEMC);
+
+  CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
+  statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
+  statusHCalIn->set_time_cut(2);
+  se->registerSubsystem(statusHCalIn);
+
+  CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
+  statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
+  statusHCALOUT->set_time_cut(2);
+  se->registerSubsystem(statusHCALOUT);
+
+  ////////////////////
+  // Calibrate towers
+  std::cout << "Calibrating EMCal" << std::endl;
+  CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
+  calibEMC->set_detector_type(CaloTowerDefs::CEMC);
+  se->registerSubsystem(calibEMC);
+
+  std::cout << "Calibrating OHcal" << std::endl;
+  CaloTowerCalib *calibOHCal = new CaloTowerCalib("HCALOUT");
+  calibOHCal->set_detector_type(CaloTowerDefs::HCALOUT);
+  se->registerSubsystem(calibOHCal);
+
+  std::cout << "Calibrating IHcal" << std::endl;
+  CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
+  calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
+  se->registerSubsystem(calibIHCal);
+  /*
+  std::cout << "Calibrating ZDC" << std::endl;
+  CaloTowerCalib *calibZDC = new CaloTowerCalib("ZDC");
+  calibZDC->set_detector_type(CaloTowerDefs::ZDC);
+  se->registerSubsystem(calibZDC);
+  */
+  //////////////////
+  // Clusters
+
+  std::cout << "Building clusters" << std::endl;
+  RawClusterBuilderTemplate *ClusterBuilder = new RawClusterBuilderTemplate("EmcRawClusterBuilderTemplate");
+  ClusterBuilder->Detector("CEMC");
+  ClusterBuilder->set_threshold_energy(0.030);  // for when using basic calibration
+  std::string emc_prof = getenv("CALIBRATIONROOT");
+  emc_prof += "/EmcProfile/CEMCprof_Thresh30MeV.root";
+  ClusterBuilder->LoadProfile(emc_prof);
+  ClusterBuilder->set_UseTowerInfo(1);  // to use towerinfo objects rather than old RawTower
+  se->registerSubsystem(ClusterBuilder);
+
 
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
-  cout << "test1.5" << endl;
+  //cout << "test1.5" << endl;
   //Chi2checker* chi2c;
   //if(chi2check) chi2c = new Chi2checker("chi2checker",debug);
   //if(chi2check) se->registerSubsystem(chi2c);
@@ -145,9 +200,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   towerjetreco->set_input_node("TOWER");
   //towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
-  cout << "test2" << endl;
+  //cout << "test2" << endl;
   R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
-  cout << "test3" << endl;
+  //cout << "test3" << endl;
   se->registerSubsystem( tt );
   cout << "test4" << endl;
   se->Print("NODETREE");
