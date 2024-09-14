@@ -126,7 +126,12 @@ void drawText(const char *text, float xp, float yp, bool isRightAlign=0, int tex
   tex->Draw();
 }
 
-void sphenixtext(float xpos = 0.8, float ypos = 0.96, int ra = 1, float textsize = 0.04)
+void sqrt_snn_text(float xp = 0.7, float yp = 0.8, bool isRightAlign=0, double textsize = 0.04)
+{
+  drawText("#sqrt{S_{NN}} = 200 GeV",xp,yp,isRightAlign,kBlack,textsize);
+}
+
+void sphenixtext(float xpos = 0.8, float ypos = 0.96, int ra = 0, float textsize = 0.04)
 {
   drawText("#bf{#it{sPHENIX}} Internal", xpos, ypos, ra, kBlack, textsize);
 }

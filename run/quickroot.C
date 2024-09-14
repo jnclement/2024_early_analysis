@@ -253,6 +253,8 @@ int quickroot(string filebase="", int njob=0)
 	  h1_AJ[h][i+8] = new TH1D(("h1_AJ"+to_string(h)+"_"+to_string(i+8)).c_str(),"",50,0,1);
 
 	  h1_tAJ[i] = new TH1D(("h1_tAJ_"+to_string(i)).c_str(),"",50,0,1);
+	  h1_tAJ[i+4] = new TH1D(("h1_tAJ_"+to_string(i+4)).c_str(),"",50,0,1);
+	  h1_tAJ[i+8] = new TH1D(("h1_tAJ_"+to_string(i+8)).c_str(),"",50,0,1);
 	}
     }
   TH2D* event_disrt[3];
@@ -626,23 +628,23 @@ int quickroot(string filebase="", int njob=0)
 	      if(odph > 7*M_PI/8)
 		{
 		  h1_AJ[h][0]->Fill(AJ);
-		  if(jet_e[h][k] > 20 && jet_e[h][k] > 10) h1_AJ[h][2]->Fill(AJ);
-		  if(jet_e[h][k] > 15 && jet_e[h][k] > 7) h1_AJ[h][1]->Fill(AJ);
-		  if(jet_e[h][k] > 25 && jet_e[h][k] > 15) h1_AJ[h][3]->Fill(AJ);
+		  if(ET1 > 20 && ET2 > 10) h1_AJ[h][2]->Fill(AJ);
+		  if(ET1 > 15 && ET2 > 7) h1_AJ[h][1]->Fill(AJ);
+		  if(ET1 > 25 && ET2 > 15) h1_AJ[h][3]->Fill(AJ);
 		  
-		  if(jet_e[h][k] > 20 && jet_e[h][k] > 8) h1_AJ[h][8]->Fill(AJ);
-		  if(jet_e[h][k] > 20 && jet_e[h][k] > 10) h1_AJ[h][10]->Fill(AJ);
-		  if(jet_e[h][k] > 20 && jet_e[h][k] > 12) h1_AJ[h][9]->Fill(AJ);
-		  if(jet_e[h][k] > 30 && jet_e[h][k] > 15) h1_AJ[h][11]->Fill(AJ);
+		  if(ET1 > 20 && ET2 > 8) h1_AJ[h][8]->Fill(AJ);
+		  if(ET1 > 20 && ET2 > 10) h1_AJ[h][10]->Fill(AJ);
+		  if(ET1 > 20 && ET2 > 12) h1_AJ[h][9]->Fill(AJ);
+		  if(ET1 > 30 && ET2 > 15) h1_AJ[h][11]->Fill(AJ);
 		}
-	      if(jet_e[h][k] > 10 && jet_e[h][l] > 5)
+	      if(ET1 > 10 && jet_e[h][l] > 5)
 		{
 		  if(odph > 3*M_PI/4)
 		    {
-		      if(jet_e[h][k] > 20 && jet_e[h][k] > 10) h1_AJ[h][4]->Fill(AJ);
-		      if(jet_e[h][k] > 15 && jet_e[h][k] > 7) h1_AJ[h][5]->Fill(AJ);
-		      if(jet_e[h][k] > 25 && jet_e[h][k] > 15) h1_AJ[h][6]->Fill(AJ);
-		      if(jet_e[h][k] > 30 && jet_e[h][k] > 12) h1_AJ[h][7]->Fill(AJ);
+		      if(ET1 > 20 && ET2 > 10) h1_AJ[h][4]->Fill(AJ);
+		      if(ET1 > 15 && ET2 > 7) h1_AJ[h][5]->Fill(AJ);
+		      if(ET1 > 25 && ET2 > 15) h1_AJ[h][6]->Fill(AJ);
+		      if(ET1 > 30 && ET2 > 12) h1_AJ[h][7]->Fill(AJ);
 		    }
 		  if(abs(jet_et[h][k]) > 0.7 || abs(jet_et[h][l]) > 0.7) continue;
 		  float dphi = jet_ph[h][k] - jet_ph[h][l];
@@ -651,9 +653,9 @@ int quickroot(string filebase="", int njob=0)
 		  if(dphi < 0) dphi+=2*M_PI;
 		  //cout << dphi << endl;
 		  h1_dphi[h][0]->Fill(dphi);
-		  if(jet_e[h][k] > 20 && jet_e[h][l] > 10) h1_dphi[h][2]->Fill(dphi);
-		  if(jet_e[h][k] > 15 && jet_e[h][l] > 10) h1_dphi[h][1]->Fill(dphi);
-		  if(jet_e[h][k] > 30 && jet_e[h][l] > 15) h1_dphi[h][3]->Fill(dphi);
+		  if(ET1 > 20 && jet_e[h][l] > 10) h1_dphi[h][2]->Fill(dphi);
+		  if(ET1 > 15 && jet_e[h][l] > 10) h1_dphi[h][1]->Fill(dphi);
+		  if(ET1 > 30 && jet_e[h][l] > 15) h1_dphi[h][3]->Fill(dphi);
 		  
 		  h2_dphi_deta[h]->Fill(deta,dphi);
 		}
@@ -722,26 +724,26 @@ int quickroot(string filebase="", int njob=0)
 		  if(odph > 7*M_PI/8)
 		    {
 		      h1_tAJ[0]->Fill(AJ);
-		      if(tjet_e[k] > 20 && tjet_e[k] > 10) h1_AJ[h][2]->Fill(AJ);
-		      if(tjet_e[k] > 15 && tjet_e[k] > 7) h1_AJ[h][1]->Fill(AJ);
-		      if(tjet_e[k] > 25 && tjet_e[k] > 15) h1_AJ[h][3]->Fill(AJ);
+		      if(ET > 20 && ET2 > 10) h1_tAJ[h][2]->Fill(AJ);
+		      if(ET > 15 && ET2 > 7) h1_tAJ[h][1]->Fill(AJ);
+		      if(ET > 25 && ET2 > 15) h1_tAJ[h][3]->Fill(AJ);
 		      
-		      if(tjet_e[k] > 20 && tjet_e[k] > 8) h1_AJ[h][8]->Fill(AJ);
-		      if(tjet_e[k] > 20 && tjet_e[k] > 10) h1_AJ[h][10]->Fill(AJ);
-		      if(tjet_e[k] > 20 && tjet_e[k] > 12) h1_AJ[h][9]->Fill(AJ);
-		      if(tjet_e[k] > 30 && tjet_e[k] > 15) h1_AJ[h][11]->Fill(AJ);
+		      if(ET > 20 && ET2 > 8) h1_tAJ[h][8]->Fill(AJ);
+		      if(ET > 20 && ET2 > 10) h1_tAJ[h][10]->Fill(AJ);
+		      if(ET > 20 && ET2 > 12) h1_tAJ[h][9]->Fill(AJ);
+		      if(ET > 30 && ET2 > 15) h1_tAJ[h][11]->Fill(AJ);
 		      
 		    }
 		  if(odph > 3*M_PI/4)
 		    {
-		      if(tjet_e[k] > 20 && tjet_e[k] > 10) h1_AJ[h][4]->Fill(AJ);
-		      if(tjet_e[k] > 15 && tjet_e[k] > 7) h1_AJ[h][5]->Fill(AJ);
-		      if(tjet_e[k] > 25 && tjet_e[k] > 15) h1_AJ[h][6]->Fill(AJ);
-		      if(tjet_e[k] > 30 && tjet_e[k] > 12) h1_AJ[h][7]->Fill(AJ);
+		      if(ET > 20 && ET2 > 10) h1_tAJ[h][4]->Fill(AJ);
+		      if(ET > 15 && ET2 > 7) h1_tAJ[h][5]->Fill(AJ);
+		      if(ET > 25 && ET2 > 15) h1_tAJ[h][6]->Fill(AJ);
+		      if(ET > 30 && ET2 > 12) h1_tAJ[h][7]->Fill(AJ);
 		    }
 		  tjet_dphi[0]->Fill(odph);
-		  if(tjet_e[j] > 20 && tjet_e[k] > 10) tjet_dphi[1]->Fill(odph);
-		  if(tjet_e[j] > 30 && tjet_e[k] > 15) tjet_dphi[2]->Fill(odph);
+		  if(ET > 20 && ET2 > 10) tjet_dphi[1]->Fill(odph);
+		  if(ET > 30 && ET2 > 15) tjet_dphi[2]->Fill(odph);
 		}
 	      if(abs(tjet_eta[j]) > 1.1) continue;
 	      tjetE->Fill(ET);

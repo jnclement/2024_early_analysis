@@ -84,7 +84,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   if(datorsim) rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2024");
   else rc->set_StringFlag("CDB_GLOBALTAG","MDC2");
   if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
-  else rc->set_uint64Flag("TIMESTAMP",0);
+  else rc->set_uint64Flag("TIMESTAMP",15);
   ifstream list1;
   string line1;
   ifstream list2;
