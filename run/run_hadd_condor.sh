@@ -4,7 +4,7 @@
 SUBNAME="hadd.sub"
 
 echo "executable = haddfinal.sh" > $SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:1000" >> $SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:12500" >> $SUBNAME
 echo "arguments = ${1}" >> $SUBNAME
 echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_hadd.out" >> $SUBNAME
 echo "request_cpus = 4" >> $SUBNAME

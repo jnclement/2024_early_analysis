@@ -33,12 +33,13 @@
 #include <centrality/CentralityReco.h>
 
 #include <r24earlytreemaker/R24earlytreemaker.h>
-//#include <chi2checker/Chi2checker.h>
+#include <chi2checker/Chi2checker.h>
 #include </sphenix/user/jocl/projects/macros/common/Calo_Calib.C>
 #include <CaloTowerCalib.h>
+#include <globalvertex/GlobalVertexReco.h>
 //#include <G4Setup_sPHENIX.C>
 using namespace std;
-//R__LOAD_LIBRARY(libchi2checker.so)
+R__LOAD_LIBRARY(libchi2checker.so)
 R__LOAD_LIBRARY(libr24earlytreemaker.so)
 R__LOAD_LIBRARY(libg4centrality.so)
 R__LOAD_LIBRARY(libFROG.so)
@@ -59,15 +60,16 @@ bool file_exists(const char* filename)
   std::ifstream infile(filename);
   return infile.good();
 }
-int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0)
+int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0, string dir = ".")
 {
   //cout << "test0" << endl;
   int verbosity = 0;
-  string filename = "/sphenix/tg/tg01/jets/jocl/evt/"+to_string((datorsim?rn:nproc))+"/events_"+tag+(tag==""?"":"_");
+  string filename = dir+"/"+to_string(rn)+"/events_"+tag+(tag==""?"":"_");
   //filename += (szs?"yszs_":"nszs_")+to_string(szs)+"_"+
   filename += to_string(rn)+"_";
   filename += to_string(nproc)+"_";
   filename += to_string(nevt);
+  string chi2filename = "/sphenix/user/jocl/projects/run2024_earlydata/run/output/temphists/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_chi2file.root";
   filename += ".root";
   FROG *fr = new FROG();
   //cout << "test0.5" << endl;
@@ -94,6 +96,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   list1.open(datorsim?("./lists/"+to_string(rn)+".list"):"lists/dst_calo_waveform.list", ifstream::in);
   if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
   if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
+  if(!datorsim && !list3) list3.open("lists/g4hits.list");
   if(!list1)
     {
       cout << "nolist!" << endl;
@@ -107,14 +110,14 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
     {
       getline(list1, line1);
       //cout << line1 << endl;
-      if(!datorsim) getline(list2, line2);
+      if(!datorsim && list2) getline(list2, line2);
       if(!datorsim) getline(list3, line3);
     }
   in_1->AddFile(line1);
-  if(!datorsim) in_2->AddFile(line2);
+  if(!datorsim && list2) in_2->AddFile(line2);
   if(!datorsim) in_3->AddFile(line3);
   se->registerInputManager( in_1 );
-  if(!datorsim) se->registerInputManager( in_2 );
+  if(!datorsim && list2) se->registerInputManager( in_2 );
   if(!datorsim) se->registerInputManager( in_3 );
   // this points to the global tag in the CDB
   //rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
@@ -123,6 +126,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
 
   std::cout << "status setters" << std::endl;
+  //if(datorsim)
+  //  {
   CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
   statusEMC->set_detector_type(CaloTowerDefs::CEMC);
   statusEMC->set_time_cut(1);
@@ -137,7 +142,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
   statusHCALOUT->set_time_cut(2);
   se->registerSubsystem(statusHCALOUT);
-
+    
   ////////////////////
   // Calibrate towers
   std::cout << "Calibrating EMCal" << std::endl;
@@ -154,6 +159,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
   calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
   se->registerSubsystem(calibIHCal);
+  //  }
   /*
   std::cout << "Calibrating ZDC" << std::endl;
   CaloTowerCalib *calibZDC = new CaloTowerCalib("ZDC");
@@ -176,20 +182,48 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
-  //cout << "test1.5" << endl;
-  //Chi2checker* chi2c;
-  //if(chi2check) chi2c = new Chi2checker("chi2checker",debug);
-  //if(chi2check) se->registerSubsystem(chi2c);
-  //RetowerCEMC *rcemc = new RetowerCEMC();
-  //rcemc->set_towerinfo(true);
-  //se->registerSubsystem(rcemc);
+  //cout << "test1.5" << endl;  
 
   EliminateBackground* bgelim = new EliminateBackground("bgelim");
   se->registerSubsystem(bgelim);
 
+
+  if (!datorsim)
+    {
+      auto mbddigi = new MbdDigitization();
+      mbddigi->Verbosity(verbosity);
+      se->registerSubsystem(mbddigi);
+
+      auto mbdreco = new MbdReco();
+      mbdreco->Verbosity(verbosity);
+      se->registerSubsystem(mbdreco);
+
+      GlobalVertexReco* gblvertex = new GlobalVertexReco();
+      gblvertex->Verbosity(verbosity);
+      se->registerSubsystem(gblvertex);
+    }
+
   //TriggerRunInfoReco* tana = new TriggerRunInfoReco("tana");
   //se->registerSubsystem(tana);
-  
+  /*
+  RetowerCEMC *rcemc = new RetowerCEMC();
+  rcemc->set_towerinfo(true);
+  rcemc->Verbosity(verbosity);
+  se->registerSubsystem(rcemc);
+  */
+
+  JetReco *truthjetreco = new JetReco();
+  if(!datorsim)
+    {
+      TruthJetInput *tji = new TruthJetInput(Jet::PARTICLE);
+      tji->add_embedding_flag(0);  // changes depending on signal vs. embedded
+      truthjetreco->add_input(tji);
+      truthjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Truth_r04");
+      truthjetreco->set_algo_node("ANTIKT");
+      truthjetreco->set_input_node("G4TruthInfo");
+      se->registerSubsystem(truthjetreco);
+    }
+
   JetReco *towerjetreco = new JetReco();
   //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
   towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO));
@@ -200,20 +234,25 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   towerjetreco->set_input_node("TOWER");
   //towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
+  Chi2checker* chi2c;
+  if(chi2check) chi2c = new Chi2checker(chi2filename,"chi2checker",debug);
+  if(chi2check) se->registerSubsystem(chi2c);
+
   //cout << "test2" << endl;
-  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
+  //R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
   //cout << "test3" << endl;
-  se->registerSubsystem( tt );
+  //se->registerSubsystem( tt );
   cout << "test4" << endl;
   se->Print("NODETREE");
+  cout << "run " << nevt << endl;
   se->run(nevt);
-  se->Print("NODETREE");
+  cout << "ran " << nevt << endl;
   cout << "Ran all events" << endl;
   se->End();
-  se->Print("NODETREE");
   cout << "Ended server" << endl;
   delete se;
   cout << "Deleted server" << endl;
+  cout << "wrote " << filename << endl;
   gSystem->Exit(0);
   cout << "Exited gSystem" << endl;
   return 0;
