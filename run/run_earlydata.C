@@ -168,7 +168,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   */
   //////////////////
   // Clusters
-
+  /*
   std::cout << "Building clusters" << std::endl;
   RawClusterBuilderTemplate *ClusterBuilder = new RawClusterBuilderTemplate("EmcRawClusterBuilderTemplate");
   ClusterBuilder->Detector("CEMC");
@@ -178,14 +178,14 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   ClusterBuilder->LoadProfile(emc_prof);
   ClusterBuilder->set_UseTowerInfo(1);  // to use towerinfo objects rather than old RawTower
   se->registerSubsystem(ClusterBuilder);
-
+  */
 
   CDBInterface::instance()->Verbosity(0);
   int cont = 0;
   //cout << "test1.5" << endl;  
 
-  EliminateBackground* bgelim = new EliminateBackground("bgelim");
-  se->registerSubsystem(bgelim);
+  //EliminateBackground* bgelim = new EliminateBackground("bgelim");
+  //se->registerSubsystem(bgelim);
 
 
   if (!datorsim)
@@ -211,7 +211,6 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   rcemc->Verbosity(verbosity);
   se->registerSubsystem(rcemc);
   */
-
   JetReco *truthjetreco = new JetReco();
   if(!datorsim)
     {
@@ -235,7 +234,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
   Chi2checker* chi2c;
-  if(chi2check) chi2c = new Chi2checker(chi2filename,"chi2checker",debug);
+  if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug);
   if(chi2check) se->registerSubsystem(chi2c);
 
   //cout << "test2" << endl;

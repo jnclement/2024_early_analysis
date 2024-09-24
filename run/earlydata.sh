@@ -13,6 +13,8 @@ fi
 SUBDIR=${3}
 mkdir -p $SUBDIR
 mkdir -p lists
+mkdir -p ./output/smg
+mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/run_earlydata.C .
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/$3.list ./lists/$3.list
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/g4hits.list ./lists/g4hits.list
@@ -23,4 +25,7 @@ root -b -q 'run_earlydata.C("'${1}'",'${2}',0,'${5}','${3}','${4}',1,'${6}')'
 ls
 echo " "
 ls $SUBDIR
+echo " "
+ls output/smg
 cp -r "./${SUBDIR}/events_${1}_${3}_${2}_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_${2}_${5}.root"
+cp ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/

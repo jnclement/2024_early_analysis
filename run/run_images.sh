@@ -1,19 +1,19 @@
 #!/bin/bash
 
-TAG=`echo $1 | awk -F'/' '{print $2}' | awk -F'.' '{print $2}'`
+TAG=`echo $1 | awk -F'/' '{print $2}' | awk -F'.' '{print $1}'`
 if [ $# -lt 1 ]; then
     echo "Need arguments (in order): filename"
     exit 1
 fi
 
-NJOB=1 #`wc -l < $1`
+NJOB=`wc -l < $1`
 NJOB=$(( ($NJOB + 9) / 10))
 BASENAME="condor_${TAG}_${NJOB}_imagemaker"
 
 SUBNAME="${BASENAME}.sub"
 
 echo "executable = quickroot.sh" > $SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:12500" >> $SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:8000" >> $SUBNAME
 echo "arguments = ${1} \$(Process)" >> $SUBNAME
 echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME

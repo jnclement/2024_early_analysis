@@ -31,95 +31,6 @@
 #include <algorithm>
 #include "dlUtility.h"
 #include <TDatime.h>
-void get_timestamps(int runnumber, unsigned int* timestamp)
-{
-
-  string datestamp;
-  TSQLServer *db = TSQLServer::Connect("pgsql://sphnxdaqdbreplica:5432/daq","phnxro","");
-
-  if (db)
-    {
-      printf("Server info: %s\n", db->ServerInfo());
-    }
-  else
-    {
-      printf("bad\n");
-    }
-
-
-  TSQLRow *row;
-  TSQLResult *res;
-  TString cmd = "";
-  char sql[1000];
-
-  cout << runnumber << endl;
-  sprintf(sql, "select brtimestamp from run where runnumber = %d;", runnumber);
-
-  res = db->Query(sql);
-
-  int nrows = res->GetRowCount();
-  
-  int nfields = res->GetFieldCount();
-  for (int i = 0; i < nrows; i++) {
-    row = res->Next();
-    for (int j = 0; j < nfields; j++) {
-      datestamp = row->GetField(j);
-    }
-    delete row;
-  }
-  delete res;
-  cout << datestamp << endl;
-  TDatime das = TDatime(datestamp.c_str());
-  *timestamp = das.Convert();
-}
-
-void get_scaledowns(int runnumber, int scaledowns[])
-{
-
-  TSQLServer *db = TSQLServer::Connect("pgsql://sphnxdaqdbreplica:5432/daq","phnxro","");
-
-  if (db)
-    {
-      printf("Server info: %s\n", db->ServerInfo());
-    }
-  else
-    {
-      printf("bad\n");
-    }
-
-
-  TSQLRow *row;
-  TSQLResult *res;
-  TString cmd = "";
-  char sql[1000];
-
-  cout << runnumber << endl;
-  for (int is = 0; is < 64; is++)
-    {
-      sprintf(sql, "select scaledown%02d from gl1_scaledown where runnumber = %d;", is, runnumber);
-
-      res = db->Query(sql);
-
-      int nrows = res->GetRowCount();
-
-      int nfields = res->GetFieldCount();
-      //cout << nrows << " " << nfields << endl;   
-      for (int i = 0; i < nrows; i++) {
-        row = res->Next();
-        for (int j = 0; j < nfields; j++) {
-          scaledowns[is] = stoi(row->GetField(j));
-          //cout << is << endl;       
-          if(is == 10 || is==17 || is==18 || is==19) cout  << is << ":" << scaledowns[is] << " ";
-        }
-        delete row;
-      }
-
-
-      delete res;
-    }
-  cout << endl;
-  return 0;
-}
 
 int plot_chi2file()
 {
@@ -134,36 +45,85 @@ int plot_chi2file()
   TFile* thefile = new TFile("summed_chi2file.root");
   gPad->SetRightMargin(0.15);
   gPad->SetLeftMargin(0.15);
-  TH2D* hists[6];
-  float ETJet[6] = {4,10,20,30,40,50};
-  for(int i=0; i<6; ++i)
+  const int nh = 3;
+  TH2D* hists[nh][6];
+  TH2D* h_ecc_E[nh];
+  TH2D* h2_g20_ecc_angle[nh];
+  TH2D* h2_g20_ecc_frcoh[nh];
+  TH2D* h2_g20_ecc_frcem[nh];
+  gPad->SetLogz();
+  for(int h=0; h<3; ++h)
     {
-      hists[i] = (TH2D*)thefile->Get(("h2_ecc_layer"+to_string(i)).c_str());
-      hists[i]->GetXaxis()->SetTitle("Jet Eccentricity");
-      hists[i]->GetYaxis()->SetTitle("Max Layer E_{T} / E_{T,jet}");
-      hists[i]->GetYaxis()->SetTitleOffset(1.5);
-      hists[i]->GetZaxis()->SetTitleOffset(1.3);
-      hists[i]->GetZaxis()->SetTitle("Counts");
-      hists[i]->Draw("COLZ");
+      h2_g20_ecc_angle[h] = (TH2D*)thefile->Get(("h2_ecc_angle"+to_string(h)).c_str());
+      h2_g20_ecc_angle[h]->GetXaxis()->SetTitle("Leading Jet Eccentricity");
+      h2_g20_ecc_angle[h]->GetYaxis()->SetTitle("Orientation Angle [rad]");
+      h2_g20_ecc_angle[h]->GetYaxis()->SetTitleOffset(1.5);
+      h2_g20_ecc_angle[h]->GetZaxis()->SetTitleOffset(1.5);
+      h2_g20_ecc_angle[h]->GetZaxis()->SetTitle("Counts");
+      h2_g20_ecc_angle[h]->Draw("COLZ");
       sphenixtext();
-      if(i<5)
+      c->SaveAs(("output/rmg/h2_g20_ecc_angle"+to_string(h)).c_str());
+      
+      h2_g20_ecc_frcoh[h] = (TH2D*)thefile->Get(("h2_ecc_frcoh"+to_string(h)).c_str());
+      h2_g20_ecc_frcoh[h]->GetXaxis()->SetTitle("Leading Jet Eccentricity");
+      h2_g20_ecc_frcoh[h]->GetYaxis()->SetTitle("E_{T,lead jet,OHCal}/E_{T,lead jet}");
+      h2_g20_ecc_frcoh[h]->GetYaxis()->SetTitleOffset(1.5);
+      h2_g20_ecc_frcoh[h]->GetZaxis()->SetTitleOffset(1.5);
+      h2_g20_ecc_frcoh[h]->GetZaxis()->SetTitle("Counts");
+      h2_g20_ecc_frcoh[h]->Draw("COLZ");
+      sphenixtext();
+      c->SaveAs(("output/rmg/h2_g20_ecc_frcoh"+to_string(h)).c_str());
+      
+      h2_g20_ecc_frcem[h] = (TH2D*)thefile->Get(("h2_ecc_frcem"+to_string(h)).c_str());
+      h2_g20_ecc_frcem[h]->GetXaxis()->SetTitle("Leading Jet Eccentricity");
+      h2_g20_ecc_frcem[h]->GetYaxis()->SetTitle("E_{T,lead jet,EMCal}/E_{T,lead jet}");
+      h2_g20_ecc_frcem[h]->GetYaxis()->SetTitleOffset(1.5);
+      h2_g20_ecc_frcem[h]->GetZaxis()->SetTitleOffset(1.5);
+      h2_g20_ecc_frcem[h]->GetZaxis()->SetTitle("Counts");
+      h2_g20_ecc_frcem[h]->Draw("COLZ");
+      sphenixtext();
+      c->SaveAs(("output/rmg/h2_g20_ecc_frcem"+to_string(h)).c_str());
+      
+
+      h_ecc_E[h] = (TH2D*)thefile->Get(("h2_ecc_E"+to_string(h)).c_str());
+      h_ecc_E[h]->GetXaxis()->SetTitle("Leading Jet Eccentricity");
+      h_ecc_E[h]->GetXaxis()->SetTitle("E_{T,lead jet}");
+      h_ecc_E[h]->GetYaxis()->SetTitleOffset(1.5);
+      h_ecc_E[h]->GetZaxis()->SetTitleOffset(1.5);
+      h_ecc_E[h]->GetZaxis()->SetTitle("Counts");
+      h_ecc_E[h]->Draw("COLZ");
+      sphenixtext();
+      c->SaveAs(("output/rmg/h_ecc_E.png"+to_string(h)).c_str());
+     
+      float ETJet[6] = {4,10,20,30,40,50};
+      for(int i=0; i<6; ++i)
 	{
-	  
-	  stringstream stream[2];
-	  stream[0] << std::fixed << std::setprecision(0) << ETJet[i];
-	  stream[1] << std::fixed << std::setprecision(0) << ETJet[i+1];
-	  string text = stream[0].str() + " < E_{T,jet} < " + stream[1].str();
-	  drawText(text.c_str(), 0.15, 0.93);
-	}
-      else
-	{
+	  hists[h][i] = (TH2D*)thefile->Get(("h2_ecc_layer"+to_string(i)).c_str());
+	  hists[h][i]->GetXaxis()->SetTitle("Leading Jet Eccentricity");
+	  hists[h][i]->GetYaxis()->SetTitle("Max Layer E_{T} / E_{T,lead jet}");
+	  hists[h][i]->GetYaxis()->SetTitleOffset(1.5);
+	  hists[h][i]->GetZaxis()->SetTitleOffset(1.5);
+	  hists[h][i]->GetZaxis()->SetTitle("Counts");
+	  hists[h][i]->Draw("COLZ");
+	  sphenixtext();
+	  if(i<5)
+	    {
+	      
+	      stringstream stream[2];
+	      stream[0] << std::fixed << std::setprecision(0) << ETJet[i];
+	      stream[1] << std::fixed << std::setprecision(0) << ETJet[i+1];
+	      string text = stream[0].str() + " < E_{T,jet} < " + stream[1].str();
+	      drawText(text.c_str(), 0.15, 0.93);
+	    }
+	  else
+	    {
 	  stringstream stream;
 	  stream << std::fixed << std::setprecision(0) << ETJet[i];
 	  string text = stream.str() + " < E_{T,jet}";
 	  drawText(text.c_str(), 0.15, 0.93);
-	} 
-      c->SaveAs(("output/rmg/chi2file"+to_string(i)+".png").c_str());
+	    } 
+	  c->SaveAs(("output/rmg/chi2file"+to_string(h)+"_"+to_string(i)+".png").c_str());
+	}
     }
-
   return 0;
 }

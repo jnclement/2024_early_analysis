@@ -91,7 +91,7 @@ void std_text(TCanvas* thecan, string* texts, int ntext, float textsize, float t
 
   thecan->cd();
   sphenixtext(textx,texty,0,textsize);
-  sqrt_snn_text(textx,texty-(5*textsize/4),0,textsize);
+  sqrt_s_text(textx,texty-(5*textsize/4),0,textsize);
   float drawy = texty-2.5*textsize;
   for(int i=0; i<ntext; ++i)
     {
@@ -508,7 +508,8 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  std_hist((h==0?NULL:h1_dphi[h][i]),(h==0?h1_dphi[h][i]:NULL),"#Delta#phi [rad]","Scaled Counts");
 	  h1_dphi[h][i]->SetMarkerSize(2);
 	  h1_dphi[h][i]->Draw("PE");
-	  std_text(d, texts, ntext, stdsize, stdx, stdy, stdright);
+	  float tempx = 0.2
+	  std_text(d, texts, ntext, stdsize, tempx, stdy, stdright);
 	  d->SaveAs(("output/rmg/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(h)+"_"+to_string(i)+"_dphi_1d.png").c_str());
 	}
     }

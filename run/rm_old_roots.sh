@@ -1,3 +1,3 @@
-for file in `ls output/root/*`; do 
-    find $file -mtime +2 -exec rm {} \;
+for file in `ls output/temphists/*`; do 
+    find $file -mtime +1 -exec rm {} \;
 done

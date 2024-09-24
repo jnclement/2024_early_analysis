@@ -510,7 +510,7 @@ int quickroot(string filebase="", int njob=0)
       //for(int j=0; j<4; ++j)
       //{
       jetTrigE[i] = new TH1D(("jetTrigE"+to_string(i)).c_str(),"",600,0,60);
-      if(i<3) tjet_dphi[i] = new TH1D(("tjet_dphi"+to_string(i)).c_str(),"",32,-M_PI,M_PI);
+      if(i<3) tjet_dphi[i] = new TH1D(("tjet_dphi"+to_string(i)).c_str(),"",32,0,M_PI);
     }
   TH1D* h1_zdist = new TH1D("h1_zdist","",200,-100,100);
   TH1D* h1_mbdq = new TH1D("h1_mbdq","",1000,0,10);
@@ -629,7 +629,7 @@ int quickroot(string filebase="", int njob=0)
 	  std::stringstream e_stream;
 	  e_stream << std::fixed << std::setprecision(2) << jet_e[h][k]/cosh(jet_et[h][k]);
 	  std::string e_string = e_stream.str();
-	  drawText((e_string+" GeV").c_str(),jet_et[h][k],jet_ph[h][k]+M_PI+(jet_ph[h][k]>40?-5.5:4.4),(jet_et[h][k]>15?1:0),kBlack,0.08,42,false);
+	  drawText((e_string+" GeV").c_str(),jet_et[h][k],jet_ph[h][k]+M_PI+(jet_ph[h][k]>3.84?-0.53:0.43),(jet_et[h][k]>0?1:0),kBlack,0.08,42,false);
 	  if(abs(jet_et[h][k]) > 1.1) continue;
 	  for(int l = 0; l<njet[h]; ++l)
 	    {
@@ -664,11 +664,12 @@ int quickroot(string filebase="", int njob=0)
 		      if(ET1 > 25 && ET2 > 15) h1_AJ[h][6]->Fill(AJ);
 		      if(ET1 > 30 && ET2 > 12) h1_AJ[h][7]->Fill(AJ);
 		    }
-		  if(abs(jet_et[h][k]) > 0.7 || abs(jet_et[h][l]) > 0.7) continue;
+		  if(abs(jet_et[h][k]) > 1 || abs(jet_et[h][l]) > 1) continue;
 		  float dphi = abs(jet_ph[h][k] - jet_ph[h][l]);
+		  if(dphi > M_PI) dphi = 2*M_PI-dphi;
 		  float deta = jet_et[h][k] - jet_et[h][l];
 		  //if(sqrt(dphi*dphi+deta*deta) < 0.4 && seedD[h][k] < 0.65 && seedD[h][l] < 0.65 && ehjet[h][k] < maxeh && ehjet[h][k] > 0 && ehjet[h][l] > 0 && ehjet[h][l] < maxeh) dodraw = 1;
-		  if(dphi < 0) dphi+=2*M_PI;
+		  //if(dphi < 0) dphi+=2*M_PI;
 		  //cout << dphi << endl;
 		  h1_dphi[h][0]->Fill(dphi);
 		  if(ET1 > 20 && jet_e[h][l] > 10) h1_dphi[h][2]->Fill(dphi);
