@@ -128,12 +128,12 @@ void drawText(const char *text, float xp, float yp, bool isRightAlign=0, int tex
 
 void sqrt_snn_text(float xp = 0.7, float yp = 0.8, bool isRightAlign=0, double textsize = 0.04)
 {
-  drawText("#sqrt{S_{NN}} = 200 GeV",xp,yp,isRightAlign,kBlack,textsize);
+  drawText("Au+Au #sqrt{s_{NN}} = 200 GeV",xp,yp,isRightAlign,kBlack,textsize);
 }
 
 void sqrt_s_text(float xp = 0.7, float yp = 0.8, bool isRightAlign=0, double textsize = 0.04)
 {
-  drawText("#sqrt{S} = 200 GeV",xp,yp,isRightAlign,kBlack,textsize);
+  drawText("p+p #sqrt{s} = 200 GeV",xp,yp,isRightAlign,kBlack,textsize);
 }
 
 void sphenixtext(float xpos = 0.7, float ypos = 0.96, int ra = 0, float textsize = 0.04)

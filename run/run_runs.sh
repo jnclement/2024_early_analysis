@@ -5,7 +5,7 @@ if [ $# -lt 3 ]; then
     exit 1
 fi
 
-nmax=100
+nmax=1000
 evt=$2
 c2c=$3
 if [ $evt -gt 10000 ]; then

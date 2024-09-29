@@ -66,10 +66,10 @@ int save_etaphiE(int etabins[], int phibins[], float energies[], int nsec, strin
   return 0;
 }
 
-int quickroot(string filebase="", int njob=0)
+int quickroot(string filebase="", int njob=0, string tag = "")
 {
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
-  gROOT->SetStyle("Plain");
+  //gROOT->SetStyle("Plain");
   //SetsPhenixStyle();
   gStyle->SetOptStat(0);
   gStyle->SetPadTickX(1);
@@ -131,12 +131,13 @@ int quickroot(string filebase="", int njob=0)
       while(getline(list[h],line))
 	{
 	}
-      */
+      
       for(int i=0; i<10*njob; ++i)
 	{
 	  getline(list[h],line);
 	}
-      for(int i=10*njob; i<10*(njob+1); ++i)
+      */
+      for(int i=0; i<10; ++i)//10*njob; i<10*(njob+1); ++i)
 	{
 	  int breakit = 0;
 	  getline(list[h],line);
@@ -174,7 +175,7 @@ int quickroot(string filebase="", int njob=0)
       //if(h==0) nmb[h] = nevents[h];
       cout << "with " << nmb[h] << " minbias events." << endl;
     }
-  TFile* outfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+to_string(njob)+"_fullfile.root").c_str(),"RECREATE");
+  TFile* outfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+tag+"_"+to_string(njob)+"_fullfile.root").c_str(),"RECREATE");
   cout << outfile->GetName() << endl;
   TTree* outt = new TTree((runnum==simstr?"st":"outt"),"output tree");
   int outnmb = nmb[1];
@@ -190,7 +191,7 @@ int quickroot(string filebase="", int njob=0)
   double red[ncol] = {1, 1, 1, 1, 1, 1, 1, 1};
   double grn[ncol] = {1, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125, 0};
   double blu[ncol] = {1, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125, 0};
-  double stp[ncol] = {0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0};
+  double stp[ncol] = {0, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.875, 1.0};
   TColor::CreateGradientColorTable(ncol, stp, red, grn, blu, ncol);
   TH1D* h1_rej[2][4];
   TH1D* h1_eta[2][4][5];
@@ -247,7 +248,7 @@ int quickroot(string filebase="", int njob=0)
   TH1D* h1_AJ[2][12];
   TH1D* h1_tAJ[12];
   TH2D* h2_tjet_eta_phi = new TH2D("h2_tjet_eta_phi","",22,-1.1,1.1,64,-M_PI,M_PI);
-    for(int h=nosim; h<2; ++h)
+  for(int h=nosim; h<2; ++h)
     {
       h2_dphi_deta[h] = new TH2D(("h2_dphi_deta"+to_string(h)).c_str(),"",20,-2.2,2.2,32,0,M_PI);
       for(int i=0; i<4; ++i)
@@ -478,8 +479,8 @@ int quickroot(string filebase="", int njob=0)
       event_disrt[i]->GetZaxis()->SetLabelSize(0.08);
       event_disrt[i]->GetXaxis()->SetLabelOffset(-0.02);
     }
-  event_sum->GetXaxis()->SetTitle("Tower Sum #eta Bin");
-  event_sum->GetYaxis()->SetTitle("Tower Sum #phi Bin");
+  event_sum->GetXaxis()->SetTitle("Tower Sum #eta");
+  event_sum->GetYaxis()->SetTitle("Tower Sum #phi");
   event_sum->GetZaxis()->SetTitle("Uncorrected Tower Energy [GeV]");
   event_sum->GetYaxis()->SetTitleOffset(1);
   event_sum->GetZaxis()->SetTitleOffset(0.75);
@@ -572,64 +573,15 @@ int quickroot(string filebase="", int njob=0)
       ojt->Fill();
       int trigvecproxy = 0;
       if(filename != simliststr) trigvecproxy = (trigvec>>10) & 1;
-      event_sum->Reset();
-      for(int j=0; j<3; ++j)
-	{
-	  event_disrt[j]->Reset();
-	  for(int k=0; k<(j==0?sector_rtem:sectorrt[h][j]); ++k)
-	    {
-	      float eta = bintoeta_hc((j==0?eta_rtem[k]:etart[h][j][k]))+0.012;
-	      float phi = bintophi_hc((j==0?phi_rtem[k]:phirt[h][j][k]))+0.012;
-	      event_disrt[j]->Fill(eta,phi,(j==0?e_rtem[k]:enrt[h][j][k]));
-	      event_sum->Fill(eta,phi,(j==0?e_rtem[k]:enrt[h][j][k]));
-	    }
-	  
-
-	  c->cd(j+1);
-	  gPad->SetLogz();
-	  gPad->SetRightMargin(0.2);
-	  gPad->SetLeftMargin(0.2);
-	  //gPad->SetTopMargin(0.05);
-	  event_disrt[j]->SetTitle(("Event "+to_string(i)).c_str());
-	  event_disrt[j]->Draw("COLZ");
-
-	}
-      c->cd(4);
-      gPad->SetLogz();
-      //gPad->SetTopMargin(0.05);
-      gPad->SetRightMargin(0.2);
-      gPad->SetLeftMargin(0.2);
-      event_sum->SetTitle(("Event "+to_string(i)).c_str());
-      event_sum->Draw("COLZ");
-      c->cd(0);
-      sphenixtext(0.96,0.96,1,0.04);
-      drawText(("Run "+runnum).c_str(),0.96,0.92,1,kBlack,0.04);
       float maxjet[4] = {0};
-      c->cd(4);
       //if(!ismb[h] && filename == simliststr) continue;
       for(int k=0; k<njet[h]; ++k)
 	{
+	  if(jet_e[h][k]/cosh(jet_et[h][k]) > 30) sshighe = 1;
 	  if(jet_e[h][k] > maxjet[0]) maxjet[0] = jet_e[h][k];
 	  int dodraw = 0;
 	  //if(seedD[h][k] > 0.65) continue;
 	  //if(ehjet[h][k] > maxeh || ehjet[h][k] < 0) continue;
-	  for(int l=0; l<ncircle; ++l)
-	    {
-	      float eta = jet_et[h][k]+0.4*cos(2*l*M_PI/ncircle);
-	      float phi = jet_ph[h][k]+0.4*sin(2*l*M_PI/ncircle)+M_PI;
-	      if(eta > 1.1 || eta < -1.1) continue;
-	      if(phi > 2*M_PI) phi -= 2*M_PI;
-	      if(phi < 0) phi += 2*M_PI;
-	      TMarker* circlemarker = new TMarker(eta,phi,20);
-	      circlemarker->SetMarkerSize(0.3);
-	      circlemarker->SetMarkerColor(kBlue);
-	      circlemarker->Draw();
-	    }
-	  if(jet_e[h][k]/cosh(jet_et[h][k]) > 35) sshighe = 1;
-	  std::stringstream e_stream;
-	  e_stream << std::fixed << std::setprecision(2) << jet_e[h][k]/cosh(jet_et[h][k]);
-	  std::string e_string = e_stream.str();
-	  drawText((e_string+" GeV").c_str(),jet_et[h][k],jet_ph[h][k]+M_PI+(jet_ph[h][k]>3.84?-0.53:0.43),(jet_et[h][k]>0?1:0),kBlack,0.08,42,false);
 	  if(abs(jet_et[h][k]) > 1.1) continue;
 	  for(int l = 0; l<njet[h]; ++l)
 	    {
@@ -699,11 +651,87 @@ int quickroot(string filebase="", int njob=0)
       
       
       if(sshighe)
-	{
+      {
 	  cout << "found a super high e jet!" << endl;
-	  c->SaveAs(("./output/smg/candidate_"+filebase+"_supersuperhighE_"+to_string(njob)+"_"+to_string(cancount)+".png").c_str());
+	  event_sum->Reset();
+	  for(int j=0; j<3; ++j)
+	    {
+	      event_disrt[j]->Reset();
+	      for(int k=0; k<(j==0?sector_rtem:sectorrt[h][j]); ++k)
+		{
+		  float eta = bintoeta_hc((j==0?eta_rtem[k]:etart[h][j][k]))+0.012;
+		  float phi = bintophi_hc((j==0?phi_rtem[k]:phirt[h][j][k]))+0.012;
+		  event_disrt[j]->Fill(eta,phi,(j==0?e_rtem[k]:enrt[h][j][k]));
+		  event_sum->Fill(eta,phi,(j==0?e_rtem[k]:enrt[h][j][k]));
+		}
+	      
+	      
+	      c->cd(j+1);
+	      gPad->SetLogz();
+	      gPad->SetRightMargin(0.2);
+	      gPad->SetLeftMargin(0.2);
+	      //gPad->SetTopMargin(0.05);
+	      event_disrt[j]->SetTitle(("Event "+to_string(i)).c_str());
+	      event_disrt[j]->Draw("COLZ");
+	      
+	    }
+	  c->cd(4);
+	  gPad->SetLogz();
+	  //gPad->SetTopMargin(0.05);
+	  gPad->SetRightMargin(0.2);
+	  gPad->SetLeftMargin(0.2);
+	  event_sum->SetTitle(("Event "+to_string(i)).c_str());
+	  event_sum->Draw("COLZ");
+	  c->cd(0);
+	  sphenixtext(0.96,0.96,1,0.04);
+	  drawText(("Run "+runnum).c_str(),0.96,0.92,1,kBlack,0.04);
+	  c->cd(4);
+	  float phivals[100];
+	  for(int k=0; k<njet[h]; ++k)
+	    {
+	      
+	      for(int l=0; l<ncircle; ++l)
+		{
+		  float eta = jet_et[h][k]+0.4*cos(2*l*M_PI/ncircle);
+		  float phi = jet_ph[h][k]+0.4*sin(2*l*M_PI/ncircle)+M_PI;
+		  if(eta > 1.1 || eta < -1.1) continue;
+		  if(phi > 2*M_PI) phi -= 2*M_PI;
+		  if(phi < 0) phi += 2*M_PI;
+		  TMarker* circlemarker = new TMarker(eta,phi,20);
+		  circlemarker->SetMarkerSize(0.3);
+		  circlemarker->SetMarkerColor(kBlue);
+		  circlemarker->Draw();
+		}
+	      std::stringstream e_stream;
+	      e_stream << std::fixed << std::setprecision(2) << jet_e[h][k]/cosh(jet_et[h][k]);
+	      std::string e_string = e_stream.str();
+	      float phitext = jet_ph[h][k]+M_PI+(jet_ph[h][k]+M_PI>5?-0.55:0.45);
+	      phivals[k] = phitext;
+	      if(k>0)
+		{
+		  if(abs(phivals[k-1]-phitext) < 0.4)
+		    {
+		      if(phitext > 5)
+			{
+			  phitext += 1.1;
+			}
+		      else
+			{
+			  phitext -= 1.1;
+			}
+		      if(phitext > 2*M_PI) phitext -= 2*M_PI;
+		      if(phitext < 0) phitext += 2*M_PI;
+		    }
+		      
+		}
+	      drawText((e_string+" GeV").c_str(),(jet_et[h][k]>0?1.0:0.1),phitext,(jet_et[h][k]>0?1:0),kBlack,0.08,42,false);
+	    }
+	  c->cd(0);
+	  drawText("Calorimeter Anti-k_{T} R=0.4",0.4,0.92,0);
+	  sqrt_s_text(0.05,0.92);
+	  c->SaveAs(("./output/smg/candidate_"+filebase++"_"+tag+"_supersuperhighE_"+to_string(njob)+"_"+to_string(cancount)+".png").c_str());
 	  cancount++;
-	}
+      }
       if(!ismb[h])// && !trigvecproxy && filename != simliststr)
 	{
 	  //cout << filename << " " << simliststr << " " << to_string(ismb[h]) << endl;

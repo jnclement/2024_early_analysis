@@ -91,12 +91,12 @@ void std_text(TCanvas* thecan, string* texts, int ntext, float textsize, float t
 
   thecan->cd();
   sphenixtext(textx,texty,0,textsize);
-  sqrt_s_text(textx,texty-(5*textsize/4),0,textsize);
-  float drawy = texty-2.5*textsize;
+  sqrt_s_text(textx,texty-(6*textsize/4),0,textsize);
+  float drawy = texty-3*textsize;
   for(int i=0; i<ntext; ++i)
     {
       drawText(texts[i].c_str(),textx,drawy,rightalign,kBlack,textsize);
-      drawy -= 5*textsize/4;
+      drawy -= 6*textsize/4;
     }
 }
 
@@ -108,11 +108,12 @@ void std_hist(TH1D* dathist=NULL, TH1D* simhist=NULL, string xtitle="", string y
       dathist->SetMarkerStyle(20);
       dathist->SetLineWidth(2);
       dathist->SetMarkerColor(kMagenta+1);
+      dathist->SetLineColor(kMagenta+1);
       dathist->GetXaxis()->SetTitleSize(0.03);
       dathist->GetXaxis()->SetLabelSize(0.03);
       dathist->GetYaxis()->SetTitleSize(0.03);
       dathist->GetYaxis()->SetLabelSize(0.03);
-      dathist->GetYaxis()->SetTitleOffset(1.7);
+      dathist->GetYaxis()->SetTitleOffset(1.85);
       dathist->GetYaxis()->SetTitle(ytitle.c_str());
       dathist->GetXaxis()->SetTitle(xtitle.c_str());
     }
@@ -121,6 +122,7 @@ void std_hist(TH1D* dathist=NULL, TH1D* simhist=NULL, string xtitle="", string y
       simhist->SetLineWidth(2);
       simhist->SetMarkerStyle(25);
       simhist->SetMarkerColor(kGreen+2);
+      simhist->SetLineColor(kGreen+2);
       simhist->GetXaxis()->SetTitle(xtitle.c_str());
       simhist->GetYaxis()->SetTitle(ytitle.c_str());
       simhist->SetMarkerSize(2);
@@ -128,7 +130,7 @@ void std_hist(TH1D* dathist=NULL, TH1D* simhist=NULL, string xtitle="", string y
       simhist->GetXaxis()->SetLabelSize(0.03);
       simhist->GetYaxis()->SetTitleSize(0.03);
       simhist->GetYaxis()->SetLabelSize(0.03);
-      simhist->GetYaxis()->SetTitleOffset(1.7);
+      simhist->GetYaxis()->SetTitleOffset(1.85);
     }
 }
 
@@ -200,7 +202,19 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 
       rootfile[2] = TFile::Open(line.c_str());
       cout << "filename: " << line << " address: " << rootfile[2] << endl;
+      if(!rootfile[2])
+	{
+	  ++whichrun;
+	  ++nfile;
+	  continue;
+	}
       TTree* tree = (TTree*)rootfile[2]->Get("outt");
+      if(!tree)
+	{
+	  ++whichrun;
+	  ++nfile;
+	  continue;
+	}
       tree->SetBranchAddress("outevt",&evtct);
       tree->SetBranchAddress("outnmb",&mbevt);
       tree->SetBranchAddress("njmb",&njmb);
@@ -342,8 +356,8 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  h1_dphi[h][i] = (TH1D*)rootfile[h]->Get(("h1_dphi"+to_string(1)+"_"+to_string(i)).c_str());
 	  h1_dphi[h][i]->GetXaxis()->SetLabelSize(0.02);
 	  h1_dphi[h][i]->GetYaxis()->SetLabelSize(0.02);
-	  h1_dphi[h][i]->GetYaxis()->SetTitle("Scaled Counts");
-	  h1_dphi[h][i]->Scale(1./(h==0?nsimmb:nmb));
+	  h1_dphi[h][i]->GetYaxis()->SetTitle("Integral Normalized Counts");
+	  h1_dphi[h][i]->Scale(1./h1_dphi[h][i]->Integral("WIDTH"));
 	  TF1* newgaus = new TF1("mygaus",mygaus,M_PI/2,3*M_PI/2,4);
 	  newgaus->SetParameter(1,M_PI);
 	  newgaus->SetParameter(0,0.0025);
@@ -477,19 +491,22 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   cout << "Passed getting" << endl;
 
   float stdsize = 0.025;
-  float stdx = 0.62;
+  float stdx = 0.46;
   float stdy = 0.88-stdsize;
   int stdright = 0;
   int nevtsim = nsimmb;
   int nevtdat = nmb;
   gPad->SetLeftMargin(0.15);
-  float lumidat = (nmb/(21e-3))/(1e12);
+  float lumidat = (nmb/(21e-3))/(1e9);
   float lumisim = (nsimmb/(21e-3))/(1e12);
-  stringstream stream[2];
+  float lumijet = (effevt[0]/(21e-3)/(1e9));
+  stringstream stream[3];
   stream[0] << std::fixed << std::setprecision(3) << lumisim;
-  stream[1] << std::fixed << std::setprecision(3) << lumidat;
-  string lumsimstr = "\\mathscr{L}_\\text{MB,sim} = "+stream[0].str()+" \\text{pb}^{-1}";
-  string lumdatstr = "\\mathscr{L}_\\text{MB,data} = "+stream[1].str()+" \\text{pb}^{-1}";
+  stream[1] << std::fixed << std::setprecision(1) << lumidat;
+  stream[2] << std::fixed << std::setprecision(0) << lumijet;
+  //string lumsimstr = "\\mathscr{L}_\\text{MB,sim} = "+stream[0].str()+" \\text{pb}^{-1}";
+  string lumdatstr = "\\mathscr{L}_\\text{MB,data} = "+stream[1].str()+" \\text{ nb}^{-1}";
+  string lumjetstr = "\\mathscr{L}_\\text{jet8,data} = "+stream[2].str()+" \\text{ nb}^{-1}";
   string dphilocuts[4] = {"4","10","10","15"};
   string dphihicuts[4] = {"4","20","15","30"};
   for(int h=0; h<2; ++h)
@@ -500,15 +517,18 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  const int ntext = 4;
 	  string texts[ntext] =
 	    {
-	      "Calorimeter Anti-k_{T} R=0.4",
+	      "Calorimeter Anti-k_{#kern[-1.0]{T}} R=0.4",
 	      "#it{E}_{T,jet1} > "+dphihicuts[i]+" GeV",
 	      "#it{E}_{T,jet2} > "+dphilocuts[i]+" GeV",
-	      "|#it{#eta}^{jet}| < 0.7, |z|<100 cm"
+	      "|#it{#eta}^{jet}| < 0.7, |z_{vtx}|<100 cm"
 	    };
-	  std_hist((h==0?NULL:h1_dphi[h][i]),(h==0?h1_dphi[h][i]:NULL),"#Delta#phi [rad]","Scaled Counts");
+	  std_hist((h==0?NULL:h1_dphi[h][i]),(h==0?h1_dphi[h][i]:NULL),"#Delta#phi [rad]","Integral Normalized Counts");
 	  h1_dphi[h][i]->SetMarkerSize(2);
-	  h1_dphi[h][i]->Draw("PE");
-	  float tempx = 0.2
+	  cout << dphihicuts[i] << " " << dphilocuts[i] << " " << h1_dphi[h][i]->GetBinContent(16) << endl;
+	  h1_dphi[h][i]->SetFillColorAlpha(kMagenta+1,0.3);
+	  h1_dphi[h][i]->Draw("P0 E0");
+	  h1_dphi[h][i]->Draw("HIST SAME");
+	  float tempx = 0.2;
 	  std_text(d, texts, ntext, stdsize, tempx, stdy, stdright);
 	  d->SaveAs(("output/rmg/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(h)+"_"+to_string(i)+"_dphi_1d.png").c_str());
 	}
@@ -530,8 +550,8 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   h1_tAJ[0]->SetMarkerSize(2);
   h1_tAJ[0]->SetMarkerColor(kRed+2);
   h1_tAJ[0]->SetMarkerStyle(21);
-  ajleg->AddEntry(h1_AJ[0][0],"MBDNS>=1 PYTHIA","p");
-  ajleg->AddEntry(h1_AJ[1][0],"MBDNS>=1 Data","p");
+  ajleg->AddEntry(h1_AJ[0][0],"MB Triggered PYTHIA","p");
+  ajleg->AddEntry(h1_AJ[1][0],"MB Triggered Data","p");
   string ajlocut[12] = {"4","7","10","15","10","7","15,","12","8","12","10","15"};
   string ajhicut[12] = {"4","15","20","25","20","15","25","30","20","20","20","30"};
   ajleg2->AddEntry(h1_AJ[0][0],"MBDNS>=1 PYTHIA Reco","p");
@@ -652,16 +672,16 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       h1_AJ[1][i]->Draw("SAME PE");
       if(i<3) h1_tAJ[i]->Draw("SAME PE");
       ajleg2->Draw();
-      string zcutstr =  ", |z|< 100 cm";
+      string zcutstr =  ", |z_{vtx}|< 100 cm";
       const int ntext=6;
       string texts[ntext] =
 	{
-	  "Calorimeter Anti-k_{T} R=0.4",
+	  "Calorimeter Anti-k_{#kern[-1.0]{T}} R=0.4",
 	  "#it{E}_{T,jet1} > "+ajhicut[i]+" GeV",
 	  "#it{E}_{T,jet2} > "+ajlocut[i]+" GeV",
 	  ((i<8 && i>3)?"#Delta#phi > 3#pi/4":"#Delta#phi > 7#pi/8")+zcutstr,
 	  lumdatstr,
-	  lumsimstr
+	  lumjetstr
 	};
       std_text(d, texts, ntext, stdsize, stdx, stdy, stdright);
       d->SaveAs(("output/rmg/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_AJ_1d.png").c_str());
@@ -680,15 +700,21 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   jetEleg->SetTextSize(stdsize);
   tjetE->SetMarkerColor(2);
   tjetE->SetMarkerSize(2);
+  int rebinfactor = 50;
+  float dividefactor = rebinfactor*0.1;
   for(int i=1; i<4; ++i)
     {
       jetTrigE[i]->SetMarkerSize(2);
-      jetTrigE[i]->Rebin(10);
+      jetTrigE[i]->Rebin(rebinfactor);
+      jetTrigE[i]->Scale(1./dividefactor);
     }
   jetTrigE[1]->SetMarkerColor(kBlue);
   jetTrigE[2]->SetMarkerColor(kBlue-7);
   jetTrigE[3]->SetMarkerColor(kBlue+3);
-  jetEleg->AddEntry(jetE[1][0],"MBDNS>=1 Data","p");
+  jetTrigE[1]->SetLineColor(kBlue);
+  jetTrigE[2]->SetLineColor(kBlue-7);
+  jetTrigE[3]->SetLineColor(kBlue+3);
+  jetEleg->AddEntry(jetE[1][0],"MB Triggered Data","p");
   //jetEleg->AddEntry(tjetE,"MBD NS>=1 Truth Jets","p");
   jetEleg->SetFillStyle(0);
   jetEleg->SetBorderSize(0);
@@ -705,12 +731,15 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   pubjet->SetMarkerColor(kCyan+2);
   pubjet->SetMarkerSize(2);
   //jetEleg->AddEntry(pubjet,"Datathiefed STAR result","p");
-  tjetE->Rebin(10);
+  tjetE->Rebin(rebinfactor);
+  tjetE->Scale(1./dividefactor);
   float minimum = 1e-9;
   for(int i=0; i<3; ++i)
     {
-      jetE[1][i]->Rebin(10);
-      jetE[0][i]->Rebin(10);
+      jetE[1][i]->Rebin(rebinfactor);
+      jetE[0][i]->Rebin(rebinfactor);
+      jetE[1][i]->Scale(1./dividefactor);
+      jetE[0][i]->Scale(1./dividefactor);
       for(int i=1; i<4; ++i)
 	{
 	  //cout << jetTrigE[i]->GetBinContent(100) << endl;
@@ -722,14 +751,18 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       const int ntext = 4;
       string texts[ntext] =
 	{
-	  "Calorimeter Anti-k_{T} R=0.4",
-	  "|z|< 100 cm",
+	  "Calorimeter Anti-k_{#kern[-1.0]{T}} R=0.4",
+	  "|z_{vtx}|< 100 cm",
 	  lumdatstr,
-	  lumsimstr
+	  lumjetstr
 	};
       //cout << minimum << endl;
-      jetE[1][i]->GetYaxis()->SetRangeUser(0.5*minimum, 2*jetE[0][i]->GetMaximum());
-      std_hist(jetE[1][i], jetE[0][i], "Raw #it{E}_{T,jet}","Event Normalized Counts");
+      jetE[1][i]->GetYaxis()->SetRangeUser(0.1*minimum, 10*jetE[0][i]->GetMaximum());
+      jetE[1][i]->GetXaxis()->SetRangeUser(10,50);
+      std_hist(jetE[1][i], jetE[0][i], "Raw #it{E}_{T,jet}","#frac{1}{N_{evt}} #frac{dN_{jet}}{d#it{E}_{T,jet}}");
+
+      gPad->SetLeftMargin(0.15);
+      gPad->SetBottomMargin(0.15);
 
       jetE[1][i]->Draw("PE");
 
@@ -740,7 +773,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       //if(i==0) tjetE->Draw("SAME PE");
       //jetEleg->Draw();
 
-      jetE[0][i]->Draw("SAME PE");
+      //jetE[0][i]->Draw("SAME PE");
       //jetE[1][i]->Draw("SAME PE");
       //if(i==0) tjetE->Draw("SAME P E");
       if(i==0)
@@ -752,10 +785,10 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       //pubjet->Draw("SAME P");
       if(i==0)
 	{
-	  jetEleg->AddEntry(jetTrigE[1],"MBDNS>=1 \& Jet 8 GeV Data","p");
-	  jetEleg->AddEntry(jetTrigE[2],"MBDNS>=1 \& Jet 10 GeV Data","p");
-	  jetEleg->AddEntry(jetTrigE[3],"MBDNS>=1 \& Jet 12 GeV Data","p");
-	  jetEleg->AddEntry(jetE[0][0],"MBDNS>=1 PYTHIA/GEANT","p");
+	  jetEleg->AddEntry(jetTrigE[1],"MB \& Jet 8 GeV Triggered Data","p");
+	  jetEleg->AddEntry(jetTrigE[2],"MB \& Jet 10 GeV Triggered Data","p");
+	  jetEleg->AddEntry(jetTrigE[3],"MB \& Jet 12 GeV Triggered Data","p");
+	  //jetEleg->AddEntry(jetE[0][0],"MBDNS>=1 PYTHIA/GEANT","p");
 	}
 
       jetEleg->Draw();
@@ -888,8 +921,8 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
     {
       h1_mlt[0][i]->GetXaxis()->SetTitle("#it{E}_{T,jet} > 5 GeV Multiplicity");
       std_hist(h1_mlt[1][i], h1_mlt[0][i]);
-      h1_mlt[0][i]->Draw("PE");
-      h1_mlt[1][i]->Draw("SAME P E");
+      h1_mlt[0][i]->Draw("P0E");
+      h1_mlt[1][i]->Draw("SAME P0 E");
       ajleg->Draw();
       //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
       d->SaveAs(("output/rmg/summed_mult"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
@@ -901,8 +934,8 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   h1_zdist[0]->GetXaxis()->SetTitle("Z-vertex Position (cm)");
   h1_zdist[0]->GetYaxis()->SetTitle("Counts");
   std_hist(h1_zdist[1], h1_zdist[0]);
-  h1_zdist[0]->Draw("PE");
-  h1_zdist[1]->Draw("SAME P E");
+  h1_zdist[0]->Draw("P0E");
+  h1_zdist[1]->Draw("SAME P0 E");
   ajleg->Draw();
   //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
   d->SaveAs(("output/rmg/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_zdist.png").c_str());
@@ -917,7 +950,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   h1_mbdq[0]->GetXaxis()->SetTitle("MBD PMT Charge [arb]");
   h1_mbdq[0]->GetYaxis()->SetTitle("Counts");
   std_hist(h1_mbdq[1], h1_mbdq[0]);
-  h1_mbdq[0]->Draw("PE");
+  h1_mbdq[0]->Draw("P0E");
   //h1_mbdq[1]->Draw("SAME P E");
   ajleg->Draw();
   cout << "test1.3" << endl;
@@ -935,8 +968,8 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  h1_eta[0][i][h]->GetYaxis()->SetRangeUser(0,1.1*max(h1_eta[0][i][h]->GetMaximum(),h1_eta[1][i][h]->GetMaximum()));
 	  h1_eta[0][i][h]->GetXaxis()->SetTitle("#eta");
 	  h1_eta[0][i][h]->GetYaxis()->SetTitle("Integral Normalized Counts");
-	  h1_eta[0][i][h]->Draw("PE");
-	  h1_eta[1][i][h]->Draw("SAME P E");
+	  h1_eta[0][i][h]->Draw("P0E");
+	  h1_eta[1][i][h]->Draw("SAME P0 E");
 	  ajleg->Draw();
 	  //std_text(d, texts, dotext, ntext, stdsize, 0.13, stdy, 0, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
 	  d->SaveAs(("output/rmg/summed_eta"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_"+to_string(h)+".png").c_str());

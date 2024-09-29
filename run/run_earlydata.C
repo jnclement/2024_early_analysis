@@ -87,25 +87,28 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   else rc->set_StringFlag("CDB_GLOBALTAG","MDC2");
   if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
   else rc->set_uint64Flag("TIMESTAMP",15);
+  /*
   ifstream list1;
   string line1;
   ifstream list2;
   string line2;
-  ifstream list3;
+  
   string line3;
   list1.open(datorsim?("./lists/"+to_string(rn)+".list"):"lists/dst_calo_waveform.list", ifstream::in);
   if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
   if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
-  if(!datorsim && !list3) list3.open("lists/g4hits.list");
+
   if(!list1)
     {
       cout << "nolist!" << endl;
       exit(1);
     }
   //cout << list1 << endl;
+  */
   Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
   Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
   Fun4AllInputManager *in_3 = new Fun4AllDstInputManager("DSTin3");
+  /*
   for(int i=0; i<nproc+1; i++)
     {
       getline(list1, line1);
@@ -113,11 +116,22 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
       if(!datorsim && list2) getline(list2, line2);
       if(!datorsim) getline(list3, line3);
     }
+  */
+  ifstream list3, list2, list1;
+  if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
+  if(!datorsim && !list3) list3.open("lists/g4hits.list");
+  if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
+  string line1, line2, line3;
+  if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".dst";
+  else line1 = "./dsts/"+to_string(rn)+"/calo_waveform_"+to_string(nproc)+".dst";
+  line2 = "./dsts/"+to_string(rn)+"/global_"+to_string(nproc)+".dst";
+  if(list3) line3 = "./dsts/"+to_string(rn)+"/truth_jet_"+to_string(nproc)+".dst";
+  else line3 = "./dsts/"+to_string(rn)+"/g4hits_"+to_string(nproc)+".dst";
   in_1->AddFile(line1);
   if(!datorsim && list2) in_2->AddFile(line2);
   if(!datorsim) in_3->AddFile(line3);
   se->registerInputManager( in_1 );
-  if(!datorsim && list2) se->registerInputManager( in_2 );
+  if(!datorsim) se->registerInputManager( in_2 );
   if(!datorsim) se->registerInputManager( in_3 );
   // this points to the global tag in the CDB
   //rc->set_StringFlag("CDB_GLOBALTAG","");//"ProdA_2023");                                     
@@ -145,6 +159,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
     
   ////////////////////
   // Calibrate towers
+  
   std::cout << "Calibrating EMCal" << std::endl;
   CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
   calibEMC->set_detector_type(CaloTowerDefs::CEMC);
@@ -159,6 +174,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
   calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
   se->registerSubsystem(calibIHCal);
+  
   //  }
   /*
   std::cout << "Calibrating ZDC" << std::endl;
@@ -186,31 +202,33 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
   //EliminateBackground* bgelim = new EliminateBackground("bgelim");
   //se->registerSubsystem(bgelim);
-
-
+  auto mbddigi = new MbdDigitization();
+  auto mbdreco = new MbdReco();
+  GlobalVertexReco* gblvertex = new GlobalVertexReco();
   if (!datorsim)
     {
-      auto mbddigi = new MbdDigitization();
+      
       mbddigi->Verbosity(verbosity);
       se->registerSubsystem(mbddigi);
-
-      auto mbdreco = new MbdReco();
       mbdreco->Verbosity(verbosity);
       se->registerSubsystem(mbdreco);
-
-      GlobalVertexReco* gblvertex = new GlobalVertexReco();
+      
       gblvertex->Verbosity(verbosity);
       se->registerSubsystem(gblvertex);
     }
 
+  se->Print("NODETREE");
+
+
+
   //TriggerRunInfoReco* tana = new TriggerRunInfoReco("tana");
   //se->registerSubsystem(tana);
-  /*
+  
   RetowerCEMC *rcemc = new RetowerCEMC();
   rcemc->set_towerinfo(true);
   rcemc->Verbosity(verbosity);
   se->registerSubsystem(rcemc);
-  */
+  
   JetReco *truthjetreco = new JetReco();
   if(!datorsim)
     {
@@ -238,9 +256,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   if(chi2check) se->registerSubsystem(chi2c);
 
   //cout << "test2" << endl;
-  //R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
+  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
   //cout << "test3" << endl;
-  //se->registerSubsystem( tt );
+  se->registerSubsystem( tt );
   cout << "test4" << endl;
   se->Print("NODETREE");
   cout << "run " << nevt << endl;
