@@ -66,7 +66,7 @@ int save_etaphiE(int etabins[], int phibins[], float energies[], int nsec, strin
   return 0;
 }
 
-int quickroot(string filebase="", int njob=0, string tag = "")
+int quickroot(string filebase="", int njob=0, int dotow = 0)
 {
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
   //gROOT->SetStyle("Plain");
@@ -175,7 +175,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
       //if(h==0) nmb[h] = nevents[h];
       cout << "with " << nmb[h] << " minbias events." << endl;
     }
-  TFile* outfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+tag+"_"+to_string(njob)+"_fullfile.root").c_str(),"RECREATE");
+  TFile* outfile = TFile::Open(("output/root/run_"+runnum+"_"+idstr+"_"+to_string(njob)+"_fullfile.root").c_str(),"RECREATE");
   cout << outfile->GetName() << endl;
   TTree* outt = new TTree((runnum==simstr?"st":"outt"),"output tree");
   int outnmb = nmb[1];
@@ -368,6 +368,8 @@ int quickroot(string filebase="", int njob=0, string tag = "")
   float clusterphi[10000];
   int cluster_n;
   cout << "begin getting branches" << endl;
+  if(dotow)
+    {
   tree[1]->SetBranchAddress("sector_rtem",&sector_rtem);
   tree[1]->SetBranchAddress("rtemen",e_rtem);
   tree[1]->SetBranchAddress("rtemet",eta_rtem);
@@ -380,15 +382,21 @@ int quickroot(string filebase="", int njob=0, string tag = "")
   tree[1]->SetBranchAddress("cluster_E",clusterE);
   tree[1]->SetBranchAddress("cluster_eta",clustereta);
   tree[1]->SetBranchAddress("cluster_phi",clusterphi);
+    }
   for(int h=nosim; h<2; ++h)
     {
-      tree[h]->SetBranchAddress("mbenrgy",mbdq);
+      if(dotow) tree[h]->SetBranchAddress("mbenrgy",mbdq);
       tree[h]->SetBranchAddress("vtx",vtx);
       tree[h]->SetBranchAddress("ismb",&ismb[h]);
       tree[h]->SetBranchAddress("_evtnum",&evtnum[h]);
+      if(dotow)
+	{
       tree[h]->SetBranchAddress("ehjet",ehjet[h]);
       tree[h]->SetBranchAddress("seedD",seedD[h]);
+	}
       tree[h]->SetBranchAddress("njet",&njet[h]);
+      if(dotow)
+	{
       tree[h]->SetBranchAddress("sectoroh",&sectorrt[h][2]);
       tree[h]->SetBranchAddress("ohcaletabin",etart[h][2]);
       tree[h]->SetBranchAddress("ohcalphibin",phirt[h][2]);
@@ -398,12 +406,16 @@ int quickroot(string filebase="", int njob=0, string tag = "")
       tree[h]->SetBranchAddress("emcalen",enrt[h][0]);
       tree[h]->SetBranchAddress("emcaletabin",etart[h][0]);
       tree[h]->SetBranchAddress("emcalphibin",phirt[h][0]);
+	}
       tree[h]->SetBranchAddress("jet_e",jet_e[h]);
       tree[h]->SetBranchAddress("jet_et",jet_et[h]);
       tree[h]->SetBranchAddress("jet_ph",jet_ph[h]);
+      if(dotow)
+	{
       tree[h]->SetBranchAddress("ihcaletabin",etart[h][1]);
       tree[h]->SetBranchAddress("ihcalphibin",phirt[h][1]);
       tree[h]->SetBranchAddress("ihcalen",enrt[h][1]);
+	}
       tree[h]->SetBranchAddress("ntj",&ntj);
       tree[h]->SetBranchAddress("tjet_e",tjet_e);
       tree[h]->SetBranchAddress("tjet_eta",tjet_eta);
@@ -415,9 +427,12 @@ int quickroot(string filebase="", int njob=0, string tag = "")
       //tree->SetBranchAddress("emcaletabin",etabin);
       //tree->SetBranchAddress("emcalphibin",phibin);
       //tree->SetBranchAddress("emetot",&emetot);
+      if(dotow)
+	{
       jett[h]->SetBranchAddress("alcet",alcet);
       jett[h]->SetBranchAddress("aceta",aceta);
       jett[h]->SetBranchAddress("allcomp",&allcomp);
+	}
       jett[h]->SetBranchAddress("njet",&njetj);
     }
   cout << "end getting branches" << endl;
@@ -495,7 +510,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
   event_sum->GetZaxis()->SetLabelSize(0.08);
   event_sum->GetXaxis()->SetLabelOffset(-0.02);
   string subdet[4] = {"#bf{EMCal}","#bf{IHCal}","#bf{OHCal}","#bf{Sum}"};
-  int ncircle = 64;
+  int ncircle = 128;
   int highejet = 0;
   float fakejets = 0;
   int dispcount = 1;
@@ -530,10 +545,13 @@ int quickroot(string filebase="", int njob=0, string tag = "")
       //int passcut = 1;
       //if(i % 1000 == 0) cout << i << endl;
 
-      
-      if(abs(vtx[2]) > 100)
+      if(abs(vtx[2]) > 300)
 	{
 	  if(ismb[h]) outnmb--;
+	}
+      if(abs(vtx[2]) > 100)
+	{
+	  //if(ismb[h]) outnmb--;
 	  continue;
 	}
       
@@ -571,13 +589,14 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	}
 	}
       ojt->Fill();
+      //bool shighsecond = false;
       int trigvecproxy = 0;
       if(filename != simliststr) trigvecproxy = (trigvec>>10) & 1;
       float maxjet[4] = {0};
       //if(!ismb[h] && filename == simliststr) continue;
       for(int k=0; k<njet[h]; ++k)
 	{
-	  if(jet_e[h][k]/cosh(jet_et[h][k]) > 30) sshighe = 1;
+	  //if(jet_e[h][k]/cosh(jet_et[h][k]) > 30) sshighe = 1;
 	  if(jet_e[h][k] > maxjet[0]) maxjet[0] = jet_e[h][k];
 	  int dodraw = 0;
 	  //if(seedD[h][k] > 0.65) continue;
@@ -590,6 +609,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	      float ET1 = jet_e[h][k]/cosh(jet_et[h][k]);
 	      float ET2 = jet_e[h][l]/cosh(jet_et[h][l]);
 	      if(ET1 < ET2) continue;
+	      if(ET1 > 15 && ET2 > 10) sshighe = 1;
 	      float AJ = (ET1-ET2)/(ET1+ET2);
 	      if(AJ < 0) cout << ET1 << " " << ET2 << " " << AJ << endl;
 	      float odph = jet_ph[h][k] - jet_ph[h][l];
@@ -616,7 +636,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 		      if(ET1 > 25 && ET2 > 15) h1_AJ[h][6]->Fill(AJ);
 		      if(ET1 > 30 && ET2 > 12) h1_AJ[h][7]->Fill(AJ);
 		    }
-		  if(abs(jet_et[h][k]) > 1 || abs(jet_et[h][l]) > 1) continue;
+		  if(abs(jet_et[h][k]) > 0.7 || abs(jet_et[h][l]) > 0.7) continue;
 		  float dphi = abs(jet_ph[h][k] - jet_ph[h][l]);
 		  if(dphi > M_PI) dphi = 2*M_PI-dphi;
 		  float deta = jet_et[h][k] - jet_et[h][l];
@@ -650,7 +670,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	}
       
       
-      if(sshighe)
+      if(sshighe && dotow)
       {
 	  cout << "found a super high e jet!" << endl;
 	  event_sum->Reset();
@@ -683,7 +703,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	  event_sum->SetTitle(("Event "+to_string(i)).c_str());
 	  event_sum->Draw("COLZ");
 	  c->cd(0);
-	  sphenixtext(0.96,0.96,1,0.04);
+	  sphenixwip(0.96,0.96,1,0.04);
 	  drawText(("Run "+runnum).c_str(),0.96,0.92,1,kBlack,0.04);
 	  c->cd(4);
 	  float phivals[100];
@@ -705,7 +725,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	      std::stringstream e_stream;
 	      e_stream << std::fixed << std::setprecision(2) << jet_e[h][k]/cosh(jet_et[h][k]);
 	      std::string e_string = e_stream.str();
-	      float phitext = jet_ph[h][k]+M_PI+(jet_ph[h][k]+M_PI>5?-0.55:0.45);
+	      float phitext = jet_ph[h][k]+M_PI+(jet_ph[h][k]+M_PI>5?-0.57:0.45);
 	      phivals[k] = phitext;
 	      if(k>0)
 		{
@@ -713,23 +733,23 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 		    {
 		      if(phitext > 5)
 			{
-			  phitext += 1.1;
+			  phitext += 1.12;
 			}
 		      else
 			{
-			  phitext -= 1.1;
+			  phitext -= 1.12;
 			}
 		      if(phitext > 2*M_PI) phitext -= 2*M_PI;
 		      if(phitext < 0) phitext += 2*M_PI;
 		    }
 		      
 		}
-	      drawText((e_string+" GeV").c_str(),(jet_et[h][k]>0?1.0:0.1),phitext,(jet_et[h][k]>0?1:0),kBlack,0.08,42,false);
+	      drawText((e_string+" GeV").c_str(),(jet_et[h][k]>0?1.0:-1.0),phitext,(jet_et[h][k]>0?1:0),kBlack,0.08,42,false);
 	    }
 	  c->cd(0);
-	  drawText("Calorimeter Anti-k_{T} R=0.4",0.4,0.92,0);
+	  drawText("Calorimeter anti-k_{T} R=0.4",0.4,0.92,0);
 	  sqrt_s_text(0.05,0.92);
-	  c->SaveAs(("./output/smg/candidate_"+filebase++"_"+tag+"_supersuperhighE_"+to_string(njob)+"_"+to_string(cancount)+".png").c_str());
+	  c->SaveAs(("./output/smg/candidate_"+filebase+"_supersuperhighE_"+to_string(njob)+"_"+to_string(cancount)+".png").c_str());
 	  cancount++;
       }
       if(!ismb[h])// && !trigvecproxy && filename != simliststr)
@@ -738,11 +758,16 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	  continue;
 	}
       h1_zdist->Fill(vtx[2]);
+      if(dotow)
+	{
       for(int j=0; j<128; ++j)
 	{
 	  h1_mbdq->Fill(mbdq[j]);
 	}
+	}
 
+      if(dotow)
+	{
       for(int j=0; j<cluster_n; ++j)
 	{
 	  if(clusterE[j] < 1) continue;
@@ -750,6 +775,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	  if(abs(clusterphi[j]) > 0.25) h1_cluster_eta->Fill(clustereta[j]);
 	  h2_cluster_eta_E->Fill(clustereta[j],clusterE[j]);
 	  h2_cluster_eta_phi->Fill(clustereta[j],clusterphi[j]);
+	}
 	}
       if(filename == simliststr)
 	{
@@ -798,6 +824,8 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	      h2_tjet_eta_phi->Fill(tjet_eta[j],tjet_phi[j]);
 	    }
 	}
+      if(dotow)
+	{
       for(int j=0; j<3; ++j)
 	{
 	  float calo_E = 0;
@@ -814,6 +842,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	  h1_calo_E[j]->Fill(calo_E);
 	  h1_calo_occ[j]->Fill(occ/(j==0?24576:1536));
 	  h2_occ_E[j]->Fill(occ/(j==0?24576:1536),calo_E);
+	}
 	}
       if(evtnum[h] < prevt)
 	{
@@ -841,6 +870,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 		      //maxjetseedD[k] = seedD[j];
 		      //maxjeteh[k] = ehjet[j];
 		    }
+		  /*
 		  if(k==1 && ehjet[h][j] < maxeh)
 		    {
 		      maxjet[k] = jet_e[h][j];
@@ -859,6 +889,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 		      //maxjetseedD[k] = seedD[j];
 		      //maxjeteh[k] = ehjet[j];
 		    }
+		  */
 		}
 	    }
 	}
@@ -879,7 +910,8 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	      ++it;
 	    }
 	}
-      
+      if(dotow)
+	{
       for(int j=0; j<3; ++j)
 	{
 	  for(int k=0; k<sectorrt[h][j]; ++k)
@@ -887,7 +919,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	      h2_cal_eta_phi[h][j]->Fill(etart[h][j][k],phirt[h][j][k],enrt[h][j][k]);
 	    }
 	}
-      
+	}
       int njo[4] = {0};	    
       float leadjetET = 0;
       float leadjetEta = -2;
@@ -911,6 +943,8 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	      continue;
 	    }
 	  */
+	  if(dotow)
+	    {
 	  if(jet_e[h][k] < 7)
 	    {
 	      jetfrac[h][0]->Fill(1.-1./ehjet[h][k]);
@@ -923,9 +957,10 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	    {
 	      jetfrac[h][2]->Fill(1.-1./ehjet[h][k]);
 	    }
+	    }
 	  //if(seedD[k] > 0.65) continue;
 	  
-	  hejet[h]->Fill(ehjet[h][k]);
+	  if(dotow) hejet[h]->Fill(ehjet[h][k]);
 	  jetE[h][0]->Fill(ET);
 	  int whichjet = 0;
 	  if(ET < 6) whichjet = 0;
@@ -937,6 +972,8 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	  h1_phi[h][0][whichjet]->Fill(jet_ph[h][k]);
 	  h2_jet_eta_phi[h][whichjet]->Fill(jet_et[h][k],jet_ph[h][k]);
 	  h2_jet_eta_e[h][0]->Fill(jet_et[h][k],jet_e[h][k]);
+	  if(dotow)
+	    {
 	  if(ehjet[h][k] < maxeh && ehjet[h][k] > 0)
 	    {
 	      h2_jet_eta_e[h][1]->Fill(jet_et[h][k],jet_e[h][k]);
@@ -957,6 +994,7 @@ int quickroot(string filebase="", int njob=0, string tag = "")
 	      h1_eta[h][3][whichjet]->Fill(jet_et[h][k]);
 	      h1_phi[h][3][whichjet]->Fill(jet_ph[h][k]);
 	      jetE[h][3]->Fill(ET);
+	    }
 	    }
 
 	  //if(seedD[h][k] > 0.65) continue;

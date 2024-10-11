@@ -1,2 +1,2 @@
-bash cleanupforhadd.sh
+#bash cleanupforhadd.sh
 bash runhadd.sh

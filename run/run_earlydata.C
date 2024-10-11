@@ -69,7 +69,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   filename += to_string(rn)+"_";
   filename += to_string(nproc)+"_";
   filename += to_string(nevt);
-  string chi2filename = "/sphenix/user/jocl/projects/run2024_earlydata/run/output/temphists/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_chi2file.root";
+  string chi2filename = dir+"/"+to_string(rn)+"_chi2/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_chi2file.root";
   filename += ".root";
   FROG *fr = new FROG();
   //cout << "test0.5" << endl;
@@ -83,7 +83,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   se->Verbosity( verbosity );
   // just if we set some flags somewhere in this macro
   recoConsts *rc =  recoConsts::instance();
-  if(datorsim) rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2024");
+  if(datorsim) rc->set_StringFlag("CDB_GLOBALTAG","2024p007");
   else rc->set_StringFlag("CDB_GLOBALTAG","MDC2");
   if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
   else rc->set_uint64Flag("TIMESTAMP",15);
@@ -200,7 +200,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   int cont = 0;
   //cout << "test1.5" << endl;  
 
-  //EliminateBackground* bgelim = new EliminateBackground("bgelim");
+  EliminateBackground* bgelim = new EliminateBackground("bgelim");
   //se->registerSubsystem(bgelim);
   auto mbddigi = new MbdDigitization();
   auto mbdreco = new MbdReco();
@@ -258,14 +258,16 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //cout << "test2" << endl;
   R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
   //cout << "test3" << endl;
-  se->registerSubsystem( tt );
+  //se->registerSubsystem( tt );
   cout << "test4" << endl;
   se->Print("NODETREE");
   cout << "run " << nevt << endl;
+  //se->skip(1000);
   se->run(nevt);
   cout << "ran " << nevt << endl;
   cout << "Ran all events" << endl;
   se->End();
+  se->PrintTimer();
   cout << "Ended server" << endl;
   delete se;
   cout << "Deleted server" << endl;

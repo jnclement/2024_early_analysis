@@ -13,13 +13,14 @@ BASENAME="condor_${TAG}_${NJOB}_imagemaker"
 SUBNAME="${BASENAME}.sub"
 
 echo "executable = quickroot.sh" > $SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:8000" >> $SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:400" >> $SUBNAME
 echo "arguments = ${1} \$(Process)" >> $SUBNAME
 echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME
 echo "when_to_transfer_output = ON_EXIT" >> $SUBNAME
 echo "error = /sphenix/user/jocl/projects/run2024_earlydata/run/output/err/error_${BASENAME}_\$(Process).err" >> $SUBNAME
 echo "log = /tmp/jocl_${BASENAME}_\$(Process).log" >> $SUBNAME
+#echo "priority = 10000000" >> $SUBNAME
 echo "queue ${NJOB}" >> $SUBNAME
 
 condor_submit $SUBNAME

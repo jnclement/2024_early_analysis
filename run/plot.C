@@ -90,7 +90,7 @@ void std_text(TCanvas* thecan, string* texts, int ntext, float textsize, float t
 {
 
   thecan->cd();
-  sphenixtext(textx,texty,0,textsize);
+  sphenixwip(textx,texty,0,textsize);
   sqrt_s_text(textx,texty-(6*textsize/4),0,textsize);
   float drawy = texty-3*textsize;
   for(int i=0; i<ntext; ++i)
@@ -146,7 +146,7 @@ double mygaus(double *x, double* par)
   float fullgaus = par[0]*exp(expterm);
   return (fullgaus+par[3]);
 }
-int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root", string filelist="lists/sumdatlist.list",int therun = -1)
+int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root", string filelist="lists/sumdatlist.list", string rmgdir = "rmg", int therun = -1)
 {
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
   const int nruns = 94;//286;//33;//72//10;//94
@@ -154,12 +154,14 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   int sds[nruns][nsd] = {0};
 
   gROOT->SetStyle("Plain");
+  SetsPhenixStyle();
   gStyle->SetOptStat(0);
   gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
   gStyle->SetOptTitle(0);
   TFile* rootfile[3];
   rootfile[0] = TFile::Open(sfilebase.c_str());
+
   TTree* simt = (TTree*)rootfile[0]->Get("st");
   int nsimmb = 0;
   int simmb = 0;
@@ -470,7 +472,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	      //fitgdat = 0;
 	      //fitgsim = 0;
 	      //std_text(d, texts, dotext, ntext, 0.03, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, 0, 0,(therun==-1?-1:runnumbers[therun]));
-	      d->SaveAs(("output/rmg/spectrum_justdat"+to_string(i)+".png").c_str());
+	      d->SaveAs(("output/"+rmgdir+"/spectrum_justdat"+to_string(i)+".png").c_str());
 	      jetE[1][i]->GetFunction("f1")->SetBit(TF1::kNotDraw);
 	      gPad->SetLogy(0);
 	    }
@@ -508,29 +510,31 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   string lumdatstr = "\\mathscr{L}_\\text{MB,data} = "+stream[1].str()+" \\text{ nb}^{-1}";
   string lumjetstr = "\\mathscr{L}_\\text{jet8,data} = "+stream[2].str()+" \\text{ nb}^{-1}";
   string dphilocuts[4] = {"4","10","10","15"};
-  string dphihicuts[4] = {"4","20","15","30"};
+  string dphihicuts[4] = {"4","15","20","30"};
   for(int h=0; h<2; ++h)
     {
-      gPad->SetLogy(0);
+      gPad->SetLogy();
       for(int i=0; i<4; ++i)
 	{
-	  const int ntext = 4;
+	  const int ntext = 5;
 	  string texts[ntext] =
 	    {
-	      "Calorimeter Anti-k_{#kern[-1.0]{T}} R=0.4",
-	      "#it{E}_{T,jet1} > "+dphihicuts[i]+" GeV",
-	      "#it{E}_{T,jet2} > "+dphilocuts[i]+" GeV",
-	      "|#it{#eta}^{jet}| < 0.7, |z_{vtx}|<100 cm"
+	      "Calorimeter anti-k_{#kern[-1.0]{T}} R=0.4",
+	      "Uncorrected #it{E}_{T,jet1} > "+dphihicuts[i]+" GeV",
+	      "Uncorrected #it{E}_{T,jet2} > "+dphilocuts[i]+" GeV",
+	      "|#it{#eta}^{jet}| < 0.7, |z_{vtx}|<100 cm",
+	      "Background rejection applied"
 	    };
 	  std_hist((h==0?NULL:h1_dphi[h][i]),(h==0?h1_dphi[h][i]:NULL),"#Delta#phi [rad]","Integral Normalized Counts");
 	  h1_dphi[h][i]->SetMarkerSize(2);
 	  cout << dphihicuts[i] << " " << dphilocuts[i] << " " << h1_dphi[h][i]->GetBinContent(16) << endl;
 	  h1_dphi[h][i]->SetFillColorAlpha(kMagenta+1,0.3);
+	  h1_dphi[h][i]->GetYaxis()->SetRangeUser(1e-3,10);
 	  h1_dphi[h][i]->Draw("P0 E0");
 	  h1_dphi[h][i]->Draw("HIST SAME");
 	  float tempx = 0.2;
 	  std_text(d, texts, ntext, stdsize, tempx, stdy, stdright);
-	  d->SaveAs(("output/rmg/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(h)+"_"+to_string(i)+"_dphi_1d.png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(h)+"_"+to_string(i)+"_dphi_1d.png").c_str());
 	}
     }
   gPad->SetLeftMargin(0.1);
@@ -586,33 +590,33 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       h1_calo_E[0][i]->Draw("PE");
       h1_calo_E[1][i]->Draw("SAME P E");
       ajleg->Draw();
-      gPad->SaveAs(("output/rmg/totalE"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
+      gPad->SaveAs(("output/"+rmgdir+"/totalE"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
       //gPad->SetLogy();
       h1_tower_E[0][i]->GetXaxis()->SetTitle((calo+" Tower E [GeV]").c_str());
       h1_tower_E[0][i]->GetYaxis()->SetTitle("Event normalized counts");
       h1_tower_E[0][i]->Draw("PE");
       h1_tower_E[1][i]->Draw("SAME P E");
       ajleg->Draw();
-      gPad->SaveAs(("output/rmg/towerE"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
+      gPad->SaveAs(("output/"+rmgdir+"/towerE"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
       h1_calo_occ[0][i]->GetXaxis()->SetTitle((calo+" Occupancy").c_str());
       h1_calo_occ[0][i]->GetYaxis()->SetTitle("Event normalized counts");
       h1_calo_occ[0][i]->Draw("PE");
       h1_calo_occ[1][i]->Draw("SAME P E");
       ajleg->Draw();
-      gPad->SaveAs(("output/rmg/caloocc"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
+      gPad->SaveAs(("output/"+rmgdir+"/caloocc"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
       gPad->SetLogy(0);
       gPad->SetRightMargin(0.2);
       h2_occ_E[0][i]->GetYaxis()->SetTitle((calo+" Total E [GeV]").c_str());
       h2_occ_E[0][i]->GetXaxis()->SetTitle((calo+" Occupancy").c_str());
       h2_occ_E[0][i]->GetZaxis()->SetTitle("Event Normalized Counts");
       h2_occ_E[0][i]->Draw("COLZ");
-      gPad->SaveAs(("output/rmg/occE0_"+to_string((therun==-1?-1:runnumbers[therun]))+"_0_"+to_string(i)+".png").c_str());
+      gPad->SaveAs(("output/"+rmgdir+"/occE0_"+to_string((therun==-1?-1:runnumbers[therun]))+"_0_"+to_string(i)+".png").c_str());
 
       h2_occ_E[1][i]->GetYaxis()->SetTitle((calo+" Total E [GeV]").c_str());
       h2_occ_E[1][i]->GetXaxis()->SetTitle((calo+" Occupancy").c_str());
       h2_occ_E[1][i]->GetZaxis()->SetTitle("Event Normalized Counts");
       h2_occ_E[1][i]->Draw("COLZ");
-      gPad->SaveAs(("output/rmg/occE0_"+to_string((therun==-1?-1:runnumbers[therun]))+"_1_"+to_string(i)+".png").c_str());
+      gPad->SaveAs(("output/"+rmgdir+"/occE0_"+to_string((therun==-1?-1:runnumbers[therun]))+"_1_"+to_string(i)+".png").c_str());
       gPad->SetRightMargin(0.1);
     }
   
@@ -626,12 +630,12 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   //h1_cluster_E[0]->Draw("PE");
   //h1_cluster_E[1]->Draw("SAME PE");
   //ajleg->Draw();
-  //gPad->SaveAs(("output/rmg/clusterE"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
+  //gPad->SaveAs(("output/"+rmgdir+"/clusterE"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
   gPad->SetLogy(0);
   h1_cluster_eta[0]->Draw("PE");
   h1_cluster_eta[1]->Draw("SAME PE");
   ajleg->Draw();
-  gPad->SaveAs(("output/rmg/clustereta"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
+  gPad->SaveAs(("output/"+rmgdir+"/clustereta"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
   
   gPad->SetRightMargin(0.2);
   //h2_cluster_eta_E[0]->GetXaxis()->SetTitle("Cluster #eta");
@@ -642,9 +646,9 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   h2_cluster_eta_phi[0]->GetZaxis()->SetTitle("Event Normalized Counts");
   h2_cluster_eta_phi[0]->GetZaxis()->SetTitleOffset(1.7);
   //h2_cluster_eta_E[0]->Draw("COLZ");
-  //gPad->SaveAs(("output/rmg/clusteretaE"+to_string((therun==-1?-1:runnumbers[therun]))+"_0.png").c_str());
+  //gPad->SaveAs(("output/"+rmgdir+"/clusteretaE"+to_string((therun==-1?-1:runnumbers[therun]))+"_0.png").c_str());
   h2_cluster_eta_phi[0]->Draw("COLZ");
-  gPad->SaveAs(("output/rmg/clusteretaphi"+to_string((therun==-1?-1:runnumbers[therun]))+"_0.png").c_str());
+  gPad->SaveAs(("output/"+rmgdir+"/clusteretaphi"+to_string((therun==-1?-1:runnumbers[therun]))+"_0.png").c_str());
   //h2_cluster_eta_E[1]->GetXaxis()->SetTitle("Cluster #eta");
   //h2_cluster_eta_E[1]->GetYaxis()->SetTitle("Cluster E [GeV]");
   //h2_cluster_eta_E[1]->GetZaxis()->SetTitle("Event Normalized Counts");
@@ -652,9 +656,9 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   h2_cluster_eta_phi[1]->GetYaxis()->SetTitle("Cluster #phi [rad]");
   h2_cluster_eta_phi[1]->GetZaxis()->SetTitle("Event Normalized Counts");
   //h2_cluster_eta_E[1]->Draw("COLZ");
-  //gPad->SaveAs(("output/rmg/clusteretaE"+to_string((therun==-1?-1:runnumbers[therun]))+"_1.png").c_str());
+  //gPad->SaveAs(("output/"+rmgdir+"/clusteretaE"+to_string((therun==-1?-1:runnumbers[therun]))+"_1.png").c_str());
   h2_cluster_eta_phi[1]->Draw("COLZ");
-  gPad->SaveAs(("output/rmg/clusteretaphi"+to_string((therun==-1?-1:runnumbers[therun]))+"_1.png").c_str());
+  gPad->SaveAs(("output/"+rmgdir+"/clusteretaphi"+to_string((therun==-1?-1:runnumbers[therun]))+"_1.png").c_str());
   gPad->SetRightMargin(0.1);
   cout << "degrombo" << endl;
   for(int i=0; i<12; ++i)
@@ -684,7 +688,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  lumjetstr
 	};
       std_text(d, texts, ntext, stdsize, stdx, stdy, stdright);
-      d->SaveAs(("output/rmg/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_AJ_1d.png").c_str());
+      d->SaveAs(("output/"+rmgdir+"/summed_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_AJ_1d.png").c_str());
     }
   cout << "legrombo" << endl;
   d->SetLogy();
@@ -757,7 +761,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  lumjetstr
 	};
       //cout << minimum << endl;
-      jetE[1][i]->GetYaxis()->SetRangeUser(0.1*minimum, 10*jetE[0][i]->GetMaximum());
+      jetE[1][i]->GetYaxis()->SetRangeUser(1e-11,1e-2); //0.1*minimum, 10*jetE[0][i]->GetMaximum());
       jetE[1][i]->GetXaxis()->SetRangeUser(10,50);
       std_hist(jetE[1][i], jetE[0][i], "Raw #it{E}_{T,jet}","#frac{1}{N_{evt}} #frac{dN_{jet}}{d#it{E}_{T,jet}}");
 
@@ -768,7 +772,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 
       std_text(d, texts, ntext, stdsize, stdx, stdy, stdright);
       
-      if(i==0) d->SaveAs("output/rmg/justdat_nofit.png");
+      if(i==0) d->SaveAs(("output/"+rmgdir+"/justdat_nofit.png").c_str());
       //jetE[0][i]->Draw("SAME PE");
       //if(i==0) tjetE->Draw("SAME PE");
       //jetEleg->Draw();
@@ -793,7 +797,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 
       jetEleg->Draw();
       std_text(d, texts, ntext, stdsize, stdx, stdy, stdright);
-      d->SaveAs(("output/rmg/summed_jetE"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
+      d->SaveAs(("output/"+rmgdir+"/summed_jetE"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
     }
 
 
@@ -813,7 +817,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
     }
   jetEleg->Draw();
   sphenixtext();
-  d->SaveAs(("output/rmg/trigturn"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
+  d->SaveAs(("output/"+rmgdir+"/trigturn"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
   
   gPad->SetLogy(0);
   
@@ -826,12 +830,12 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
     }
   jetEleg->Draw();
   sphenixtext();
-  d->SaveAs(("output/rmg/trigrat"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
+  d->SaveAs(("output/"+rmgdir+"/trigrat"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
   gPad->SetLeftMargin(0.1);      
   //h1_trigrat[0]->Draw("PE");
   //h1_trigrat[1]->Draw("SAME PE");
   //h1_trigrat[2]->Draw("SAME PE");
-  //d->SaveAs(("output/rmg/trigrat"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
+  //d->SaveAs(("output/"+rmgdir+"/trigrat"+to_string((therun==-1?-1:runnumbers[therun]))+".png").c_str());
 
 
   /*
@@ -858,7 +862,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   fitgdat = 0;
   fitgsim = 0;
   std_text(d, texts, dotext, ntext, 0.03, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-  d->SaveAs(("output/rmg/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_ljetE.png").c_str());
+  d->SaveAs(("output/"+rmgdir+"/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_ljetE.png").c_str());
 
 
   for(int j=0; j<ntext; ++j)
@@ -878,7 +882,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   fitgdat = 0;
   fitgsim = 0;
   std_text(d, texts, dotext, ntext, 0.03, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-  d->SaveAs(("output/rmg/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_ljetEta.png").c_str());
+  d->SaveAs(("output/"+rmgdir+"/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_ljetEta.png").c_str());
   gPad->SetLogy();
   //jetEleg->AddEntry(jetTrigE[0],"Jet 4 GeV Trigger","p");
   //jetEleg->AddEntry(jetTrigE[1],"Jet 6 GeV Trigger","p");
@@ -914,7 +918,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       leg->AddEntry(h1_rej[h][3],((h==0?simstr:datstr)+" Rejection factor (both cuts)").c_str(),"p");
     }
   leg->Draw();  
-  d->SaveAs(("output/rmg/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_rej.png").c_str());
+  d->SaveAs(("output/"+rmgdir+"/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_rej.png").c_str());
 
   */
   for(int i=0; i<4; ++i)
@@ -925,7 +929,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       h1_mlt[1][i]->Draw("SAME P0 E");
       ajleg->Draw();
       //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-      d->SaveAs(("output/rmg/summed_mult"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
+      d->SaveAs(("output/"+rmgdir+"/summed_mult"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
     }
 
   cout << "test1.2" << endl;
@@ -938,7 +942,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   h1_zdist[1]->Draw("SAME P0 E");
   ajleg->Draw();
   //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-  d->SaveAs(("output/rmg/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_zdist.png").c_str());
+  d->SaveAs(("output/"+rmgdir+"/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_zdist.png").c_str());
   //cout << h1_zdist[0]->GetBinContent(0) << " " << h1_zdist[1]->GetBinContent(0) << " " << h1_zdist[0]->GetBinContent(201) << " " << h1_zdist[1]->GetBinContent(201) << endl;
   gPad->SetLogy();
 
@@ -955,7 +959,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
   ajleg->Draw();
   cout << "test1.3" << endl;
   //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-  d->SaveAs(("output/rmg/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_mbdq.png").c_str());
+  d->SaveAs(("output/"+rmgdir+"/summed"+to_string((therun==-1?-1:runnumbers[therun]))+"_mbdq.png").c_str());
   
   gPad->SetLogy();
   
@@ -972,7 +976,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  h1_eta[1][i][h]->Draw("SAME P0 E");
 	  ajleg->Draw();
 	  //std_text(d, texts, dotext, ntext, stdsize, 0.13, stdy, 0, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-	  d->SaveAs(("output/rmg/summed_eta"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_"+to_string(h)+".png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/summed_eta"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_"+to_string(h)+".png").c_str());
 	}
       
       h2_cal_eta_phi[1][0]->GetZaxis()->SetRangeUser(0,h2_cal_eta_phi[1][0]->GetMaximum()*1.1);
@@ -985,12 +989,12 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	      h2_cal_eta_phi[0][i]->GetXaxis()->SetTitle("#eta");
 	      h2_cal_eta_phi[0][i]->GetYaxis()->SetTitle("#phi [rad]");
 	      h2_cal_eta_phi[0][i]->Draw("COLZ");
-	      d->SaveAs(("output/rmg/cal_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+".png").c_str());
+	      d->SaveAs(("output/"+rmgdir+"/cal_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+".png").c_str());
 	      h2_cal_eta_phi[1][i]->GetXaxis()->SetTitle("#eta");
 	      h2_cal_eta_phi[1][i]->GetYaxis()->SetTitle("#phi [rad]");
 	      h2_cal_eta_phi[1][i]->GetZaxis()->SetRangeUser(0,h2_cal_eta_phi[1][i]->GetMaximum()*1.1);
 	      h2_cal_eta_phi[1][i]->Draw("COLZ");
-	      d->SaveAs(("output/rmg/cal_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(1)+"_"+to_string(i)+".png").c_str());
+	      d->SaveAs(("output/"+rmgdir+"/cal_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(1)+"_"+to_string(i)+".png").c_str());
 	    }
 	  //cout << "grombo0" << endl;
 	  gPad->SetRightMargin(0.2);
@@ -1000,7 +1004,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  h2_tjet_eta_phi->GetYaxis()->SetTitle("#phi [rad]");
 	  h2_tjet_eta_phi->Draw("COLZ");
 	  h2_tjet_eta_phi->GetZaxis()->SetTitle("N_{jet} Event Normalized");
-	  d->SaveAs(("output/rmg/tjet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+".png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/tjet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+".png").c_str());
 	  cout << "test1.4"<<i << endl;
 	  h2_jet_eta_phi[0][i]->GetZaxis()->SetRangeUser(0,h2_jet_eta_phi[0][i]->GetMaximum());
 	  h2_jet_eta_phi[0][i]->GetZaxis()->SetTitleOffset(1.7);
@@ -1008,33 +1012,33 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  h2_jet_eta_phi[0][i]->GetYaxis()->SetTitle("#phi [rad]");
 	  h2_jet_eta_phi[0][i]->Draw("COLZ");
 	  h2_jet_eta_phi[0][i]->GetZaxis()->SetTitle("N_{jet} Event Normalized");
-	  d->SaveAs(("output/rmg/jet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+".png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/jet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+".png").c_str());
 	  cout << "test1.7"<<i << endl;
 	  h2_jet_eta_phi[0][i]->Draw("LEGO");
-	  d->SaveAs(("output/rmg/jet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+"_lego.png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/jet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+"_lego.png").c_str());
 	  h2_jet_eta_phi[1][i]->GetZaxis()->SetTitleOffset(1.7);
 	  h2_jet_eta_phi[1][i]->GetXaxis()->SetTitle("#eta");
 	  h2_jet_eta_phi[1][i]->GetYaxis()->SetTitle("#phi [rad]");
 	  h2_jet_eta_phi[1][i]->GetZaxis()->SetTitle("N_{jet} Event Normalized");
 	  h2_jet_eta_phi[1][i]->GetZaxis()->SetRangeUser(0,h2_jet_eta_phi[1][i]->GetMaximum());
 	  h2_jet_eta_phi[1][i]->Draw("COLZ");
-	  d->SaveAs(("output/rmg/jet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(1)+"_"+to_string(i)+".png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/jet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(1)+"_"+to_string(i)+".png").c_str());
 	  cout << "test1.8"<<i << endl;
 	  h2_jet_eta_phi[1][i]->Draw("LEGO");
-	  d->SaveAs(("output/rmg/jet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(1)+"_"+to_string(i)+"_lego.png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/jet_eta_phi_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(1)+"_"+to_string(i)+"_lego.png").c_str());
 	  cout << "test1.11"<<i << endl;
 	  h2_jet_eta_e[0][i]->GetZaxis()->SetRangeUser(0,h2_jet_eta_e[0][i]->GetMaximum());
 	  h2_jet_eta_e[0][i]->GetXaxis()->SetTitle("#eta");
 	  h2_jet_eta_e[0][i]->GetYaxis()->SetTitle("#it{E}_{jet} [GeV]");
 	  h2_jet_eta_e[0][i]->Draw("COLZ");
-	  d->SaveAs(("output/rmg/jet_eta_e_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+".png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/jet_eta_e_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(0)+"_"+to_string(i)+".png").c_str());
 	  cout << "test1.9"<<i << endl;
 	  //cout << "grombo3" << endl;
 	  h2_jet_eta_e[1][i]->GetXaxis()->SetTitle("#eta");
 	  h2_jet_eta_e[1][i]->GetYaxis()->SetTitle("#it{E}_{jet} [GeV]");
 	  h2_jet_eta_e[1][i]->GetZaxis()->SetRangeUser(0,h2_jet_eta_e[1][i]->GetMaximum());
 	  h2_jet_eta_e[1][i]->Draw("COLZ");
-	  d->SaveAs(("output/rmg/jet_eta_e_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(1)+"_"+to_string(i)+".png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/jet_eta_e_"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(1)+"_"+to_string(i)+".png").c_str());
 	  gPad->SetRightMargin(0.1);
 	  cout << "test1.10"<<i << endl;
 	  //cout << "grombo1" << endl;
@@ -1047,7 +1051,7 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
 	  h1_phi[1][i][h]->Draw("SAME P E");
 	  ajleg->Draw();
 	  //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-	  d->SaveAs(("output/rmg/summed_phi"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_"+to_string(h)+".png").c_str());
+	  d->SaveAs(("output/"+rmgdir+"/summed_phi"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+"_"+to_string(h)+".png").c_str());
 	}
     }
   cout << "test1.5" << endl;
@@ -1069,8 +1073,31 @@ int plot(string filebase = "summed_dat.root", string sfilebase="summed_sim.root"
       jetfrac[1][i]->Draw("SAME HIST");
       ajleg->Draw();
       //std_text(d, texts, dotext, ntext, stdsize, stdx, stdy, stdright, nevtsim, nevtdat, fitgdat, gmd, ged, fitgsim, gms, ges);
-      d->SaveAs(("output/rmg/summed_emfrac"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
+      d->SaveAs(("output/"+rmgdir+"/summed_emfrac"+to_string((therun==-1?-1:runnumbers[therun]))+"_"+to_string(i)+".png").c_str());
     }
+
+  
+  
+  TFile* outolay = new TFile("output/outolay.root","UPDATE");
+  outolay->mkdir("rmg");
+  outolay->cd("rmg");
+  outolay->WriteObject(jetE[1][0],"jetE10rj");
+  outolay->WriteObject(jetTrigE[1],"jetTrigE1rj");
+  outolay->WriteObject(jetTrigE[2],"jetTrigE2rj");
+  outolay->WriteObject(jetTrigE[3],"jetTrigE3rj");
+  outolay->Write();
+  outolay->Close();
+  /*
+  TFile* outolay = new TFile("output/outolay.root","UPDATE");
+  outolay->mkdir("rmg2");
+  outolay->cd("rmg2");
+  outolay->WriteObject(jetE[1][0],"jetE10nr");
+  outolay->WriteObject(jetTrigE[1],"jetTrigE1nr");
+  outolay->WriteObject(jetTrigE[2],"jetTrigE2nr");
+  outolay->WriteObject(jetTrigE[3],"jetTrigE3nr");
+  outolay->Write();
+  outolay->Close();
+  */
 
   cout << "test1.6" << endl;
   cout << h1_zdist[0]->Integral() << endl;

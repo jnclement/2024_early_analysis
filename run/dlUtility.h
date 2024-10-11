@@ -141,6 +141,11 @@ void sphenixtext(float xpos = 0.7, float ypos = 0.96, int ra = 0, float textsize
   drawText("#bf{#it{sPHENIX}} Internal", xpos, ypos, ra, kBlack, textsize);
 }
 
+void sphenixwip(float xpos = 0.7, float ypos = 0.96, int ra = 0, float textsize = 0.04)
+{
+  drawText("#bf{#it{sPHENIX}} Work in Progress", xpos, ypos, ra, kBlack, textsize);
+}
+
 void sphenixprelim(float xpos = 0.8, float ypos = 0.96, int ra = 1, float textsize = 0.04)
 {
   drawText("#bf{#it{sPHENIX}} Preliminary", xpos, ypos, ra, kBlack, textsize);
