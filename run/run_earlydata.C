@@ -122,11 +122,11 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   if(!datorsim && !list3) list3.open("lists/g4hits.list");
   if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
   string line1, line2, line3;
-  if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".dst";
-  else line1 = "./dsts/"+to_string(rn)+"/calo_waveform_"+to_string(nproc)+".dst";
-  line2 = "./dsts/"+to_string(rn)+"/global_"+to_string(nproc)+".dst";
-  if(list3) line3 = "./dsts/"+to_string(rn)+"/truth_jet_"+to_string(nproc)+".dst";
-  else line3 = "./dsts/"+to_string(rn)+"/g4hits_"+to_string(nproc)+".dst";
+  if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
+  else line1 = "./dsts/"+to_string(rn)+"/calo_waveform_"+to_string(nproc)+".root";
+  line2 = "./dsts/"+to_string(rn)+"/global_"+to_string(nproc)+".root";
+  if(list3) line3 = "./dsts/"+to_string(rn)+"/truth_jet_"+to_string(nproc)+".root";
+  else line3 = "./dsts/"+to_string(rn)+"/g4hits_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
   if(!datorsim && list2) in_2->AddFile(line2);
   if(!datorsim) in_3->AddFile(line3);
@@ -140,42 +140,42 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
 
   std::cout << "status setters" << std::endl;
-  //if(datorsim)
-  //  {
-  CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
-  statusEMC->set_detector_type(CaloTowerDefs::CEMC);
-  statusEMC->set_time_cut(1);
-  se->registerSubsystem(statusEMC);
-
-  CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
-  statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
-  statusHCalIn->set_time_cut(2);
-  se->registerSubsystem(statusHCalIn);
-
-  CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
-  statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
-  statusHCALOUT->set_time_cut(2);
-  se->registerSubsystem(statusHCALOUT);
-    
-  ////////////////////
-  // Calibrate towers
-  
-  std::cout << "Calibrating EMCal" << std::endl;
-  CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
-  calibEMC->set_detector_type(CaloTowerDefs::CEMC);
-  se->registerSubsystem(calibEMC);
-
-  std::cout << "Calibrating OHcal" << std::endl;
-  CaloTowerCalib *calibOHCal = new CaloTowerCalib("HCALOUT");
-  calibOHCal->set_detector_type(CaloTowerDefs::HCALOUT);
-  se->registerSubsystem(calibOHCal);
-
-  std::cout << "Calibrating IHcal" << std::endl;
-  CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
-  calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
-  se->registerSubsystem(calibIHCal);
-  
-  //  }
+  if(!datorsim)
+    {
+      CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
+      statusEMC->set_detector_type(CaloTowerDefs::CEMC);
+      statusEMC->set_time_cut(1);
+      se->registerSubsystem(statusEMC);
+      
+      CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
+      statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
+      statusHCalIn->set_time_cut(2);
+      se->registerSubsystem(statusHCalIn);
+      
+      CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
+      statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
+      statusHCALOUT->set_time_cut(2);
+      se->registerSubsystem(statusHCALOUT);
+      
+      ////////////////////
+      // Calibrate towers
+      
+      std::cout << "Calibrating EMCal" << std::endl;
+      CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
+      calibEMC->set_detector_type(CaloTowerDefs::CEMC);
+      se->registerSubsystem(calibEMC);
+      
+      std::cout << "Calibrating OHcal" << std::endl;
+      CaloTowerCalib *calibOHCal = new CaloTowerCalib("HCALOUT");
+      calibOHCal->set_detector_type(CaloTowerDefs::HCALOUT);
+      se->registerSubsystem(calibOHCal);
+      
+      std::cout << "Calibrating IHcal" << std::endl;
+      CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
+      calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
+      se->registerSubsystem(calibIHCal);
+      
+    }
   /*
   std::cout << "Calibrating ZDC" << std::endl;
   CaloTowerCalib *calibZDC = new CaloTowerCalib("ZDC");

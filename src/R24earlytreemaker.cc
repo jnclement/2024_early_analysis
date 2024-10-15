@@ -264,6 +264,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(_datorsim)
     {
       gl1 = findNode::getClass<Gl1Packetv2>(topNode, "GL1Packet");
+      if(!gl1)
+	{
+	  cout << "No trigger info!" << endl;
+	  return Fun4AllReturnCodes::ABORTRUN;
+	}
       if(_debug > 1) cout << "Getting gl1 trigger vector from: " << gl1 << endl;
       triggervec = gl1->getScaledVector();
       if(triggervec >> 10 & 0x1)
@@ -304,7 +309,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  break;
 	}
     }
-  else
+  else if(gvtxmap)
     {
       auto iter = gvtxmap->begin();
       while(iter != gvtxmap->end())

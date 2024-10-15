@@ -25,10 +25,10 @@ G4HITSF=`sed -n "${UPLN}"p ./lists/g4hits.list`
 CALOCLF=`sed -n "${UPLN}"p ./lists/dst_calo_waveform.list`
 GLOBALF=`sed -n "${UPLN}"p ./lists/dst_global.list`
 TRTHJET=`sed -n "${UPLN}"p ./lists/dst_truth_jet.list`
-cp -r $G4HITSF ./dsts/$3/g4hits_${2}.dst
-cp -r $CALOCLF ./dsts/$3/calo_waveform_${2}.dst
-cp -r $GLOBALF ./dsts/$3/global_${2}.dst
-cp -r $TRTHJET ./dsts/$3/truth_jet_${2}.dst
+cp -r $G4HITSF ./dsts/$3/g4hits_${2}.root
+cp -r $CALOCLF ./dsts/$3/calo_waveform_${2}.root
+cp -r $GLOBALF ./dsts/$3/global_${2}.root
+cp -r $TRTHJET ./dsts/$3/truth_jet_${2}.root
 root -b -q 'run_earlydata.C("'${1}'",'${2}',0,'${5}','${3}','${4}',0,'${6}')'
 ls
 echo " "
