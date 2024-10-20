@@ -43,7 +43,6 @@ R__LOAD_LIBRARY(libchi2checker.so)
 R__LOAD_LIBRARY(libr24earlytreemaker.so)
 R__LOAD_LIBRARY(libg4centrality.so)
 R__LOAD_LIBRARY(libFROG.so)
-R__LOAD_LIBRARY(libg4jets.so)
 R__LOAD_LIBRARY(libg4vertex.so)
 R__LOAD_LIBRARY(libfun4all.so)
 R__LOAD_LIBRARY(libcalo_io.so)
@@ -53,6 +52,7 @@ R__LOAD_LIBRARY(libmbd_io.so)
 R__LOAD_LIBRARY(libmbd.so)
 R__LOAD_LIBRARY(libffamodules.so)
 R__LOAD_LIBRARY(libg4jets.so)
+R__LOAD_LIBRARY(libjetbase.so)
 R__LOAD_LIBRARY(libjetbackground.so)
 R__LOAD_LIBRARY(libemulatortreemaker.so)
 bool file_exists(const char* filename)
@@ -228,7 +228,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   rcemc->set_towerinfo(true);
   rcemc->Verbosity(verbosity);
   se->registerSubsystem(rcemc);
-  
+  cout << "set up retower emcal" << endl;
   JetReco *truthjetreco = new JetReco();
   if(!datorsim)
     {
@@ -243,7 +243,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
   JetReco *towerjetreco = new JetReco();
   //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
-  towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO));
+  towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB"));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALIN_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALOUT_TOWERINFO));
   towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
@@ -251,10 +251,12 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   towerjetreco->set_input_node("TOWER");
   //towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
+  cout << "set up jetreco" << endl;
   Chi2checker* chi2c;
+
   if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug);
   if(chi2check) se->registerSubsystem(chi2c);
-
+  cout << "set up chi2check" << endl;
   //cout << "test2" << endl;
   R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 1);
   //cout << "test3" << endl;

@@ -12,17 +12,17 @@ if [ $# -lt 6 ]; then
 fi
 
 BASENAME="condor_${TAG}_${NFILE}_${RN}_${ZS}_${EVT}"
-
+PREFIX="." #"/sphenix/user/hanpuj/test"
 SUBNAME="${BASENAME}.sub"
 
-echo "executable = earlydata.sh" > $SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:400" >> $SUBNAME
-echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C}" >> $SUBNAME
-echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
-echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME
-echo "when_to_transfer_output = ON_EXIT" >> $SUBNAME
-echo "error = /sphenix/user/jocl/projects/run2024_earlydata/run/output/err/error_${BASENAME}_\$(Process).err" >> $SUBNAME
-echo "log = /tmp/jocl_${BASENAME}.log" >> $SUBNAME
-echo "queue ${NFILE}" >> $SUBNAME
+echo "executable = earlydata.sh" > $PREFIX/$SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:400" >> $PREFIX/$SUBNAME
+echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C}" >> $PREFIX/$SUBNAME
+echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_${BASENAME}_\$(Process).out" >> $PREFIX/$SUBNAME
+echo "should_transfer_files   = IF_NEEDED" >> $PREFIX/$SUBNAME
+echo "when_to_transfer_output = ON_EXIT" >> $PREFIX/$SUBNAME
+echo "error = /sphenix/user/jocl/projects/run2024_earlydata/run/output/err/error_${BASENAME}_\$(Process).err" >> $PREFIX/$SUBNAME
+echo "log = /tmp/jocl_${BASENAME}.log" >> $PREFIX/$SUBNAME
+echo "queue ${NFILE}" >> $PREFIX/$SUBNAME
 
-condor_submit $SUBNAME
+condor_submit $PREFIX/$SUBNAME
