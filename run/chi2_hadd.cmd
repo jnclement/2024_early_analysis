@@ -1,0 +1,1 @@
+hadd -f -j 4 chi2file_allhists.root `ls output/temphists/*`
