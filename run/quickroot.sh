@@ -17,6 +17,8 @@ IMN=`echo $1 | awk -F'.' '{print $1}' | awk -F'/' '{print $2}'`
 NJOB=$(( ($2 * 10) + 1))
 mkdir -p treefiles_$IMN\_$NJOB
 mkdir -p output/smg/candidate_lists
+mkdir -p output/err
+mkdir -p output/out
 FILENAME=lists/$IMN\_$NJOB.imagelist
 ls /sphenix/tg/tg01/jets/jocl/evt/$IMN/*nobgelim*0* | tail -n +$NJOB | head -n 10 > ./output/templist_$IMN\_$NJOB.list
 
@@ -33,3 +35,5 @@ cp /sphenix/user/jocl/projects/run2024_earlydata/run/dlUtility.h .
 root -b -q 'quickroot.C("'${FILENAME}'",'${2}',1)'
 cp -r output/root/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/root3/
 cp -r output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg2/
+cp -r output/err/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/err/
+cp -r output/out/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/

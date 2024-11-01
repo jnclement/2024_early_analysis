@@ -8,6 +8,7 @@
 #include <iostream>
 #include <TCanvas.h>
 #include <TH2D.h>
+#include <TGaxis.h>
 #include "dlUtility.h"
 
 void std_text(TCanvas* thecan, string* texts, int ntext, float textsize, float textx, float texty, int rightalign)
@@ -37,13 +38,26 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
     std::cerr << "Error: Histogram is null." << std::endl;
     return;
   }
-  
+
+  float zmax = 0;
+  float zmin = 100000000;
+
+  for(int i=0; i<hist->GetNbinsX(); ++i)
+    {
+      for(int j=0; j<hist->GetNbinsY(); ++j)
+	{
+	  float binc = hist->GetBinContent(i+1,j+1);
+	  if(binc > zmax) zmax = binc;
+	  if(binc < zmin && binc > 0) zmin = binc;
+	}
+    }
+  hist->GetZaxis()->SetRangeUser(zmin,zmax);
   // Set pad margins
   canvas->SetLeftMargin(leftMargin);
   canvas->SetRightMargin(rightMargin);
   canvas->SetTopMargin(topMargin);
   canvas->SetBottomMargin(bottomMargin);
-
+  gPad->SetLogz();
   // Set axis titles
   hist->SetXTitle(xTitle);
   hist->SetYTitle(yTitle);
@@ -59,6 +73,8 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
   hist->GetYaxis()->SetTitleSize(yTitleSize);
   hist->GetZaxis()->SetTitleSize(zTitleSize);
 
+  TGaxis::SetExponentOffset(0,-0.05,"x");
+
   // Set label sizes
   hist->GetXaxis()->SetLabelSize(xLabelSize);
   hist->GetYaxis()->SetLabelSize(yLabelSize);
@@ -67,7 +83,7 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
   // Draw the histogram
   hist->Draw("COLZ"); // Use "COLZ" to draw with color palet
   // Update the canvas to display changes
-  std_text(canvas,texts,1,0.03,0.2,0.96,0);
+  std_text(canvas,texts,1,0.03,0.25,0.96,0);
   canvas->SaveAs((fname + ".png").c_str());
   canvas->Update();
 }
@@ -111,18 +127,18 @@ void draw_chi2hists(const TString& fileName) {
   }
 
   string xtitles[nhist] = {
-    "Eccentricity","Eccentricity","Eccentricity","Eccentricity","Eccentricity","Eccentricity","Eccentricity","Eccentricity",
-    "#theta","#theta","#theta","#theta","#theta","#theta","#theta",
-    "Fraction of Jet Energy in OHCal","Fraction of Jet Energy in OHCal","Fraction of Jet Energy in OHCal","Fraction of Jet Energy in OHCal","Fraction of Jet Energy in OHCal","Fraction of Jet Energy in OHCal",
-    "Fraction of Jet Energy in EMCal","Fraction of Jet Energy in EMCal","Fraction of Jet Energy in EMCal","Fraction of Jet Energy in EMCal","Fraction of Jet Energy in EMCal",
+    "#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}",
+    "Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}",
+    "Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal",
+    "Fraction of E_{T,lead} in EMCal","Fraction of E_{T,lead} in EMCal","Fraction of E_{T,lead} in EMCal","Fraction of E_{T,lead} in EMCal","Fraction of E_{T,lead} in EMCal",
     "#eta","#eta","#eta","#eta",
     "#phi","#phi","#phi",
     "E_{T,lead}","E_{T,lead}"
   };
 
   const string names[nhist] = {
-    "ecc_theta", "ecc_frcoh", "ecc_frcem", "ecc_eta", "ecc_phi", "ecc_jet_ET", "ecc_dphi", "ecc_subjet_ET",
-    "theta_frcoh", "theta_frcem", "theta_eta", "theta_phi", "theta_jet_ET", "theta_dphi", "theta_subjet_ET",
+    "ecc_chi2", "ecc_frcoh", "ecc_frcem", "ecc_eta", "ecc_phi", "ecc_jet_ET", "ecc_dphi", "ecc_subjet_ET",
+    "chi2_frcoh", "chi2_frcem", "chi2_eta", "chi2_phi", "chi2_jet_ET", "chi2_dphi", "chi2_subjet_ET",
     "frcoh_frcem", "frcoh_eta", "frcoh_phi", "frcoh_jet_ET", "frcoh_dphi", "frcoh_subjet_ET",
     "frcem_eta", "frcem_phi", "frcem_jet_ET", "frcem_dphi", "frcem_subjet_ET",
     "eta_phi", "eta_jet_ET", "eta_dphi", "eta_subjet_ET",
@@ -132,9 +148,9 @@ void draw_chi2hists(const TString& fileName) {
 
 
   string ytitles[nhist] = {
-    "#theta","Fraction of Jet Energy in OHCal","Fraction of Jet Energy in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
-    "Fraction of Jet Energy in OHCal","Fraction of Jet Energy in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
-    "Fraction of Jet Energy in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
+    "Max Tower #chi^{2}","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
+    "Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
+    "Fraction of E_{T,lead} in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
     "#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
     "#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
     "E_{T,lead}","#Delta#phi","E_{T,sublead}",

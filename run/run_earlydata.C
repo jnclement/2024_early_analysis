@@ -201,7 +201,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //cout << "test1.5" << endl;  
 
   EliminateBackground* bgelim = new EliminateBackground("bgelim");
-  //se->registerSubsystem(bgelim);
+  se->registerSubsystem(bgelim);
   auto mbddigi = new MbdDigitization();
   auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();

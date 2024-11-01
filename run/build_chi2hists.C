@@ -124,7 +124,7 @@ int build_chi2hists(string filebase)
     const int numHistograms = 2; // Number of histograms in each array
     const int numTypes = 35;
     // Arrays to hold the histograms
-    TH2F* h2_ecc_theta[numHistograms];
+    TH2F* h2_ecc_chi2[numHistograms];
     TH2F* h2_ecc_frcoh[numHistograms];
     TH2F* h2_ecc_frcem[numHistograms];
     TH2F* h2_ecc_eta[numHistograms];
@@ -133,13 +133,13 @@ int build_chi2hists(string filebase)
     TH2F* h2_ecc_dphi[numHistograms];
     TH2F* h2_ecc_subjet_ET[numHistograms];
 
-    TH2F* h2_theta_frcoh[numHistograms];
-    TH2F* h2_theta_frcem[numHistograms];
-    TH2F* h2_theta_eta[numHistograms];
-    TH2F* h2_theta_phi[numHistograms];
-    TH2F* h2_theta_jet_ET[numHistograms];
-    TH2F* h2_theta_dphi[numHistograms];
-    TH2F* h2_theta_subjet_ET[numHistograms];
+    TH2F* h2_chi2_frcoh[numHistograms];
+    TH2F* h2_chi2_frcem[numHistograms];
+    TH2F* h2_chi2_eta[numHistograms];
+    TH2F* h2_chi2_phi[numHistograms];
+    TH2F* h2_chi2_jet_ET[numHistograms];
+    TH2F* h2_chi2_dphi[numHistograms];
+    TH2F* h2_chi2_subjet_ET[numHistograms];
 
     TH2F* h2_frcoh_frcem[numHistograms];
     TH2F* h2_frcoh_eta[numHistograms];
@@ -167,8 +167,8 @@ int build_chi2hists(string filebase)
     TH2F* h2_jet_ET_subjet_ET[numHistograms];
 
     TH2F** allhists[numTypes] = {
-      h2_ecc_theta, h2_ecc_frcoh, h2_ecc_frcem, h2_ecc_eta, h2_ecc_phi, h2_ecc_jet_ET, h2_ecc_dphi, h2_ecc_subjet_ET,
-      h2_theta_frcoh, h2_theta_frcem, h2_theta_eta, h2_theta_phi, h2_theta_jet_ET, h2_theta_dphi, h2_theta_subjet_ET,
+      h2_ecc_chi2, h2_ecc_frcoh, h2_ecc_frcem, h2_ecc_eta, h2_ecc_phi, h2_ecc_jet_ET, h2_ecc_dphi, h2_ecc_subjet_ET,
+      h2_chi2_frcoh, h2_chi2_frcem, h2_chi2_eta, h2_chi2_phi, h2_chi2_jet_ET, h2_chi2_dphi, h2_chi2_subjet_ET,
       h2_frcoh_frcem, h2_frcoh_eta, h2_frcoh_phi, h2_frcoh_jet_ET, h2_frcoh_dphi ,h2_frcoh_subjet_ET,
       h2_frcem_eta, h2_frcem_phi, h2_frcem_jet_ET, h2_frcem_dphi, h2_frcem_subjet_ET,
       h2_eta_phi, h2_eta_jet_ET, h2_eta_dphi, h2_eta_subjet_ET,
@@ -178,8 +178,8 @@ int build_chi2hists(string filebase)
 
     // Create the histograms using a loop
     const char* names[] = {
-      "ecc_theta", "ecc_frcoh", "ecc_frcem", "ecc_eta", "ecc_phi", "ecc_jet_ET", "ecc_dphi", "ecc_subjet_ET",
-      "theta_frcoh", "theta_frcem", "theta_eta", "theta_phi", "theta_jet_ET", "theta_dphi", "theta_subjet_ET",
+      "ecc_chi2", "ecc_frcoh", "ecc_frcem", "ecc_eta", "ecc_phi", "ecc_jet_ET", "ecc_dphi", "ecc_subjet_ET",
+      "chi2_frcoh", "chi2_frcem", "chi2_eta", "chi2_phi", "chi2_jet_ET", "chi2_dphi", "chi2_subjet_ET",
       "frcoh_frcem", "frcoh_eta", "frcoh_phi", "frcoh_jet_ET", "frcoh_dphi", "frcoh_subjet_ET",
       "frcem_eta", "frcem_phi", "frcem_jet_ET", "frcem_dphi", "frcem_subjet_ET",
       "eta_phi", "eta_jet_ET", "eta_dphi", "eta_subjet_ET",
@@ -188,8 +188,8 @@ int build_chi2hists(string filebase)
     };
 
     const char* titles[] = {
-      "ecc vs theta", "ecc vs frcoh", "ecc vs frcem", "ecc vs eta", "ecc vs phi", "ecc vs jet_ET", "ecc vs dphi", "ecc vs subjet_ET",
-      "theta vs frcoh", "theta vs frcem", "theta vs eta", "theta vs phi", "theta vs jet_ET", "theta vs dphi", "theta vs subjet_ET",
+      "ecc vs chi2", "ecc vs frcoh", "ecc vs frcem", "ecc vs eta", "ecc vs phi", "ecc vs jet_ET", "ecc vs dphi", "ecc vs subjet_ET",
+      "chi2 vs frcoh", "chi2 vs frcem", "chi2 vs eta", "chi2 vs phi", "chi2 vs jet_ET", "chi2 vs dphi", "chi2 vs subjet_ET",
       "frcoh vs frcem", "frcoh vs eta", "frcoh vs phi", "frcoh vs jet_ET", "frcoh vs dphi", "frcoh vs subjet_ET",
       "frcem vs eta", "frcem vs phi", "frcem vs jet_ET", "frcem vs dphi", "frcem vs subjet_ET",
       "eta vs phi", "eta vs jet_ET", "eta vs dphi", "eta vs subjet_ET",
@@ -198,23 +198,23 @@ int build_chi2hists(string filebase)
     };
 
     const double xbins[] = {
-      2, 2, 2, 2, 2, 2, 2, 2,
-      0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75,
-      2, 2, 2, 2, 2, 2,
-      2, 2, 2, 2, 2,
+      1, 1, 1, 1, 1, 1, 1, 1,
+      1e4, 1e4, 1e4, 1e4, 1e4, 1e4, 1e4,
+      1.2, 1.2, 1.2, 1.2, 1.2, 1.2,
+      1.2, 1.2, 1.2, 1.2, 1.2,
       1.5, 1.5, 1.5, 1.5,
       3.14, 3.14, 3.14,
       100, 100
     };
 
     const double ybins[] = {
-      3.14, 2, 2, 1.5, 0.75, 100, 3.14, 100,
-      2, 2, 1.5, 0.75, 100, 3.14, 100,
-      2, 1.5, 0.75, 100, 3.14, 100,
-      1.5, 0.75, 100, 3.14, 100,
-      0.75, 100, 3.14, 100,
-      100, 3.14, 100,
-      3.14, 100
+      1e4, 1.2, 1.2, 1.5, 3.14, 100, 3.15, 100,
+      1.2, 1.2, 1.5, 3.14, 100, 3.15, 100,
+      1.2, 1.5, 3.14, 100, 3.15, 100,
+      1.5, 3.14, 100, 3.15, 100,
+      3.14, 100, 3.15, 100,
+      100, 3.15, 100,
+      3.15, 100
     };
     //std:://cout << "got all arrays for making hists" << endl;
     // Loop to create histograms
@@ -225,10 +225,10 @@ int build_chi2hists(string filebase)
 
         // Set ranges based on index
         double xMin = xbins[i]==1.5?-1.5:0;
-	if(xbins[i]==0.75) xMin = -0.75;
+	if(xbins[i]==3.14) xMin = -3.14;
         double xMax = xbins[i];
         double yMin = ybins[i]==1.5?-1.5:0;
-	if(ybins[i]==0.75) yMin = -0.75;
+	if(ybins[i]==3.14) yMin = -3.14;
         double yMax = ybins[i];
 
         // Create the histogram
@@ -258,7 +258,9 @@ int build_chi2hists(string filebase)
 	*/
         // Fill additional 2D histograms
 	//cout << "filling (got entry). isdijet = " << isdijet << endl;
-        h2_ecc_theta[isdijet]->Fill(ecc, theta);
+	float chi2 = maxTowChi2[0];
+	if(maxTowChi2[1] > chi2) chi2 = maxTowChi2[1];
+        h2_ecc_chi2[isdijet]->Fill(ecc, chi2);
         h2_ecc_frcoh[isdijet]->Fill(ecc, frcoh);
         h2_ecc_frcem[isdijet]->Fill(ecc, frcem);
         h2_ecc_eta[isdijet]->Fill(ecc, eta);
@@ -267,13 +269,13 @@ int build_chi2hists(string filebase)
         h2_ecc_dphi[isdijet]->Fill(ecc, dphi);
         h2_ecc_subjet_ET[isdijet]->Fill(ecc, subjet_ET);
 	//cout << "filled first block" << endl;
-        h2_theta_frcoh[isdijet]->Fill(theta, frcoh);
-        h2_theta_frcem[isdijet]->Fill(theta, frcem);
-        h2_theta_eta[isdijet]->Fill(theta, eta);
-        h2_theta_phi[isdijet]->Fill(theta, phi);
-        h2_theta_jet_ET[isdijet]->Fill(theta, jet_ET);
-        h2_theta_dphi[isdijet]->Fill(theta, dphi);
-        h2_theta_subjet_ET[isdijet]->Fill(theta, subjet_ET);
+        h2_chi2_frcoh[isdijet]->Fill(chi2, frcoh);
+        h2_chi2_frcem[isdijet]->Fill(chi2, frcem);
+        h2_chi2_eta[isdijet]->Fill(chi2, eta);
+        h2_chi2_phi[isdijet]->Fill(chi2, phi);
+        h2_chi2_jet_ET[isdijet]->Fill(chi2, jet_ET);
+        h2_chi2_dphi[isdijet]->Fill(chi2, dphi);
+        h2_chi2_subjet_ET[isdijet]->Fill(chi2, subjet_ET);
 	//cout << "filled second block" << endl;
         h2_frcoh_frcem[isdijet]->Fill(frcoh, frcem);
         h2_frcoh_eta[isdijet]->Fill(frcoh, eta);
@@ -318,7 +320,7 @@ int build_chi2hists(string filebase)
     // Write additional 2D histograms
     for(int i=0; i<numHistograms; ++i)
       {
-    h2_ecc_theta[i]->Write();
+    h2_ecc_chi2[i]->Write();
     h2_ecc_frcoh[i]->Write();
     h2_ecc_frcem[i]->Write();
     h2_ecc_eta[i]->Write();
@@ -327,13 +329,13 @@ int build_chi2hists(string filebase)
     h2_ecc_dphi[i]->Write();
     h2_ecc_subjet_ET[i]->Write();
 
-    h2_theta_frcoh[i]->Write();
-    h2_theta_frcem[i]->Write();
-    h2_theta_eta[i]->Write();
-    h2_theta_phi[i]->Write();
-    h2_theta_jet_ET[i]->Write();
-    h2_theta_dphi[i]->Write();
-    h2_theta_subjet_ET[i]->Write();
+    h2_chi2_frcoh[i]->Write();
+    h2_chi2_frcem[i]->Write();
+    h2_chi2_eta[i]->Write();
+    h2_chi2_phi[i]->Write();
+    h2_chi2_jet_ET[i]->Write();
+    h2_chi2_dphi[i]->Write();
+    h2_chi2_subjet_ET[i]->Write();
 
     h2_frcoh_frcem[i]->Write();
     h2_frcoh_eta[i]->Write();

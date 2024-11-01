@@ -18,6 +18,8 @@ mkdir -p lists
 mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/
 mkdir -p ./dsts/$SUBDIR
 mkdir -p ./output/smg
+mkdir -p output/err
+mkdir -p output/out
 mkdir -p $SUBDIR\_chi2
 echo "Made dirs"
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/run_earlydata.C .
@@ -41,4 +43,6 @@ ls $SUBDIR
 ls $SUBDIR\_chi2/*
 cp -r "./${SUBDIR}/events_${1}_${3}_${2}_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_${2}_${5}.root"
 cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
-cp -r ./${SUBDIR}_chi2/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/temphists
+cp -r ./output/out/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/
+cp -r ./output/err/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/err/
+cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2
