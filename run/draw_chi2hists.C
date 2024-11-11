@@ -83,7 +83,7 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
   // Draw the histogram
   hist->Draw("COLZ"); // Use "COLZ" to draw with color palet
   // Update the canvas to display changes
-  std_text(canvas,texts,1,0.03,0.25,0.96,0);
+  std_text(canvas,texts,2,0.025,0.25,0.98,0);
   canvas->SaveAs((fname + ".png").c_str());
   canvas->Update();
 }
@@ -92,7 +92,7 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
 void draw_chi2hists(const TString& fileName) {
   // Open the ROOT file
   gStyle->SetOptTitle(0);
-  const int nhist = 35;
+  const int nhist = 90;
   TFile* file = TFile::Open(fileName);
   if (!file || file->IsZombie()) {
     std::cerr << "Error opening file: " << fileName << std::endl;
@@ -127,16 +127,26 @@ void draw_chi2hists(const TString& fileName) {
   }
 
   string xtitles[nhist] = {
-    "#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}","#epsilon_{lead}",
+    "#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower",
+    "N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet","N Bad #chi^{2} Towers in Lead Jet",
+    "E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]","E_{T,lead tower} - E_{T,sublead tower} [GeV]",
+    "E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]","E_{T,sublead tower} [GeV]",
+    "E_{T,lead tower} [GeV]","E_{T,lead tower} [GeV]","E_{T,lead tower} [GeV]","E_{T,lead tower} [GeV]","E_{T,lead tower} [GeV]","E_{T,lead tower} [GeV]","E_{T,lead tower} [GeV]","E_{T,lead tower} [GeV]","E_{T,lead tower} [GeV]",
+    "#epsilon_{lead jet}","#epsilon_{lead jet}","#epsilon_{lead jet}","#epsilon_{lead jet}","#epsilon_{lead jet}","#epsilon_{lead jet}","#epsilon_{lead jet}","#epsilon_{lead jet}",
     "Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}","Max Tower #chi^{2}",
-    "Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in OHCal",
-    "Fraction of E_{T,lead} in EMCal","Fraction of E_{T,lead} in EMCal","Fraction of E_{T,lead} in EMCal","Fraction of E_{T,lead} in EMCal","Fraction of E_{T,lead} in EMCal",
+    "Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in OHCal",
+    "Fraction of E_{T,lead jet} in EMCal","Fraction of E_{T,lead jet} in EMCal","Fraction of E_{T,lead jet} in EMCal","Fraction of E_{T,lead jet} in EMCal","Fraction of E_{T,lead jet} in EMCal",
     "#eta","#eta","#eta","#eta",
     "#phi","#phi","#phi",
-    "E_{T,lead}","E_{T,lead}"
+    "E_{T,lead jet}","E_{T,lead jet}"
   };
 
   const string names[nhist] = {
+    "maxETowChi2_nBadChi2","maxETowChi2_maxTowDiff","maxETowChi2_chi2", "maxETowChi2_frcoh", "maxETowChi2_frcem", "maxETowChi2_eta", "maxETowChi2_phi", "maxETowChi2_jet_ET", "maxETowChi2_dphi", "maxETowChi2_subjet_ET","maxETowChi2_ecc","maxETowChi2_maxTowE","maxETowChi2_subTowE",
+    "nBadChi2_maxTowDiff","nBadChi2_chi2", "nBadChi2_frcoh", "nBadChi2_frcem", "nBadChi2_eta", "nBadChi2_phi", "nBadChi2_jet_ET", "nBadChi2_dphi", "nBadChi2_subjet_ET","nBadChi2_ecc","nBadChi2_maxTowE","nBadChi2_subTowE",
+    "maxTowDiff_chi2", "maxTowDiff_frcoh", "maxTowDiff_frcem", "maxTowDiff_eta", "maxTowDiff_phi", "maxTowDiff_jet_ET", "maxTowDiff_dphi", "maxTowDiff_subjet_ET","maxTowDiff_ecc","maxTowDiff_maxTowE","maxTowDiff_subTowE",
+    "subTowE_chi2", "subTowE_frcoh", "subTowE_frcem", "subTowE_eta", "subTowE_phi", "subTowE_jet_ET", "subTowE_dphi", "subTowE_subjet_ET","subTowE_ecc","subTowE_maxTowE",
+    "maxTowE_chi2", "maxTowE_frcoh", "maxTowE_frcem", "maxTowE_eta", "maxTowE_phi", "maxTowE_jet_ET", "maxTowE_dphi", "maxTowE_subjet_ET","maxTowE_ecc",
     "ecc_chi2", "ecc_frcoh", "ecc_frcem", "ecc_eta", "ecc_phi", "ecc_jet_ET", "ecc_dphi", "ecc_subjet_ET",
     "chi2_frcoh", "chi2_frcem", "chi2_eta", "chi2_phi", "chi2_jet_ET", "chi2_dphi", "chi2_subjet_ET",
     "frcoh_frcem", "frcoh_eta", "frcoh_phi", "frcoh_jet_ET", "frcoh_dphi", "frcoh_subjet_ET",
@@ -148,13 +158,18 @@ void draw_chi2hists(const TString& fileName) {
 
 
   string ytitles[nhist] = {
-    "Max Tower #chi^{2}","Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
-    "Fraction of E_{T,lead} in OHCal","Fraction of E_{T,lead} in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
-    "Fraction of E_{T,lead} in EMCal","#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
-    "#eta","#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
-    "#phi","E_{T,lead}","#Delta#phi","E_{T,sublead}",
-    "E_{T,lead}","#Delta#phi","E_{T,sublead}",
-    "#Delta#phi","E_{T,sublead}"
+    "N Bad #chi^{2}","E_{T,lead tower} - E_{T,sublead tower} [GeV]","Max Tower #chi^{2}","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in EMCal","#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}","#epsilon_{lead jet}","E_{T,lead tower} [GeV]","E_{T,sublead tower} [GeV]",
+    "E_{T,lead tower} - E_{T,sublead tower} [GeV]","Max Tower #chi^{2}","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in EMCal","#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}","#epsilon_{lead jet}","E_{T,lead tower} [GeV]","E_{T,sublead tower} [GeV]",
+    "Max Tower #chi^{2}","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in EMCal","#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}","#epsilon_{lead jet}","E_{T,lead tower} [GeV]","E_{T,sublead tower} [GeV]",
+    "Max Tower #chi^{2}","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in EMCal","#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}","#epsilon_{lead jet}","E_{T,lead tower} [GeV]",
+    "Max Tower #chi^{2}","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in EMCal","#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}","#epsilon_{lead jet}",
+    "Max Tower #chi^{2}","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in EMCal","#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}",
+    "Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in EMCal","#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}",
+    "Fraction of E_{T,lead jet} in EMCal","#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}",
+    "#eta","#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}",
+    "#phi","E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}",
+    "E_{T,lead jet}","#Delta#phi","E_{T,sublead jet}",
+    "#Delta#phi","E_{T,sublead jet}"
   };
   TCanvas* canvas = new TCanvas("canvas", "Canvas", 1200, 1200);
   for(int i=0; i<histograms.size(); ++i)
@@ -163,9 +178,11 @@ void draw_chi2hists(const TString& fileName) {
       histograms.at(i)->Scale(1/histograms.at(i)->Integral("WIDTH"));
       cout << "scaled hist" << endl;
       string outdrawname = "output/chi2img/"+names[i%nhist] + "_" + to_string(i>(nhist-1)?1:0);
-      string texts[1];
-      if(i<35) texts[0] = "Events contain no dijet with E_{T,sublead} > 8 GeV";
-      else texts[0] = "Events contain dijet with E_{T,sublead} > 8 GeV";
+      string texts[2];
+      texts[0] = "E_{T,lead jet} > 8 GeV";
+      if(i<35) texts[1] = "Events contain only one jet with E_{T,jet} > 8 GeV";
+      else texts[1] = "Events contain at least two jets with E_{T,jet} > 8 GeV";
+      
       cout << "prep to draw" << endl;
       FormatAndDrawHistogram(
 			     canvas,histograms.at(i),
