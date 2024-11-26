@@ -37,6 +37,7 @@
 #include </sphenix/user/jocl/projects/macros/common/Calo_Calib.C>
 #include <CaloTowerCalib.h>
 #include <globalvertex/GlobalVertexReco.h>
+#include <beambackgroundfilterandqa/BeamBackgroundFilterAndQA.h>
 //#include <G4Setup_sPHENIX.C>
 using namespace std;
 R__LOAD_LIBRARY(libchi2checker.so)
@@ -55,6 +56,7 @@ R__LOAD_LIBRARY(libg4jets.so)
 R__LOAD_LIBRARY(libjetbase.so)
 R__LOAD_LIBRARY(libjetbackground.so)
 R__LOAD_LIBRARY(libemulatortreemaker.so)
+R__LOAD_LIBRARY(libbeambackgroundfilterandqa.so);
 bool file_exists(const char* filename)
 {
   std::ifstream infile(filename);
@@ -200,8 +202,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   int cont = 0;
   //cout << "test1.5" << endl;  
 
-  EliminateBackground* bgelim = new EliminateBackground("bgelim");
-  se->registerSubsystem(bgelim);
+  //EliminateBackground* bgelim = new EliminateBackground("bgelim");
+  //se->registerSubsystem(bgelim);
   auto mbddigi = new MbdDigitization();
   auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
@@ -252,6 +254,10 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
   cout << "set up jetreco" << endl;
+
+  BeamBackgroundFilterAndQA* bfq = new BeamBackgroundFilterAndQA();
+  se->registerSubsystem(bfq);
+
   Chi2checker* chi2c;
 
   if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug);
@@ -268,6 +274,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   se->run(nevt);
   cout << "ran " << nevt << endl;
   cout << "Ran all events" << endl;
+  se->Print("NODETREE");
   se->End();
   se->PrintTimer();
   cout << "Ended server" << endl;

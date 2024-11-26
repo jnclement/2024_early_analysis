@@ -87,7 +87,7 @@ int build_chi2hists(string filebase)
     jet_tree->SetBranchAddress("maxETowChi2Det",&maxETowChi2Det);
     //std:://cerr << "set branches" << endl;
     // Create 2D histograms for all combinations of variables
-    const int numHistograms = 2; // Number of histograms in each array
+    const int numHistograms = 4; // Number of histograms in each array
     const int numTypes = 90;
     // Arrays to hold the histograms
 

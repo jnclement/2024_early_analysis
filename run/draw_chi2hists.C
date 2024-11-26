@@ -172,12 +172,29 @@ void draw_chi2hists(const TString& fileName) {
     "#Delta#phi","E_{T,sublead jet}"
   };
   TCanvas* canvas = new TCanvas("canvas", "Canvas", 1200, 1200);
+  int histgroup;
   for(int i=0; i<histograms.size(); ++i)
     {
+      if(i>3*nhist-1)
+	{
+	  histgroup = 3;
+	}
+      else if(i>2*nhist-1)
+	{
+	  histgroup = 2;
+	}
+      else if(i>nhist-1)
+	{
+	  histgroup = 1;
+	}
+      else
+	{
+	  histgroup = 0;
+	}
       cout << histograms.at(i)->GetName() << endl;
       histograms.at(i)->Scale(1/histograms.at(i)->Integral("WIDTH"));
       cout << "scaled hist" << endl;
-      string outdrawname = "output/chi2img/"+names[i%nhist] + "_" + to_string(i>(nhist-1)?1:0);
+      string outdrawname = "output/chi2img/"+names[i%nhist] + "_" + to_string(histgroup);
       string texts[2];
       texts[0] = "E_{T,lead jet} > 8 GeV";
       if(i<35) texts[1] = "Events contain only one jet with E_{T,jet} > 8 GeV";
@@ -196,4 +213,5 @@ void draw_chi2hists(const TString& fileName) {
     }
   // Clean up
   file->Close();
+  return 0;
 }

@@ -24,10 +24,13 @@ mkdir -p $SUBDIR\_chi2
 echo "Made dirs"
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/run_earlydata.C .
 #cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/Fun4All_CaloDataAna.C .
+echo "copied root script here"
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calo_run2pp-000$3.list ./lists/$3.list
+echo "copied dstlist here"
 DSTFILE=`sed -n "${UPLN}"p "./lists/${3}.list"`
 getinputfiles.pl $DSTFILE
-cp $DSTFILE ./dsts/$3/${3}_${2}.root
+echo "got input files"
+mv $DSTFILE ./dsts/$3/${3}_${2}.root
 echo "Running Fun4All now"
 echo $DSTFILE
 echo ./dsts/$3/${3}_${2}.root
