@@ -20,7 +20,7 @@ mkdir -p output/smg/candidate_lists
 mkdir -p output/err
 mkdir -p output/out
 FILENAME=lists/$IMN\_$NJOB.imagelist
-ls /sphenix/tg/tg01/jets/jocl/evt/$IMN/*nobgelim*0* | tail -n +$NJOB | head -n 10 > ./output/templist_$IMN\_$NJOB.list
+ls /sphenix/tg/tg01/jets/jocl/evt/$IMN/*alltog*.root | tail -n +$NJOB | head -n 10 > ./output/templist_$IMN\_$NJOB.list
 
 cat ./output/templist_$IMN\_$NJOB.list
 

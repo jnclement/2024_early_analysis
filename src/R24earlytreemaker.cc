@@ -58,6 +58,7 @@
 
 #include <centrality/CentralityInfo.h>
 #include <calotrigger/MinimumBiasInfo.h>
+#include <calotrigger/MinimumBiasInfov1.h>
 #include <ffarawobjects/Gl1Packetv2.h>
 #include <jetbase/JetMapv1.h>
 #include <jetbase/JetMap.h>
@@ -94,10 +95,10 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree->Branch("triggervec",&triggervec,"triggervec/g");
   _tree2->Branch("mbevt",&mbevt,"mbevt/I");
   _tree->Branch("ismb",&ismb,"ismb/I");
-  _jett->Branch("ismb",&ismb,"ismb/I");
-  _tree->Branch("caloEfrac",caloEfrac,"caloEfrac[3]/F");
-  _tree->Branch("maxTowerChi2",maxTowerChi2,"maxTowerChi2[3]/F");
-  _tree->Branch("maxTowerET",maxTowerET,"maxTowerET[3]/F");
+  //_jett->Branch("ismb",&ismb,"ismb/I");
+  //_tree->Branch("caloEfrac",caloEfrac,"caloEfrac[3]/F");
+  //_tree->Branch("maxTowerChi2",maxTowerChi2,"maxTowerChi2[3]/F");
+  //_tree->Branch("maxTowerET",maxTowerET,"maxTowerET[3]/F");
   if(_dotow)_jett->Branch("allcomp",&allcomp,"allcomp/I");
   if(_dotow)_jett->Branch("alcet",alcet,"alcet[allcomp]/F");
   if(_dotow)_tree->Branch("emetot",&emetot,"emetot/F");
@@ -131,17 +132,17 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree->Branch("vtx",vtx,"vtx[3]/F");
   if(_dotow) _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
   _tree->Branch("njet",&njet,"njet/I");
-  _jett->Branch("njet",&njet,"njet/I");
-  _jett->Branch("aceta",aceta,"aceta[njet]/F");
-  _tree->Branch("seedD",&seedD,"seedD[njet]/F");
+  //_jett->Branch("njet",&njet,"njet/I");
+  //_jett->Branch("aceta",aceta,"aceta[njet]/F");
+  //_tree->Branch("seedD",&seedD,"seedD[njet]/F");
   _tree->Branch("jet_e",jet_e,"jet_e[njet]/F");
-  _jett->Branch("jet_e",jet_e,"jet_e[njet]/F");
+  //_jett->Branch("jet_e",jet_e,"jet_e[njet]/F");
   //_tree->Branch("jet_r",jet_r,"jet_r[njet]/F");
   _tree->Branch("jet_et",jet_et,"jet_et[njet]/F");
   _tree->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
-
-  _jett->Branch("jet_et",jet_et,"jet_et[njet]/F");
-  _jett->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
+  _tree->Branch("failscut",&failscut,"failscut/I");
+  //_jett->Branch("jet_et",jet_et,"jet_et[njet]/F");
+  //_jett->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
   
   if(_dotow)
     {
@@ -327,6 +328,25 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       if(ismb) mbevt--;
       return Fun4AllReturnCodes::ABORTEVENT;
     }
+  int outfailscut = 0;
+  MinimumBiasInfov1* mbinfo = findNode::getClass<MinimumBiasInfov1>(topNode, "mbc_bkgd");
+  MinimumBiasInfov1* mbinfo2 = findNode::getClass<MinimumBiasInfov1>(topNode, "mbc_bkgd2");
+  if(_debug > 3) cout << "mbinfo: " << mbinfo << endl;
+  if(mbinfo)
+    {
+      //cout << "mbinfo exists - setting failscut to" << mbinfo->isAuAuMinimumBias() << endl
+      outfailscut = mbinfo->isAuAuMinimumBias()?1:0; //THIS IS ACTUALLY CUT FAILURE
+    }
+  else
+    {
+      if(_debug > 3) cout << "NO MBINFO NODE!" << endl;
+    }
+  if(mbinfo2)
+    {
+      int outfailscut2 = mbinfo2->isAuAuMinimumBias()?1:0;
+      outfailscut += 2*outfailscut2;
+    }
+  failscut = outfailscut;
   /*
   else
     {
@@ -359,7 +379,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	    {
 	      continue;
 	    }
-	  if(jet_e[njet] < 10) continue;
+	  if(jet_e[njet] < 8) continue;
 	  if(_debug > 2) cout << "found a good jet!" << endl;
 	  float maxeovertot = 0;
 	  float hcale = 0;
@@ -367,6 +387,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  float ohcale = 0;
 	  float ecale = 0;
 	  int ncomp = 0;
+	  
+	  /*
 	  for(auto comp: jet->get_comp_vec())
 	    {
 	      unsigned int channel = comp.second;
@@ -434,19 +456,20 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      allcomp++;
 	      ncomp++;
 	    }
-	  caloEfrac[0] = ecale/jet_e[njet];
-	  caloEfrac[1] = ihcale/jet_e[njet];
-	  caloEfrac[2] = ohcale/jet_e[njet];
-	  aceta[njet] /= ncomp;
+	  */
+	  //caloEfrac[0] = ecale/jet_e[njet];
+	  //caloEfrac[1] = ihcale/jet_e[njet];
+	  //caloEfrac[2] = ohcale/jet_e[njet];
+	  //aceta[njet] /= ncomp;
 	  //aceta[njet] /= jet_e[njet];
 	  if(_debug > 2) cout << "Now filling some jet adjacent numbers: " << endl;
 	  if(_debug && jet_e[njet] - ecale - hcale > 0.01) cout << jet_e[njet] << " " << ecale << " " << hcale << endl;
-	  ehjet[njet] = ecale/hcale;
-	  maxeovertot /= jet_e[njet];
+	  //ehjet[njet] = ecale/hcale;
+	  //maxeovertot /= jet_e[njet];
 	  //if(_debug) cout << maxeovertot << endl;
 	  //if(maxeovertot > 0.7) continue;
-	  seedD[njet] = maxeovertot;
-	  jet_ph[njet] = (jet_ph[njet]>0?jet_ph[njet]-M_PI:jet_ph[njet]+M_PI);
+	  //seedD[njet] = maxeovertot;
+	  //jet_ph[njet] = (jet_ph[njet]>0?jet_ph[njet]-M_PI:jet_ph[njet]+M_PI);
 	  ++njet;
 	}
     }
@@ -456,7 +479,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     }
   //int jetfired = ((1 & triggervec >> 20) | (1 & triggervec >> 21) | (1 & triggervec >> 22) | (1 & triggervec >> 23));
   //int phtfired = ((1 & triggervec >> 28) | (1 & triggervec >> 29) | (1 & triggervec >> 30) | (1 & triggervec >> 31));
-  if(!njet && !_dotow) return Fun4AllReturnCodes::ABORTEVENT;
+  if(!njet && !_dotow) return Fun4AllReturnCodes::EVENT_OK;
   
   if(_debug > 1) cout << "Getting retowered EMCal towers: " << endl;
   if(_dotow) 
@@ -488,7 +511,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   ohetot = 0;
   ihetot = 0;
   if(_debug > 1) cout << "Getting EMCal info" << endl;
-
+  /*
   if(clusters)
     {
       RawClusterContainer::ConstRange begin_end = clusters->getClusters();
@@ -516,7 +539,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	    }
 	    
 	    }
-	  */
+  
 	  //if (best_chi2 > 1e+5) continue;                                                                                                                                                                     
 	  
 	  //float theta = atan2( cluster->get_r() , cluster->get_z() );                                                                                                                                         
@@ -547,6 +570,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     {
       if(_debug > 0) cout << "No cluster info!" << endl;
     }
+  */
   if(towersEM && _dotow)
     { //get EMCal values
       int nchannels = 24576; //channels in emcal
@@ -733,7 +757,7 @@ int R24earlytreemaker::End(PHCompositeNode *topNode)
     }
   _tree2->Fill();
   _f->cd();
-  _jett->Write();
+  //_jett->Write();
   _tree->Write();
   _tree2->Write();
   _f->Write();

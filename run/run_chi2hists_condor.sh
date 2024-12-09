@@ -12,7 +12,7 @@ echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME
 echo "when_to_transfer_output = ON_EXIT" >> $SUBNAME
 echo "error = output/err/error_${BASENAME}_\$(Process).err" >> $SUBNAME
 echo "log = /tmp/jocl_${BASENAME}_\$(Process).log" >> $SUBNAME
-#echo "priority = 10000000" >> $SUBNAME
+echo "priority = 10000000" >> $SUBNAME
 echo "queue $NJOB" >> $SUBNAME
 
 condor_submit $SUBNAME

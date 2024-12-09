@@ -52,6 +52,7 @@ class R24earlytreemaker : public SubsysReco
   TTree *_tree;
   TTree *_tree2;
   TTree *_jett;
+  int failscut;
   std::string _foutname;
   float emetot, ihetot, ohetot;
   int sectorem;
