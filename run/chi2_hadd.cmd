@@ -1,1 +1,1 @@
-hadd -n 250 -f -j 4 chi2file_allhists.root `ls output/temphists/*newbigprod*`
+hadd -n 250 -f -j 4 chi2file_allhists.root `ls output/chi2_haddhists/*`

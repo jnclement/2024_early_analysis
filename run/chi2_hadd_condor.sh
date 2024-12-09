@@ -2,11 +2,11 @@
 
 
 SUBNAME="hadd.sub"
-find /sphenix/user/jocl/projects/run2024_earlydata/run/output/temphists/ -type f -name '*.root' > chi2_hadd_condor_files.txt
+find /sphenix/user/jocl/projects/run2024_earlydata/run/output/temphists/ -type f -name '*newbigprod*.root' > chi2_hadd_condor_files.txt
 njob=$(( `cat chi2_hadd_condor_files.txt | wc -l` / 100 ))
 echo "executable = chi2_hadd_condor.cmd" > $SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:1250" >> $SUBNAME
-echo "\$(Process)" >> $SUBNAME
+#echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:100" >> $SUBNAME
+echo "arguments = \$(Process)" >> $SUBNAME
 echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_hadd.out" >> $SUBNAME
 echo "request_cpus = 4" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME

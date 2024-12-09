@@ -301,6 +301,12 @@ int build_chi2hists(string filebase)
     //std:://cerr << "made hists" << endl;
     std::cout << "made hists" << endl;
     // Loop over entries in the tree
+    const int nRatio = 5;
+    TH1F* forRatio[nRatio];
+    for(int i=0; i<nRatio; ++i)
+      {
+	forRatio[i] = new TH1F(("h1_forRatio_"+to_string(i)).c_str(),"",1000,0,100);
+      }
     const int nSpectra = 32;
     TH1F* jetSpectra[nSpectra];
     for(int i=0; i<nSpectra; ++i)
@@ -312,7 +318,7 @@ int build_chi2hists(string filebase)
     Long64_t nEntries = jet_tree->GetEntries();
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
-	bool stripCut = (dphi > 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
+	bool stripCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	bool dhCut = ((bbfqavec >> 5) & 1);
 	bool dPhiCut = ((frcem < 0.4) && (dphi < 0.15) && isdijet);
 	bool ETCut = (frcem < 0.1) && (jet_ET > (50*frcem+20));
@@ -359,6 +365,11 @@ int build_chi2hists(string filebase)
 		if(isdijet) jetSpectra[j]->Fill(subjet_ET);
 	      }
 	  }
+	forRatio[0]->Fill(jet_ET);
+	if(isdijet) forRatio[1]->Fill(jet_ET);
+	if(!cutArr[1] && isdijet) forRatio[2]->Fill(jet_ET);
+	if(!cutArr[31]) forRatio[3]->Fill(jet_ET);
+	if(!cutArr[31] && isdijet) forRatio[4]->Fill(jet_ET);
 	//cout << "filling (got entry). isdijet = " << isdijet << endl;
 	float chi2 = maxTowChi2[0];
 	if(maxTowChi2[2] > chi2) chi2 = maxTowChi2[2];
@@ -374,7 +385,7 @@ int build_chi2hists(string filebase)
 	for(int j=0; j<numHistograms/2; ++j)
 	  {
 	    if(jet_ET < threshes[j]) continue;
-	    whichhist = j + ((subjet_ET > slt[j])?numHistograms/2:0);
+	    whichhist = j + ((subjet_ET > slt[j] && isdijet)?numHistograms/2:0);
 
 	if(whichhist < 0 || whichhist > numHistograms-1) continue;
 
@@ -506,6 +517,11 @@ int build_chi2hists(string filebase)
       {
 	cout << "jetSpectrum: " << jetSpectra[i] << endl;
 	jetSpectra[i]->Write();
+      }
+    
+    for(int i=0; i<nRatio; ++i)
+      {
+	forRatio[i]->Write();
       }
     outputFile->Close();
     //cout << "wrote" << endl;

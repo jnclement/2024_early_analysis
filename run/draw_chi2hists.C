@@ -57,7 +57,7 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
   canvas->SetRightMargin(rightMargin);
   canvas->SetTopMargin(topMargin);
   canvas->SetBottomMargin(bottomMargin);
-  gPad->SetLogz(0);
+  gPad->SetLogz();
   // Set axis titles
   hist->SetXTitle(xTitle);
   hist->SetYTitle(yTitle);
@@ -100,6 +100,8 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
 void draw_chi2hists(const TString& fileName) {
   // Open the ROOT file
   gStyle->SetOptTitle(0);
+  gStyle->SetPadTickX(1);
+  gStyle->SetPadTickY(1);
   const int nhist = 92;
   TFile* file = TFile::Open(fileName);
   if (!file || file->IsZombie()) {
@@ -194,7 +196,7 @@ void draw_chi2hists(const TString& fileName) {
     "#Delta#phi"
   };
 
-  TLegend* spectraLegend = new TLegend(0.45,0.5,0.85,0.7);
+  TLegend* spectraLegend = new TLegend(0.45,0.5,0.85,0.7,"Cuts:");
   spectraLegend->SetFillStyle(0);
   spectraLegend->SetFillColor(0);
   spectraLegend->SetTextFont(42);
@@ -202,25 +204,69 @@ void draw_chi2hists(const TString& fileName) {
 
   TCanvas* canvas = new TCanvas("canvas", "Canvas", 1200, 1200);
   const int nSpectra = 32;
-  const int nColors = 4;
-  string spectraLegendNames[nSpectra] = {"No Cuts","No Cuts OH E_{T} Frac > 0.9","No Cuts EM E_{T} Frac > 0.9","OH 90% #phi","OH 90% #phi OH E_{T} Frac > 0.9","OH 90% #phi OH E_{T} Frac > 0.9"};
-  int spectraColors[nColors] = {kBlack,kRed,kGreen,kBlue};
+  const int nh1;
+  const int nColors = 7;
+  const int nLegend = 7;
+  const int nRatio = 5;
+  string spectraLegendNames[nLegend] = {"No Cuts","Hard #Delta#phi","Soft #Delta#phi + Low EM Frac","OHCal Stripe","Low EM Frac + High E_{T}","High EM Frac + High E_{T}","All Cuts"};
+  int spectraColors[nColors] = {kBlack,kRed+2,kGreen+2,kBlue+2,kMagenta+2,kYellow+2,kCyan+2};
   string xSpectraTitle = "E_{T,jet} [GeV]";
   string ySpectraTitle = "dN_{jet}/dE_{T,jet}";
   gPad->SetLeftMargin(0.15);
-  gPad->SetLogy();
+
   float stdsize = 0.025;
   float stdx = 0.6;
   float stdy = 0.85;
   int stdright = 0;
-  const int ntext = 2;
+  const int ntext = 3;
   const int nSame = 3;
   string calcut = "";
+
+  // 4/0, 4/3, 1/0, 2/0, 3/0
+  TH1F* ratios[5];
+  gPad->SetLogy(0);
+  for(int i=0; i<nRatio; ++i)
+    {
+      ratios[i] = new TH1F(("ratio_"+to_string(i)).c_str(),"",100,0,100);
+    }
+  
   string texts[ntext] =
     {
       "Calorimeter Anti-k_{T} R=0.4",
-      "|z_{vtx}| < 150 cm"
+      "|z_{vtx}| < 150 cm",
+      "Jet-8 & MBDNS>=1 Triggered"
     };
+  TLegend* ratLeg = new TLegend(0.45,0.5,0.85,0.7);
+  ratios[0]->Divide(jetSpectra.at(33),jetSpectra.at(32));
+  ratios[1]->Divide(jetSpectra.at(34),jetSpectra.at(32));
+  ratios[2]->Divide(jetSpectra.at(35),jetSpectra.at(32));
+  ratios[3]->Divide(jetSpectra.at(36),jetSpectra.at(32));
+  ratios[4]->Divide(jetSpectra.at(36),jetSpectra.at(35));
+  string ratLegNames[nRatio] = {"2+ Jets / All Jets","2+ Jets & Hard #Delta#phi / All Jets","All cuts / All Jets","2+ Jets & All Cuts / All Jets","2+ Jets & All Cuts / All Cuts"};
+  for(int i=0; i<nRatio; ++i)
+    {
+      ratios[i]->Rebin(10);
+      ratios[i]->GetYaxis()->SetTitleOffset(1.85);
+      ratios[i]->SetMarkerColor(spectraColors[i]);
+      ratios[i]->SetMarkerStyle(20);
+      ratios[i]->SetMarkerSize(2);
+      ratios[i]->SetLineColor(spectraColors[i]);
+      ratios[i]->Scale(1./ratios[i]->GetBinWidth(1));
+      ratios[i]->GetYaxis()->SetRangeUser(0,1);
+      ratios[i]->GetXaxis()->SetTitle("E_{T,lead} [GeV]");
+      ratios[i]->GetYaxis()->SetTitle("Ratio");
+      ratLeg->AddEntry(ratios[i],ratLegNames[i].c_str(),"p");
+      ratios[i]->Draw(i==0?"PE":"SAME PE");
+    }
+    std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
+    ratLeg->SetFillStyle(0);
+    ratLeg->SetFillColor(0);
+    ratLeg->SetTextFont(42);
+    ratLeg->SetBorderSize(0);
+    ratLeg->Draw();
+    canvas->SaveAs("output/chi2img/evtRatios.png");
+    gPad->SetLogy();
+    
   jetSpectra.at(0)->Rebin(10);
   jetSpectra.at(0)->GetYaxis()->SetTitleOffset(1.85);
   jetSpectra.at(0)->SetMarkerColor(spectraColors[0]);
@@ -232,6 +278,23 @@ void draw_chi2hists(const TString& fileName) {
   jetSpectra.at(0)->GetXaxis()->SetTitle(xSpectraTitle.c_str());
   jetSpectra.at(0)->GetYaxis()->SetTitle(ySpectraTitle.c_str());
   jetSpectra.at(0)->Draw("PE");
+  spectraLegend->AddEntry(jetSpectra.at(0),spectraLegendNames[0].c_str(),"p");
+  for(int i=1; i<7; ++i)
+    {
+      jetSpectra.at(i<6?i:31)->Rebin(10);
+      jetSpectra.at(i<6?i:31)->GetYaxis()->SetTitleOffset(1.85);
+      jetSpectra.at(i<6?i:31)->SetMarkerColor(spectraColors[i]);
+      jetSpectra.at(i<6?i:31)->SetMarkerStyle(20);
+      jetSpectra.at(i<6?i:31)->SetMarkerSize(2);
+      jetSpectra.at(i<6?i:31)->SetLineColor(spectraColors[i]);
+      jetSpectra.at(i<6?i:31)->Scale(1./jetSpectra.at(i<6?i:31)->GetBinWidth(1));
+      jetSpectra.at(i<6?i:31)->GetYaxis()->SetRangeUser(0.5,1e7);
+      jetSpectra.at(i<6?i:31)->GetXaxis()->SetTitle(xSpectraTitle.c_str());
+      jetSpectra.at(i<6?i:31)->GetYaxis()->SetTitle(ySpectraTitle.c_str());
+      jetSpectra.at(i<6?i:31)->Draw("SAME PE");
+      spectraLegend->AddEntry(jetSpectra.at(i<6?i:31),spectraLegendNames[i].c_str(),"p");
+    }
+  spectraLegend->Draw();
   std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
   canvas->SaveAs(("output/chi2img/jetSpectrumWithCuts-1.png"));
   for(int i=0; i<nSpectra; i+=3)
@@ -328,7 +391,7 @@ void draw_chi2hists(const TString& fileName) {
 
       //if(i<(ntype/2)*nhist) histograms.at(i)->Add(histograms.at(i),histograms.at(i+180));
       cout << "prep to draw" << endl;
-      histograms.at(i)->Rebin2D(4,4);
+      //histograms.at(i)->Rebin2D(4,4);
       FormatAndDrawHistogram(
 			     canvas,histograms.at(i),
 			     outdrawname,xtitles[i%nhist].c_str(),ytitles[i%nhist].c_str(),"N_{jet}",
