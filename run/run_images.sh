@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 TAG=`echo $1 | awk -F'/' '{print $2}' | awk -F'.' '{print $1}'`
@@ -12,7 +13,7 @@ BASENAME="condor_${TAG}_${NJOB}_imagemaker"
 
 SUBNAME="${BASENAME}.sub"
 
-echo "executable = quickroot.sh" > $SUBNAME
+echo "executable = quick_jet10.sh" > $SUBNAME
 echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:400" >> $SUBNAME
 echo "arguments = ${1} \$(Process)" >> $SUBNAME
 echo "output = output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME

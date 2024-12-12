@@ -32,7 +32,141 @@
 #include "dlUtility.h"
 #include <TDatime.h>
 
-int build_chi2hists(string filebase)
+void get_scaledowns(int runnumber, int scaledowns[])
+{
+
+  TSQLServer *db = TSQLServer::Connect("pgsql://sphnxdaqdbreplica:5432/daq","","");
+
+  if (db)
+    {
+      printf("Server info: %s\n", db->ServerInfo());
+    }
+  else
+    {
+      printf("bad\n");
+    }
+
+
+  TSQLRow *row;
+  TSQLResult *res;
+  TString cmd = "";
+  char sql[1000];
+
+  cout << runnumber << endl;
+  for (int is = 0; is < 64; is++)
+    {
+      sprintf(sql, "select scaledown%02d from gl1_scaledown where runnumber = %d;", is, runnumber);
+      //printf("%s \n" , sql);                                                                      
+      res = db->Query(sql);
+
+      int nrows = res->GetRowCount();
+
+      int nfields = res->GetFieldCount();
+      for (int i = 0; i < nrows; i++) {
+        row = res->Next();
+        for (int j = 0; j < nfields; j++) {
+          scaledowns[is] = stoi(row->GetField(j));
+
+          if(is == 10 || is==17 || is==18 || is==19) cout  << is << ":" << scaledowns[is] << " ";
+        }
+        delete row;
+      }
+
+
+      delete res;
+    }
+  cout << endl;
+  delete db;
+}
+
+int get_scaledown17(int runnumber)
+{
+
+  TSQLServer *db = TSQLServer::Connect("pgsql://sphnxdaqdbreplica:5432/daq","","");
+
+  if (db)
+    {
+      printf("Server info: %s\n", db->ServerInfo());
+    }
+  else
+    {
+      printf("bad\n");
+    }
+
+  TSQLRow *row;
+  TSQLResult *res;
+  char sql[1000];
+
+  sprintf(sql, "select scaledown17 from gl1_scaledown where runnumber = %d;", runnumber);
+  res = db->Query(sql);
+  row = res->Next();
+  int sd17 = stoi(row->GetField(0));
+      
+  delete row;
+  delete res;
+  delete db;
+  return sd17;
+}
+
+int get_scaledown10(int runnumber)
+{
+
+  TSQLServer *db = TSQLServer::Connect("pgsql://sphnxdaqdbreplica:5432/daq","","");
+
+  if (db)
+    {
+      printf("Server info: %s\n", db->ServerInfo());
+    }
+  else
+    {
+      printf("bad\n");
+    }
+
+  TSQLRow *row;
+  TSQLResult *res;
+  char sql[1000];
+
+  sprintf(sql, "select scaledown10 from gl1_scaledown where runnumber = %d;", runnumber);
+  res = db->Query(sql);
+  row = res->Next();
+  int sd10 = stoi(row->GetField(0));
+      
+  delete row;
+  delete res;
+  delete db;
+  return sd10;
+}
+
+long unsigned int get_nmb(int runnumber)
+{
+
+  TSQLServer *db = TSQLServer::Connect("pgsql://sphnxdaqdbreplica:5432/daq","","");
+
+  if (db)
+    {
+      printf("Server info: %s\n", db->ServerInfo());
+    }
+  else
+    {
+      printf("bad\n");
+    }
+
+  TSQLRow *row;
+  TSQLResult *res;
+  char sql[1000];
+
+  sprintf(sql, "select scaled from gl1_scalers where runnumber = %d and index = 10;", runnumber);
+  res = db->Query(sql);
+  row = res->Next();
+  long unsigned int nmb = stoi(row->GetField(0));
+      
+  delete row;
+  delete res;
+  delete db;
+  return nmb;
+}
+
+int build_chi2hists(string filebase, int runnumber)
 {
   TCanvas* c = new TCanvas("","",1000,1000);
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
@@ -301,14 +435,17 @@ int build_chi2hists(string filebase)
     //std:://cerr << "made hists" << endl;
     std::cout << "made hists" << endl;
     // Loop over entries in the tree
-    const int nRatio = 5;
+    const int nRatio = 7;
     TH1F* forRatio[nRatio];
     for(int i=0; i<nRatio; ++i)
       {
-	forRatio[i] = new TH1F(("h1_forRatio_"+to_string(i)).c_str(),"",1000,0,100);
+	forRatio[i] = new TH1F(("h1_forRatio_"+to_string(i)).c_str(),"",i<5?1000:100,0,i<5?100:1);
       }
-    const int nSpectra = 32;
+    const int nSpectra = 33;
     TH1F* jetSpectra[nSpectra];
+    TH1F* xJ[2];
+    xJ[0] = new TH1F("xJ0","",100,0,1);
+    xJ[1] = new TH1F("xJ1","",100,0,1);
     for(int i=0; i<nSpectra; ++i)
       {
 	jetSpectra[i] = new TH1F(("h1_jetSpectra_"+to_string(i)).c_str(),"",1000,0,100);
@@ -320,10 +457,10 @@ int build_chi2hists(string filebase)
         jet_tree->GetEntry(i);
 	bool stripCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	bool dhCut = ((bbfqavec >> 5) & 1);
-	bool dPhiCut = ((frcem < 0.4) && (dphi < 0.15) && isdijet);
-	bool ETCut = (frcem < 0.1) && (jet_ET > (50*frcem+20));
-	bool ZSCut = (frcem > 0.9) && (jet_ET > 27.5);
-
+	bool dPhiCut = (frcem+frcoh) < 0.7;
+	bool ETCut = ((frcem < 0.1) && (jet_ET > (50*frcem+20))) && (stripCut || !isdijet);
+	bool ZSCut = ((frcem > 0.9) && (jet_ET > (-50*frcem+75))) && (stripCut || !isdijet);
+	bool chi2cut = jet_ET > 25 && maxETowChi2 < 10;
 	cutArr[0]=false;
 	cutArr[1]=stripCut;
 	cutArr[2]=dhCut;
@@ -354,15 +491,16 @@ int build_chi2hists(string filebase)
 	cutArr[27]=(stripCut || dhCut || dPhiCut || ZSCut);
 	cutArr[28]=(stripCut || dhCut || ETCut || ZSCut);
 	cutArr[29]=(stripCut || dPhiCut || ETCut || ZSCut);
-	cutArr[30]=(dhCut || dPhiCut || ETCut || ZSCut);
-	cutArr[31]=(stripCut || dhCut || dPhiCut || ETCut || ZSCut);
-	
+	cutArr[30]=(dhCut || dPhiCut || ETCut || ZSCut || stripCut);
+	cutArr[31]=(stripCut || dhCut || dPhiCut || ETCut || ZSCut);// || chi2cut);
+	cutArr[32]=chi2cut;
 	for(int j=0; j<nSpectra; ++j)
 	  {
 	    if(!cutArr[j])
 	      {
 		jetSpectra[j]->Fill(jet_ET);
 		if(isdijet) jetSpectra[j]->Fill(subjet_ET);
+		
 	      }
 	  }
 	forRatio[0]->Fill(jet_ET);
@@ -370,6 +508,16 @@ int build_chi2hists(string filebase)
 	if(!cutArr[1] && isdijet) forRatio[2]->Fill(jet_ET);
 	if(!cutArr[31]) forRatio[3]->Fill(jet_ET);
 	if(!cutArr[31] && isdijet) forRatio[4]->Fill(jet_ET);
+	if(isdijet && jet_ET > 20 && subjet_ET > 10)
+	  {
+	    forRatio[5]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
+	    xJ[0]->Fill(subjet_ET/jet_ET);
+	  }
+	if(isdijet && !cutArr[31] && jet_ET > 20 && subjet_ET > 10)
+	  {
+	    forRatio[6]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
+	    xJ[1]->Fill(subjet_ET/jet_ET);
+	  }
 	//cout << "filling (got entry). isdijet = " << isdijet << endl;
 	float chi2 = maxTowChi2[0];
 	if(maxTowChi2[2] > chi2) chi2 = maxTowChi2[2];
@@ -380,12 +528,12 @@ int build_chi2hists(string filebase)
 	else det = "Error";
 	//int whichhist = isdijet%2 + 2*maxETowIsZS;
 	int whichhist = -1;
-	int threshes[numHistograms/2] = {8,15,20,25,35,40,45,50,55,60,65,70};
-	int slt[numHistograms/2] = {8,8,10,10,15,15,20,20,25,25,30,30};
-	for(int j=0; j<numHistograms/2; ++j)
+	int threshes[numHistograms/4] = {8,15,20,25,35,40};
+	int slt[numHistograms/4] = {8,8,10,10,15,15};
+	for(int j=0; j<numHistograms/4; ++j)
 	  {
-	    if(jet_ET < threshes[j]) continue;
-	    whichhist = j + ((subjet_ET > slt[j] && isdijet)?numHistograms/2:0);
+	    if(jet_ET < threshes[j] && j < numHistograms/4) continue;
+	    whichhist = j + (isdijet?numHistograms/4:0); //(cutArr[31]?numHistograms/4:0); //((subjet_ET > slt[j] && isdijet)?numHistograms/4:0);// + ();
 
 	if(whichhist < 0 || whichhist > numHistograms-1) continue;
 
@@ -395,6 +543,7 @@ int build_chi2hists(string filebase)
 	    h2_AJ_dphi[whichhist]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),dphi);
 	  }
 	//if(maxTowE > 15 && maxETowChi2 < 100) cout << "Detector: " << det << " tower ET: " << maxTowE << " chi2: " << maxETowChi2 << " is ZS: " << maxETowIsZS <<endl;
+	//if(cutArr[31]) continue;
 	h2_maxETowChi2_nBadChi2[whichhist]->Fill(maxETowChi2, nBadChi2);
 	h2_maxETowChi2_maxTowDiff[whichhist]->Fill(maxETowChi2, maxTowDiff);
 	h2_maxETowChi2_subTowE[whichhist]->Fill(maxETowChi2, subTowE);
@@ -473,6 +622,7 @@ int build_chi2hists(string filebase)
         h2_chi2_subjet_ET[whichhist]->Fill(chi2, subjet_ET);
 	//cout << "filled second block" << endl;
         h2_frcoh_frcem[whichhist]->Fill(frcoh, frcem);
+	if(whichhist < numHistograms/4) h2_frcoh_frcem[whichhist+numHistograms/4]->Fill(frcoh,frcem);
         h2_frcoh_eta[whichhist]->Fill(frcoh, eta);
         h2_frcoh_phi[whichhist]->Fill(frcoh, phi);
         h2_frcoh_jet_ET[whichhist]->Fill(frcoh, jet_ET);
@@ -486,6 +636,7 @@ int build_chi2hists(string filebase)
         h2_frcem_subjet_ET[whichhist]->Fill(frcem, subjet_ET);
 	//cout << "filled fourth block" << endl;
         h2_eta_phi[whichhist]->Fill(eta, phi);
+	if(whichhist < numHistograms/4) h2_eta_phi[whichhist+numHistograms/4]->Fill(eta,phi);
         h2_eta_jet_ET[whichhist]->Fill(eta, jet_ET);
         h2_eta_dphi[whichhist]->Fill(eta, dphi);
         h2_eta_subjet_ET[whichhist]->Fill(eta, subjet_ET);
@@ -495,6 +646,7 @@ int build_chi2hists(string filebase)
         h2_phi_subjet_ET[whichhist]->Fill(phi, subjet_ET);
 	//cout << "filled sixth block" << endl;
         h2_jet_ET_dphi[whichhist]->Fill(jet_ET, dphi);
+	if(whichhist < numHistograms/4) h2_jet_ET_dphi[whichhist+numHistograms/4]->Fill(jet_ET,dphi);
         h2_jet_ET_subjet_ET[whichhist]->Fill(jet_ET, subjet_ET);
 	//cout << "filled seventh block" << endl;
 	h2_subjet_ET_dphi[whichhist]->Fill(subjet_ET, dphi);
@@ -513,17 +665,35 @@ int build_chi2hists(string filebase)
 	  }
       }
 
+    int sd17 = get_scaledown17(runnumber);
+    int sd10 = get_scaledown10(runnumber);
+    int nmb = get_nmb(runnumber);
+    cout << sd17 << " " << sd10 << " " << nmb << endl;
     for(int i=0; i<nSpectra; ++i)
       {
 	cout << "jetSpectrum: " << jetSpectra[i] << endl;
-	jetSpectra[i]->Write();
+	if(sd17 >= 0 && sd10 >= 0 && nmb > 0 && std::isfinite(sd17) && std::isfinite(sd10) && std::isfinite(nmb))
+	  {
+	    float effevt = (((1.*(1+sd10))/(1+sd17))*nmb);
+	    //jetSpectra[i]->Scale(1./effevt);
+	    cout << "effevt: " << effevt << endl;
+	    jetSpectra[i]->Write();
+	  }
+	else
+	  {
+	    jetSpectra[i]->Clear();
+	    cout << "PANIC IN " << runnumber << " " << filebase << " " << i << endl;
+	  }
       }
     
     for(int i=0; i<nRatio; ++i)
       {
 	forRatio[i]->Write();
       }
+    xJ[0]->Write();
+    xJ[1]->Write();
     outputFile->Close();
+
     //cout << "wrote" << endl;
     // Clean up
     file->Close();
