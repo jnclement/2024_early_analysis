@@ -382,7 +382,7 @@ int build_chi2hists(string filebase, int runnumber)
       1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e6,
       1.25, 1.25, 1.25, 1.25, 1.25, 1.25,
       1.25, 1.25, 1.25, 1.25, 1.25,
-      1.5, 1.5, 1.5, 1.5,
+      0.7, 0.7, 0.7, 0.7,
       3.14, 3.14, 3.14,
       100, 100,
       100,
@@ -390,15 +390,15 @@ int build_chi2hists(string filebase, int runnumber)
     };
 
     const double ybins[] = {
-      64, 100, 1e6, 1.25, 1.25, 1.5, 3.14, 100, 3.15, 100, 1, 100, 100,
-      100, 1e6, 1.25, 1.25, 1.5, 3.14, 100, 3.15, 100, 1, 100, 100,
-      1e6, 1.25, 1.25, 1.5, 3.14, 100, 3.15, 100, 1, 100, 100,
-      1e6, 1.25, 1.25, 1.5, 3.14, 100, 3.15, 100, 1, 100,
-      1e6, 1.25, 1.25, 1.5, 3.14, 100, 3.15, 100, 1,
-      1e6, 1.25, 1.25, 1.5, 3.14, 100, 3.15, 100,
-      1.25, 1.25, 1.5, 3.14, 100, 3.15, 100,
-      1.25, 1.5, 3.14, 100, 3.15, 100,
-      1.5, 3.14, 100, 3.15, 100,
+      64, 100, 1e6, 1.25, 1.25, 0.7, 3.14, 100, 3.15, 100, 1, 100, 100,
+      100, 1e6, 1.25, 1.25, 0.7, 3.14, 100, 3.15, 100, 1, 100, 100,
+      1e6, 1.25, 1.25, 0.7, 3.14, 100, 3.15, 100, 1, 100, 100,
+      1e6, 1.25, 1.25, 0.7, 3.14, 100, 3.15, 100, 1, 100,
+      1e6, 1.25, 1.25, 0.7, 3.14, 100, 3.15, 100, 1,
+      1e6, 1.25, 1.25, 0.7, 3.14, 100, 3.15, 100,
+      1.25, 1.25, 0.7, 3.14, 100, 3.15, 100,
+      1.25, 0.7, 3.14, 100, 3.15, 100,
+      0.7, 3.14, 100, 3.15, 100,
       3.14, 100, 3.15, 100,
       100, 3.15, 100,
       3.15, 100,
@@ -414,11 +414,11 @@ int build_chi2hists(string filebase, int runnumber)
 	std::string title = ""; //std::string(titles[i]) + " " + std::to_string(j);
 
         // Set ranges based on index
-        double xMin = xbins[i]==1.5?-1.5:0;
+        double xMin = xbins[i]==0.7?-0.7:0;
 	if(xbins[i]==3.14) xMin = -3.14;
 	if(xbins[i]==1.25) xMin = -0.25;
         double xMax = xbins[i];
-        double yMin = ybins[i]==1.5?-1.5:0;
+        double yMin = ybins[i]==0.7?-0.7:0;
 	//cerr << "got some bounds" << endl;
 	if(ybins[i]==3.14) yMin = -3.14;
 	if(ybins[i]==1.25) yMin = -0.25;
@@ -455,6 +455,7 @@ int build_chi2hists(string filebase, int runnumber)
     Long64_t nEntries = jet_tree->GetEntries();
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
+	if(abs(eta) > 0.7) continue;
 	bool stripCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	bool dhCut = ((bbfqavec >> 5) & 1);
 	bool dPhiCut = (frcem+frcoh) < 0.7;

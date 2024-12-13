@@ -142,7 +142,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   _tree->Branch("jet_e",jet_e,"jet_e[njet]/F");
   //_jett->Branch("jet_e",jet_e,"jet_e[njet]/F");
   //_tree->Branch("jet_r",jet_r,"jet_r[njet]/F");
-  if(_datorsim) _tree->Branch("jet_et",jet_et,"jet_et[njet]/F");
+  _tree->Branch("jet_et",jet_et,"jet_et[njet]/F");
   _tree->Branch("jet_ph",jet_ph,"jet_ph[njet]/F");
   //_tree->Branch("failscut",&failscut,"failscut/I");
   //_jett->Branch("jet_et",jet_et,"jet_et[njet]/F");

@@ -207,8 +207,8 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     "maxTowE_chi2", "maxTowE_frcoh", "maxTowE_frcem", "maxTowE_eta", "maxTowE_phi", "maxTowE_jet_ET", "maxTowE_dphi", "maxTowE_subjet_ET","maxTowE_ecc",
     "ecc_chi2", "ecc_frcoh", "ecc_frcem", "ecc_eta", "ecc_phi", "ecc_jet_ET", "ecc_dphi", "ecc_subjet_ET",
     "chi2_frcoh", "chi2_frcem", "chi2_eta", "chi2_phi", "chi2_jet_ET", "chi2_dphi", "chi2_subjet_ET",
-    "frcoh_frcem", "frcoh_eta", "frcoh_phi", "frcoh_jet_ET", "frcoh_dphi", "frcoh_subjet_ET",
-    "frcem_eta", "frcem_phi", "frcem_jet_ET", "frcem_dphi", "frcem_subjet_ET",
+    "frcoh_frcem_h1", "frcoh_eta", "frcoh_phi", "frcoh_jet_ET", "frcoh_dphi", "frcoh_subjet_ET",
+    "frcem_eta", "frcem_phi", "frcem_jet_ET", "frcem_dphi_h1", "frcem_subjet_ET",
     "eta_phi_h1", "eta_jet_ET", "eta_dphi", "eta_subjet_ET",
     "phi_jet_ET", "phi_dphi", "phi_subjet_ET",
     "jet_ET_dphi", "jet_ET_subjet_ET",
@@ -633,13 +633,13 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
       int threshes[ntype/2] = {8,15,20,25,35,40,45,50,55,60,65,70};
       int slt[ntype/2] = {8,8,10,10,15,15,20,20,25,25,30,30};
       //texts[0] = "E_{T,lead jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
-	if(i<(ntype/2)*nhist) texts[0] = "Events contain only one jet with E_{T,jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
+	if(i>(ntype/2)*nhist) texts[0] = "Events contain only one jet with E_{T,jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
 	else
 	{
-	  texts[0] = "Events contain at least one jet with E_{T,jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
+	  texts[0] = "Events contain at least one jet with E_{T,jet} > 8 GeV";//+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
 	}
 
-	if(i<(ntype/2)*nhist) texts[1] = "Cuts Applied";//"And no subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";
+	if(i<(ntype/4)*nhist) texts[1] = "Cuts Applied";//"And no subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";
 	else
 	{
 	  texts[1] = "No Cuts Applied";// "And at least one subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";

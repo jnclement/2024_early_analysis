@@ -90,6 +90,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   int njet;
   float vtx[3];
   float jet_e[100];
+  float jet_et[100];
   float frcem[100];
   float jet_ph[100];
   tree->SetBranchAddress("bbfqavec",&bbfqavec);
@@ -98,6 +99,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   tree->SetBranchAddress("frcem",frcem);
   tree->SetBranchAddress("jet_ph",jet_ph);
   tree->SetBranchAddress("jet_e",jet_e);
+  tree->SetBranchAddress("jet_et",jet_et);
   cout << "end getting branches" << endl;
   
   TFile* jetfile = TFile::Open(("output/simhists/run_jet10_"+idstr+"_"+to_string(njob)+"_simhists.root").c_str(),"RECREATE");
@@ -128,13 +130,13 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	{
 	  continue;
 	}
-
       float ljetET = 0;
       float subjetET = 0;
       float ljetph = 0;
       float subjetph = 0;
       float ljetfrcem = -1;
       int isdijet = 0;
+      float ljeteta = 0;
       for(int j=0; j<njet; ++j)
 	{
 	  if(jet_e[j] > ljetET)
@@ -144,8 +146,10 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	      ljetET = jet_e[j];
 	      ljetph = jet_ph[j];
 	      ljetfrcem = frcem[j];
+	      ljeteta = jet_et[j];
 	    }
 	}
+      if(abs(ljeteta) > 0.7);
       if(subjetET > 8) isdijet = 1;
       
       h1_ucspec->Fill(ljetET);
