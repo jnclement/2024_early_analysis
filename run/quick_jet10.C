@@ -126,7 +126,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       tree->GetEntry(i);   
       
 
-      if(abs(vtx[2]) > 150)
+      if(abs(vtx[2]) > 30)
 	{
 	  continue;
 	}

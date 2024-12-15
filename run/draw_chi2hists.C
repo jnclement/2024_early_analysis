@@ -279,12 +279,12 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   string texts[ntext] =
     {
       "Calorimeter Anti-k_{T} R=0.4",
-      "|z_{vtx}| < 150 cm",
+      "|z_{vtx}| < 30 cm",
       "Jet-8 & MBDNS>=1 Triggered Data",
       "PYTHIA8 Jet-10 Sample Sim",
       "\\mathscr{L}_{\\text{data}}=13.37 \\text{pb}^{-1}"
     };
-  TLegend* ratLeg = new TLegend(0.57,0.5,0.9,0.6);
+  TLegend* ratLeg = new TLegend(0.6,0.5,0.9,0.6,"Dijets / Event:");
   ratLeg->SetTextSize(0.02);
   jetSpectra.at(39)->Scale(1./jetSpectra.at(39)->Integral("WIDTH"));
   jetSpectra.at(47)->Scale(1./jetSpectra.at(47)->Integral("WIDTH"));
@@ -307,7 +307,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
       canvas->SaveAs(("output/chi2img/spectra"+to_string(i)+".pdf").c_str());
     }
   gPad->SetLogy(0);
-  string ratLegNames[nRatio] = {"Data 2+ Jets / All Jets","2+ Jets & Hard #Delta#phi / All Jets","All cuts / All Jets","2+ Jets & All Cuts / All Jets","Data 2+ Jets & All Cuts / All Cuts","Sim 2+ Jets All Cuts / All Cuts","Sim 2+ Jets All Cuts / No Cuts","Data No Cuts / Sim No Cuts","Data All Cuts / Sim All Cuts"};
+  string ratLegNames[nRatio] = {"Data No Cuts","2+ Jets & Hard #Delta#phi / All Jets","All cuts / All Jets","2+ Jets & All Cuts / All Jets","Data All Cuts","Sim All Cuts","Sim No Cuts","Data No Cuts / Sim No Cuts","Data All Cuts / Sim All Cuts"};
   canvas->SetRightMargin(0.05);
   for(int i=0; i<nRatio; ++i)
     {
@@ -380,6 +380,8 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     ajleg->SetTextFont(42);
     ajleg->SetBorderSize(0);
     ajleg->SetTextSize(0.02);
+    jetSpectra.at(39)->Rebin(4);
+    jetSpectra.at(47)->Rebin(4);
     jetSpectra.at(39)->Draw("PE");
     jetSpectra.at(47)->Draw("SAME PE");
     std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
@@ -413,6 +415,8 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     ajleg2->SetTextFont(42);
     ajleg2->SetBorderSize(0);
     ajleg2->SetTextSize(0.02);
+    jetSpectra.at(38)->Rebin(4);
+    jetSpectra.at(46)->Rebin(4);
     jetSpectra.at(38)->Draw("PE");
     jetSpectra.at(46)->Draw("SAME PE");
     std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
@@ -633,18 +637,18 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
       int threshes[ntype/2] = {8,15,20,25,35,40,45,50,55,60,65,70};
       int slt[ntype/2] = {8,8,10,10,15,15,20,20,25,25,30,30};
       //texts[0] = "E_{T,lead jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
-	if(i>(ntype/2)*nhist) texts[0] = "Events contain only one jet with E_{T,jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
+	if(i>(ntype/4)*nhist) texts[0] = "Events contain only one jet with E_{T,jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
 	else
 	{
 	  texts[0] = "Events contain at least one jet with E_{T,jet} > 8 GeV";//+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
 	}
 
-	if(i<(ntype/4)*nhist) texts[1] = "Cuts Applied";//"And no subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";
+	if(i<(ntype/4)*nhist) texts[1] = "And at least one subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";
 	else
 	{
-	  texts[1] = "No Cuts Applied";// "And at least one subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";
+	  texts[1] = "And no subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";
 	}
-       
+	texts[1] = "No cuts applied";
       //if(i<(ntype/2)*nhist) histograms.at(i)->Add(histograms.at(i),histograms.at(i+180));
       cout << "prep to draw" << endl;
       //histograms.at(i)->Rebin2D(4,4);

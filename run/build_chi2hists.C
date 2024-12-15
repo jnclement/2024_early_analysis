@@ -455,6 +455,7 @@ int build_chi2hists(string filebase, int runnumber)
     Long64_t nEntries = jet_tree->GetEntries();
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
+	if(abs(zvtx) > 30) continue;
 	if(abs(eta) > 0.7) continue;
 	bool stripCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	bool dhCut = ((bbfqavec >> 5) & 1);

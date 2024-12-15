@@ -37,6 +37,7 @@
 
 #include <r24earlytreemaker/R24earlytreemaker.h>
 #include <chi2checker/Chi2checker.h>
+#include <trigzvtxchecker/Trigzvtxchecker.h>
 #include </sphenix/user/jocl/projects/macros/common/Calo_Calib.C>
 #include <CaloTowerCalib.h>
 #include <globalvertex/GlobalVertexReco.h>
@@ -62,6 +63,7 @@ R__LOAD_LIBRARY(libjetbase.so)
 R__LOAD_LIBRARY(libbeambackgroundfilterandqa.so);
 R__LOAD_LIBRARY(libjetbackground.so)
 R__LOAD_LIBRARY(libemulatortreemaker.so)
+R__LOAD_LIBRARY(libtrigzvtxchecker.so)
 bool file_exists(const char* filename)
 {
   std::ifstream infile(filename);
@@ -80,6 +82,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   filename += to_string(nproc)+"_";
   filename += to_string(nevt);
   string chi2filename = dir+"/"+to_string(rn)+"_chi2/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_chi2file.root";
+
+  string trigzvtxfilename = dir+"/"+to_string(rn)+"_chi2/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_mbtree.root";
   filename += ".root";
   FROG *fr = new FROG();
   //cout << "test0.5" << endl;
@@ -125,6 +129,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //if(!datorsim) se->registerInputManager( in_3 );
 
   std::cout << "status setters" << std::endl;
+  
+  Trigzvtxchecker* tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug);
+  se->registerSubsystem(tz);
   if(!datorsim)
     {
       CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
@@ -232,7 +239,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //cout << "test2" << endl;
   R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 0);
   //cout << "test3" << endl;
-  se->registerSubsystem( tt );
+  if(!datorsim) se->registerSubsystem( tt );
   
   cout << "test4" << endl;
   se->Print("NODETREE");
@@ -242,7 +249,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   cout << "ran " << nevt << endl;
   cout << "Ran all events" << endl;
   se->Print("NODETREE");
+  cout << "ending" << endl;
   se->End();
+  cout << "printing timer" << endl;
   se->PrintTimer();
   cout << "Ended server" << endl;
   delete se;
