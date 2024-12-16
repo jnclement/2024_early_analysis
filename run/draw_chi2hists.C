@@ -279,10 +279,10 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   string texts[ntext] =
     {
       "Calorimeter Anti-k_{T} R=0.4",
-      "|z_{vtx}| < 30 cm",
+      "|z_{vtx}| < 150 cm",
       "Jet-8 & MBDNS>=1 Triggered Data",
       "PYTHIA8 Jet-10 Sample Sim",
-      "\\mathscr{L}_{\\text{data}}=13.37 \\text{pb}^{-1}"
+      "\\mathscr{L}_{\\text{data}}=16.17 \\text{pb}^{-1}"
     };
   TLegend* ratLeg = new TLegend(0.6,0.5,0.9,0.6,"Dijets / Event:");
   ratLeg->SetTextSize(0.02);
@@ -456,11 +456,11 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   TH1F* specrat = new TH1F("specrat","",100,0,100);
 
   spectraLegend->AddEntry(jetSpectra.at(0),spectraLegendNames[0].c_str(),"p");
-  jetSpectra.at(0)->Scale(1./280758718700.0);
+  jetSpectra.at(0)->Scale(1./1.79769e11);
   TLegend* specL2 = new TLegend(*spectraLegend);
   for(int i=1; i<nLegend; ++i)
     {
-      if(i<nLegend-2) touse[i-1]->Scale(1./280758718700.0);
+      if(i<nLegend-2) touse[i-1]->Scale(1./1.79769e11);
       touse[i-1]->Rebin(10);
       touse[i-1]->GetYaxis()->SetTitleOffset(1.85);
       touse[i-1]->SetMarkerColor(spectraColors[i]);

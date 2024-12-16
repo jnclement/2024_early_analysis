@@ -19,6 +19,7 @@ UPLN=$(( $2 + 1 ))
 mkdir -p $SUBDIR
 mkdir -p lists
 mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/
+mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/${SUBDIR}/
 mkdir -p ./dsts/$SUBDIR
 mkdir -p ./output/smg
 mkdir -p output/err
@@ -51,4 +52,4 @@ cp -r "./${SUBDIR}/events_${1}_${3}_${2}_${5}.root" "/sphenix/tg/tg01/jets/jocl/
 cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
 cp -r ./output/out/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/
 cp -r ./output/err/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/err/
-cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2
+cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/

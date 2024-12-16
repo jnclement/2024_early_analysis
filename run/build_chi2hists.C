@@ -196,6 +196,8 @@ int build_chi2hists(string filebase, int runnumber)
     int isdijet, nBadChi2, maxETowChi2Det, maxETowIsZS;
     Float_t jetcompE[3][512], jetcompEta[3][512], jetcompPhi[3][512];
     Float_t maxTowChi2[3];
+    float jet_eta[10], jet_phi[10], jet_et[10];
+    int jet_n;
     long long unsigned int triggervec;
     unsigned int bbfqavec, elmbgvec;
     // Set branch addresses
@@ -223,6 +225,11 @@ int build_chi2hists(string filebase, int runnumber)
     jet_tree->SetBranchAddress("zvtx",&zvtx);
     jet_tree->SetBranchAddress("bbfqavec",&bbfqavec);
     jet_tree->SetBranchAddress("elmbgvec",&elmbgvec);
+    jet_tree->SetBranchAddress("jet_et",jet_et);
+    jet_tree->SetBranchAddress("jet_eta",jet_eta);
+    jet_tree->SetBranchAddress("jet_phi",jet_phi);
+    jet_tree->SetBranchAddress("jet_n",&jet_n);
+    
     //std:://cerr << "set branches" << endl;
     // Create 2D histograms for all combinations of variables
     const int numHistograms = 24; // Number of histograms in each array
@@ -455,7 +462,7 @@ int build_chi2hists(string filebase, int runnumber)
     Long64_t nEntries = jet_tree->GetEntries();
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
-	if(abs(zvtx) > 30) continue;
+	if(abs(zvtx) > 150) continue;
 	if(abs(eta) > 0.7) continue;
 	bool stripCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	bool dhCut = ((bbfqavec >> 5) & 1);
@@ -493,16 +500,20 @@ int build_chi2hists(string filebase, int runnumber)
 	cutArr[27]=(stripCut || dhCut || dPhiCut || ZSCut);
 	cutArr[28]=(stripCut || dhCut || ETCut || ZSCut);
 	cutArr[29]=(stripCut || dPhiCut || ETCut || ZSCut);
-	cutArr[30]=(dhCut || dPhiCut || ETCut || ZSCut || stripCut);
-	cutArr[31]=(stripCut || dhCut || dPhiCut || ETCut || ZSCut);// || chi2cut);
+	cutArr[30]=(dhCut || dPhiCut || ETCut || ZSCut);
+	cutArr[31]=(dhCut || dPhiCut || ETCut || ZSCut);// || chi2cut);
 	cutArr[32]=chi2cut;
 	for(int j=0; j<nSpectra; ++j)
 	  {
 	    if(!cutArr[j])
 	      {
-		jetSpectra[j]->Fill(jet_ET);
-		if(isdijet) jetSpectra[j]->Fill(subjet_ET);
-		
+		for(int k=0; k<jet_n; ++k)
+		  {
+		    if(abs(jet_eta[k]) < 0.7 && jet_et[k] > 8)
+		      {
+			jetSpectra[j]->Fill(jet_et[k]);		
+		      }
+		  }
 	      }
 	  }
 	forRatio[0]->Fill(jet_ET);
@@ -535,7 +546,7 @@ int build_chi2hists(string filebase, int runnumber)
 	for(int j=0; j<numHistograms/4; ++j)
 	  {
 	    if(jet_ET < threshes[j] && j < numHistograms/4) continue;
-	    whichhist = j + (isdijet?numHistograms/4:0); //(cutArr[31]?numHistograms/4:0); //((subjet_ET > slt[j] && isdijet)?numHistograms/4:0);// + ();
+	    whichhist = j + (cutArr[31]?numHistograms/4:0); //((subjet_ET > slt[j] && isdijet)?numHistograms/4:0);// + ();
 
 	if(whichhist < 0 || whichhist > numHistograms-1) continue;
 

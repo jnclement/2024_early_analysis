@@ -136,6 +136,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   if(_dotow) _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
   _tree->Branch("njet",&njet,"njet/I");
   _tree->Branch("frcem",_frcem,"frcem[njet]");
+  _tree->Branch("frcoh",_frcoh,"frcoh[njet]");
   //_jett->Branch("njet",&njet,"njet/I");
   //_jett->Branch("aceta",aceta,"aceta[njet]/F");
   //_tree->Branch("seedD",&seedD,"seedD[njet]/F");
@@ -395,6 +396,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      continue;
 	    }
 	  _frcem[njet] = 0;
+	  _frcoh[njet] = 0;
 	  if(jet_e[njet] < 8) continue;
 	  if(_debug > 2) cout << "found a good jet!" << endl;
 	  float maxeovertot = 0;
@@ -413,9 +415,17 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  tower = towersEM->get_tower_at_channel(channel);
 		  _frcem[njet] += tower->get_energy();
 		}
+	      if(comp.first == 7 || comp.first == 27)
+		{
+		  tower = towersOH->get_tower_at_channel(channel);
+		  _frcoh[njet] += tower->get_energy();
+		}
 	    }
 	  _frcem[njet] /= cosh(jet_et[njet]);
 	  _frcem[njet] /= jet_e[njet];
+
+	  _frcoh[njet] /= cosh(jet_et[njet]);
+	  _frcoh[njet] /= jet_e[njet];
 
 	  /*
 	  for(auto comp: jet->get_comp_vec())

@@ -107,12 +107,30 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 
   int eventbase = {0};
   int prevt = 0;
-  TH1F* h1_zdist = new TH1F("h1_zdist","",200,-150,150);
+  const int nh2 = 6;
+  TH2F* hists2[nh2];
+  const int nz = 2;
+  TH1F* h1_zdist[nz];
+  for(int i=0; i<nz; ++i)
+    {
+      h1_zdist[i] = new TH1F(("h1_zdist"+to_string(i)).c_str(),"",200,-150,150);
+    }
   TH1F* h1_forrat[5];
   for(int i=0; i<5; ++i)
     {
-      h1_forrat[i] = new TH1F(("h1_forrat"+to_string(i)).c_str(),"",i<3?1000:100,0,i<3?100:1);
+      h1_forrat[i] = new TH1F(("h2_forrat_tosee"+to_string(i)).c_str(),"",i<3?1000:100,0,i<3?100:1);
     }
+
+  float xlo[nh2] = {-0.2,-0.2,-0.2,-0.2,-0.2,-0.2};
+  float xhi[nh2] = {1.2,1.2,1.2,1.2,1.2,1.2};
+  float ylo[nh2] = {0,0,0,0,-0.2,-0.2};
+  float yhi[nh2] = {100,100,100,100,1.2,1.2};
+  
+  for(int i=0; i<nh2; ++i)
+    {
+      hists2[i] = new TH2F(("hists2"+to_string(i)).c_str(),"",100,xlo[i],xhi[i],100,ylo[i],yhi[i]);
+    }
+  
   TH1F* h1_ucspec = new TH1F("h1_ucspec","",1000,0,100);
   TH1F* h1_cspec = new TH1F("h1_cspec","",1000,0,100);
   TH1F* xJ[2];
@@ -126,7 +144,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       tree->GetEntry(i);   
       
 
-      if(abs(vtx[2]) > 30)
+      if(abs(vtx[2]) > 150)
 	{
 	  continue;
 	}
@@ -148,23 +166,28 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	      ljetfrcem = frcem[j];
 	      ljeteta = jet_et[j];
 	    }
+	  if(jet_e[j] > 8)
+	    {
+	      hists2[0]->Fill(ljetfrcem,jet_e[j]);
+	      //hists[1]->Fill(
+	    }
+	  else continue;
+	  if(abs(jet_et[j]) > 0.7) continue;
+	  h1_ucspec->Fill(jet_e[j]);
+	  
 	}
-      if(abs(ljeteta) > 0.7);
       if(subjetET > 8) isdijet = 1;
       
-      h1_ucspec->Fill(ljetET);
-      if(isdijet) h1_ucspec->Fill(subjetET);
-
       float dphi = abs(ljetph - subjetph);
       if(dphi > M_PI) dphi = 2*M_PI - dphi;
 
       bool hdPhiCut = dphi < 3*M_PI/4 && isdijet;
       bool bbCut = (bbfqavec >> 5) & 1;
-      bool sdPhiCut = (ljetfrcem < 0.4 && dphi < 0.15) && isdijet;
+      //bool sdPhiCut = (ljetfrcem < 0.4 && dphi < 0.15) && isdijet;
       bool lETCut = ljetfrcem < 0.1 && (ljetET > (50*ljetfrcem+20)) && (hdPhiCut || !isdijet);
       bool hETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+80)) && (hdPhiCut || !isdijet);
       
-      bool fullcut = hdPhiCut || bbCut || sdPhiCut || lETCut || hETCut;
+      bool fullcut = bbCut || lETCut || hETCut;
       h1_forrat[2]->Fill(ljetET);
       
       if(isdijet && ljetET > 20 && subjetET > 10)
@@ -174,12 +197,31 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	}
       if(!fullcut)
 	{
+	  h1_zdist[1]->Fill(vtx[2]);
 	  h1_forrat[0]->Fill(ljetET);
 	  h1_cspec->Fill(ljetET);
+	  for(int j=0; j<njet; ++j)
+	    {
+	      if(jet_e[j] > ljetET)
+		{
+		  subjetET = ljetET;
+		  subjetph = ljetph;
+		  ljetET = jet_e[j];
+		  ljetph = jet_ph[j];
+		  ljetfrcem = frcem[j];
+		  ljeteta = jet_et[j];
+		}
+	      if(jet_e[j] >8)
+		{
+		  if(abs(jet_et[j]) < 0.7) continue;
+		  hists2[3]->Fill(ljetfrcem,jet_e[j]);
+		  h1_cspec->Fill(jet_e[j]);
+		  
+		}
+	    }
 	  if(isdijet)
 	    {
 	      h1_forrat[1]->Fill(ljetET);
-	      h1_cspec->Fill(subjetET);
 	      if(ljetET > 20 && subjetET > 10)
 		{
 		  h1_forrat[4]->Fill((ljetET-subjetET)/(ljetET+subjetET));
@@ -187,11 +229,11 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 		}
 	    }
 	}
-      h1_zdist->Fill(vtx[2]); 
+      h1_zdist[0]->Fill(vtx[2]); 
     }
 
 
-  h1_zdist->Write();
+  h1_zdist[0]->Write();
   h1_ucspec->Scale(4e-5/2.8e6);
   h1_ucspec->Write();
   h1_cspec->Scale(4e-5/2.8e6);

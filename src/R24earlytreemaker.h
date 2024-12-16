@@ -39,6 +39,7 @@ class R24earlytreemaker : public SubsysReco
   int ismb = 0;
   long unsigned int _bbfqavec;
   float _frcem[1000];
+  float _frcoh[1000];
   int _cluster_n;
   int _cluster_nTower[10000];
   float _cluster_Ecore[10000];
