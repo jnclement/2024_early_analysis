@@ -230,6 +230,8 @@ int build_chi2hists(string filebase, int runnumber)
     jet_tree->SetBranchAddress("jet_phi",jet_phi);
     jet_tree->SetBranchAddress("jet_n",&jet_n);
     
+
+
     //std:://cerr << "set branches" << endl;
     // Create 2D histograms for all combinations of variables
     const int numHistograms = 24; // Number of histograms in each array
@@ -459,50 +461,65 @@ int build_chi2hists(string filebase, int runnumber)
 	cout << jetSpectra[i] << endl;
       }
     bool cutArr[nSpectra];
+    
+    const int nzhist = 6;
+    TH1F* zhists[nzhist];
+    for(int i=0; i<nzhist; ++i)
+      {
+	zhists[i] = new TH1F(("data_zhist"+to_string(i)).c_str(),"",300,-150,150);
+      }
+
+
     Long64_t nEntries = jet_tree->GetEntries();
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
 	if(abs(zvtx) > 150) continue;
 	if(abs(eta) > 0.7) continue;
-	bool stripCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
+	bool dPhiCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	bool dhCut = ((bbfqavec >> 5) & 1);
-	bool dPhiCut = (frcem+frcoh) < 0.7;
-	bool ETCut = ((frcem < 0.1) && (jet_ET > (50*frcem+20))) && (stripCut || !isdijet);
-	bool ZSCut = ((frcem > 0.9) && (jet_ET > (-50*frcem+75))) && (stripCut || !isdijet);
+	bool ihCut = (frcem+frcoh) < 0.65;
+	bool loETCut = ((frcem < 0.1) && (jet_ET > (50*frcem+20))) && (dPhiCut || !isdijet);
+	bool hiETCut = ((frcem > 0.9) && (jet_ET > (-50*frcem+75))) && (dPhiCut || !isdijet);
 	bool chi2cut = jet_ET > 25 && maxETowChi2 < 10;
+	zhists[0]->Fill(zvtx);
+	if(dhCut) zhists[1]->Fill(zvtx);
+	if(ihCut) zhists[2]->Fill(zvtx);
+	if(loETCut) zhists[3]->Fill(zvtx);
+	if(hiETCut) zhists[4]->Fill(zvtx);
 	cutArr[0]=false;
-	cutArr[1]=stripCut;
+	cutArr[1]=dPhiCut;
 	cutArr[2]=dhCut;
-	cutArr[3]=dPhiCut;
-	cutArr[4]=ETCut;
-	cutArr[5]=ZSCut;
-	cutArr[6]=(stripCut || dhCut);
-	cutArr[7]=(stripCut || dPhiCut);
-	cutArr[8]=(stripCut || ETCut);
-	cutArr[9]=(stripCut || ZSCut);
-	cutArr[10]=(dhCut || dPhiCut);
-	cutArr[11]=(dhCut || ETCut);
-	cutArr[12]=(dhCut || ZSCut);
-	cutArr[13]=(dPhiCut || ETCut);
-	cutArr[14]=(dPhiCut || ZSCut);
-	cutArr[15]=(ETCut || ZSCut);
-	cutArr[16]=(stripCut || dhCut || dPhiCut);
-	cutArr[17]=(stripCut || dhCut || ETCut);
-	cutArr[18]=(stripCut || dhCut || ZSCut);
-	cutArr[19]=(stripCut || dPhiCut || ETCut);
-	cutArr[20]=(stripCut || dPhiCut || ZSCut);
-	cutArr[21]=(stripCut || ETCut || ZSCut);
-	cutArr[22]=(dhCut || dPhiCut || ETCut);
-	cutArr[23]=(dhCut || dPhiCut || ZSCut);
-	cutArr[24]=(dhCut || ETCut || ZSCut);
-	cutArr[25]=(dPhiCut || ETCut || ZSCut);
-	cutArr[26]=(stripCut || dhCut || dPhiCut || ETCut);
-	cutArr[27]=(stripCut || dhCut || dPhiCut || ZSCut);
-	cutArr[28]=(stripCut || dhCut || ETCut || ZSCut);
-	cutArr[29]=(stripCut || dPhiCut || ETCut || ZSCut);
-	cutArr[30]=(dhCut || dPhiCut || ETCut || ZSCut);
-	cutArr[31]=(dhCut || dPhiCut || ETCut || ZSCut);// || chi2cut);
+	cutArr[3]=ihCut;
+	cutArr[4]=loETCut;
+	cutArr[5]=hiETCut;
+	cutArr[6]=(dPhiCut || dhCut);
+	cutArr[7]=(dPhiCut || ihCut);
+	cutArr[8]=(dPhiCut || loETCut);
+	cutArr[9]=(dPhiCut || hiETCut);
+	cutArr[10]=(dhCut || ihCut);
+	cutArr[11]=(dhCut || loETCut);
+	cutArr[12]=(dhCut || hiETCut);
+	cutArr[13]=(ihCut || loETCut);
+	cutArr[14]=(ihCut || hiETCut);
+	cutArr[15]=(loETCut || hiETCut);
+	cutArr[16]=(dPhiCut || dhCut || ihCut);
+	cutArr[17]=(dPhiCut || dhCut || loETCut);
+	cutArr[18]=(dPhiCut || dhCut || hiETCut);
+	cutArr[19]=(dPhiCut || ihCut || loETCut);
+	cutArr[20]=(dPhiCut || ihCut || hiETCut);
+	cutArr[21]=(dPhiCut || loETCut || hiETCut);
+	cutArr[22]=(dhCut || ihCut || loETCut);
+	cutArr[23]=(dhCut || ihCut || hiETCut);
+	cutArr[24]=(dhCut || loETCut || hiETCut);
+	cutArr[25]=(ihCut || loETCut || hiETCut);
+	cutArr[26]=(dPhiCut || dhCut || ihCut || loETCut);
+	cutArr[27]=(dPhiCut || dhCut || ihCut || hiETCut);
+	cutArr[28]=(dPhiCut || dhCut || loETCut || hiETCut);
+	cutArr[29]=(dPhiCut || ihCut || loETCut || hiETCut);
+	cutArr[30]=(dhCut || ihCut || loETCut || hiETCut);
+	cutArr[31]=(dhCut || ihCut || loETCut || hiETCut);// || chi2cut);
 	cutArr[32]=chi2cut;
+	if(!cutArr[31]) zhists[5]->Fill(zvtx);
 	for(int j=0; j<nSpectra; ++j)
 	  {
 	    if(!cutArr[j])

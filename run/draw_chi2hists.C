@@ -245,8 +245,8 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   const int nColors = 7;
   const int nLegend = 7;
   const int nRatio = 9;
-  string spectraLegendNames[nLegend] = {"No Cuts","OHCal Strip Cut Only","Add #Delta#phi Cuts","Add E_{T} Cuts","Data All Cuts","Sim No Cuts","Sim All Cuts"};
-  int spectraColors[nColors] = {kBlack,kRed+2,kOrange+2,kYellow+2,kGreen+2,kBlue-2,kViolet+2};
+  string spectraLegendNames[nLegend] = {"Data No Cuts","OHCal Strip Cut Only","Add #Delta#phi Cuts","Add E_{T} Cuts","Data All Cuts","Sim No Cuts","Sim All Cuts"};
+  int spectraColors[nColors] = {kBlack,kOrange+2,kBlue-2,kYellow+2,kGreen+2,kRed+2,kViolet+2};
   string xSpectraTitle = "E_{T,jet} [GeV]";
   string ySpectraTitle = "#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]";
   gPad->SetLeftMargin(0.2);
@@ -286,10 +286,16 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     };
   TLegend* ratLeg = new TLegend(0.6,0.5,0.9,0.6,"Dijets / Event:");
   ratLeg->SetTextSize(0.02);
-  jetSpectra.at(39)->Scale(1./jetSpectra.at(39)->Integral("WIDTH"));
-  jetSpectra.at(47)->Scale(1./jetSpectra.at(47)->Integral("WIDTH"));
-  jetSpectra.at(38)->Scale(1./jetSpectra.at(38)->Integral("WIDTH"));
-  jetSpectra.at(46)->Scale(1./jetSpectra.at(46)->Integral("WIDTH"));
+
+  jetSpectra.at(38)->Rebin(4);
+  jetSpectra.at(46)->Rebin(4);
+  jetSpectra.at(39)->Rebin(4);
+  jetSpectra.at(47)->Rebin(4);
+
+  jetSpectra.at(39)->Scale(1./jetSpectra.at(39)->Integral());
+  jetSpectra.at(47)->Scale(1./jetSpectra.at(47)->Integral());
+  jetSpectra.at(38)->Scale(1./jetSpectra.at(38)->Integral());
+  jetSpectra.at(46)->Scale(1./jetSpectra.at(46)->Integral());
 
   ratios[0]->Divide(jetSpectra.at(34),jetSpectra.at(33));
   ratios[1]->Divide(jetSpectra.at(35),jetSpectra.at(33));
@@ -362,7 +368,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     jetSpectra.at(39)->SetMarkerSize(2);
     jetSpectra.at(39)->SetLineColor(spectraColors[0]);
     jetSpectra.at(39)->Scale(1./jetSpectra.at(39)->GetBinWidth(1));
-    //jetSpectra.at(39)->GetYaxis()->SetRangeUser(0,);
+    jetSpectra.at(39)->GetYaxis()->SetRangeUser(0,4);
     jetSpectra.at(39)->GetXaxis()->SetTitle("A_{J}");
     jetSpectra.at(39)->GetYaxis()->SetTitle("Normalized Counts");
     jetSpectra.at(39)->GetYaxis()->SetTitleOffset(2.0);
@@ -380,8 +386,6 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     ajleg->SetTextFont(42);
     ajleg->SetBorderSize(0);
     ajleg->SetTextSize(0.02);
-    jetSpectra.at(39)->Rebin(4);
-    jetSpectra.at(47)->Rebin(4);
     jetSpectra.at(39)->Draw("PE");
     jetSpectra.at(47)->Draw("SAME PE");
     std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
@@ -397,7 +401,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     jetSpectra.at(38)->SetMarkerSize(2);
     jetSpectra.at(38)->SetLineColor(spectraColors[0]);
     jetSpectra.at(38)->Scale(1./jetSpectra.at(38)->GetBinWidth(1));
-    //jetSpectra.at(38)->GetYaxis()->SetRangeUser(0,);
+    jetSpectra.at(38)->GetYaxis()->SetRangeUser(0,4);
     jetSpectra.at(38)->GetXaxis()->SetTitle("A_{J}");
     jetSpectra.at(38)->GetYaxis()->SetTitle("Normalized Counts");
     jetSpectra.at(38)->GetYaxis()->SetTitleOffset(2.0);
@@ -415,8 +419,6 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     ajleg2->SetTextFont(42);
     ajleg2->SetBorderSize(0);
     ajleg2->SetTextSize(0.02);
-    jetSpectra.at(38)->Rebin(4);
-    jetSpectra.at(46)->Rebin(4);
     jetSpectra.at(38)->Draw("PE");
     jetSpectra.at(46)->Draw("SAME PE");
     std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
@@ -451,7 +453,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   cout << "drew 0" << endl;
   canvas->SaveAs("testimg.pdf");
   //sleep(30);
-  TH1* touse[nLegend-1] = {jetSpectra.at(2),jetSpectra.at(16),jetSpectra.at(28),jetSpectra.at(31),jetSpectra.at(41),jetSpectra.at(42)};
+  TH1* touse[nLegend-1] = {jetSpectra.at(2),jetSpectra.at(16),jetSpectra.at(24),jetSpectra.at(31),jetSpectra.at(41),jetSpectra.at(42)};
   TH1F* prespcr = new TH1F("prespcr","",100,0,100);
   TH1F* specrat = new TH1F("specrat","",100,0,100);
 
@@ -460,6 +462,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   TLegend* specL2 = new TLegend(*spectraLegend);
   for(int i=1; i<nLegend; ++i)
     {
+      if(i==2) continue;
       if(i<nLegend-2) touse[i-1]->Scale(1./1.79769e11);
       touse[i-1]->Rebin(10);
       touse[i-1]->GetYaxis()->SetTitleOffset(1.85);
@@ -553,7 +556,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   specrat->SetMarkerSize(2);
   specrat->SetLineColor(spectraColors[0]);
   specrat->Scale(1./specrat->GetBinWidth(1));
-  specrat->GetYaxis()->SetRangeUser(0,1);
+  specrat->GetYaxis()->SetRangeUser(0,2);
   specrat->GetXaxis()->SetTitle("E_{T} [GeV]");
   specrat->GetYaxis()->SetTitle("Data/Sim All Cuts Spectrum Ratio");
   specrat->Draw("PE");
@@ -572,7 +575,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   prespcr->Scale(1./prespcr->GetBinWidth(1));
   prespcr->GetXaxis()->SetTitle("E_{T} [GeV]");
   prespcr->GetYaxis()->SetTitle("Data/Sim No Cuts Spectrum Ratio");
-  prespcr->GetYaxis()->SetRangeUser(0,3);
+  prespcr->GetYaxis()->SetRangeUser(0,5);
   prespcr->Draw("PE");
   //spectraLegend->Draw();
   std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
@@ -589,7 +592,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   string xJLegNames[4] = {"Data No Cuts","Data With Cuts","Sim No Cuts","Sim With Cuts"};
   for(int i=0; i<4; ++i)
     {
-      xJ.at(i)->Scale(1./xJ.at(i)->Integral("WIDTH"));
+      xJ.at(i)->Scale(1./xJ.at(i)->Integral());
       xJ.at(i)->SetLineColor(xJColors[i]);
       xJ.at(i)->SetMarkerColor(xJColors[i]);
       xJ.at(i)->SetMarkerStyle(20);

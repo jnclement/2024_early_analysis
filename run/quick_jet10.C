@@ -93,6 +93,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   float jet_et[100];
   float frcem[100];
   float jet_ph[100];
+  float frcoh[100];
   tree->SetBranchAddress("bbfqavec",&bbfqavec);
   tree->SetBranchAddress("vtx",vtx);
   tree->SetBranchAddress("njet",&njet);
@@ -100,6 +101,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   tree->SetBranchAddress("jet_ph",jet_ph);
   tree->SetBranchAddress("jet_e",jet_e);
   tree->SetBranchAddress("jet_et",jet_et);
+  tree->SetBranchAddress("frcoh",frcoh);
   cout << "end getting branches" << endl;
   
   TFile* jetfile = TFile::Open(("output/simhists/run_jet10_"+idstr+"_"+to_string(njob)+"_simhists.root").c_str(),"RECREATE");
@@ -155,6 +157,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       float ljetfrcem = -1;
       int isdijet = 0;
       float ljeteta = 0;
+      float ljetfrcoh = -1;
       for(int j=0; j<njet; ++j)
 	{
 	  if(jet_e[j] > ljetET)
@@ -165,16 +168,17 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	      ljetph = jet_ph[j];
 	      ljetfrcem = frcem[j];
 	      ljeteta = jet_et[j];
-	    }
-	  if(jet_e[j] > 8)
-	    {
-	      hists2[0]->Fill(ljetfrcem,jet_e[j]);
-	      //hists[1]->Fill(
+	      ljetfrcoh = frcoh[j];
 	    }
 	  else continue;
 	  if(abs(jet_et[j]) > 0.7) continue;
 	  h1_ucspec->Fill(jet_e[j]);
 	  
+	}
+      if(jet_e[j] > 8)
+	{
+	  hists2[0]->Fill(ljetfrcem,jet_e[j]);
+	  //hists[1]->Fill(
 	}
       if(subjetET > 8) isdijet = 1;
       
@@ -186,7 +190,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       //bool sdPhiCut = (ljetfrcem < 0.4 && dphi < 0.15) && isdijet;
       bool lETCut = ljetfrcem < 0.1 && (ljetET > (50*ljetfrcem+20)) && (hdPhiCut || !isdijet);
       bool hETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+80)) && (hdPhiCut || !isdijet);
-      
+      bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
       bool fullcut = bbCut || lETCut || hETCut;
       h1_forrat[2]->Fill(ljetET);
       
@@ -195,28 +199,21 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	  h1_forrat[3]->Fill((ljetET-subjetET)/(ljetET+subjetET));
 	  xJ[0]->Fill(subjetET/ljetET);
 	}
+      if(bbCut) h1_zhist[1]->Fill(vtx[2]);
+      if(ihCut) h1_zhist[2]->Fill(vtx[2]);
+      if(lETCut) h1_zhist[3]->Fill(vtx[2]);
+      if(hETCut) h1_zhist[4]->Fill(vtx[2]);
       if(!fullcut)
 	{
-	  h1_zdist[1]->Fill(vtx[2]);
+	  h1_zdist[5]->Fill(vtx[2]);
 	  h1_forrat[0]->Fill(ljetET);
 	  h1_cspec->Fill(ljetET);
 	  for(int j=0; j<njet; ++j)
 	    {
-	      if(jet_e[j] > ljetET)
-		{
-		  subjetET = ljetET;
-		  subjetph = ljetph;
-		  ljetET = jet_e[j];
-		  ljetph = jet_ph[j];
-		  ljetfrcem = frcem[j];
-		  ljeteta = jet_et[j];
-		}
 	      if(jet_e[j] >8)
 		{
-		  if(abs(jet_et[j]) < 0.7) continue;
-		  hists2[3]->Fill(ljetfrcem,jet_e[j]);
+		  if(abs(jet_et[j]) > 0.7) continue;
 		  h1_cspec->Fill(jet_e[j]);
-		  
 		}
 	    }
 	  if(isdijet)

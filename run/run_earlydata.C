@@ -131,7 +131,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   std::cout << "status setters" << std::endl;
   
   Trigzvtxchecker* tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug);
-  se->registerSubsystem(tz);
+  if(datorsim) se->registerSubsystem(tz);
   if(!datorsim)
     {
       CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
