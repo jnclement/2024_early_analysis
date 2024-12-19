@@ -534,7 +534,7 @@ int build_chi2hists(string filebase, int runnumber)
 	      }
 	  }
 	forRatio[0]->Fill(jet_ET);
-	if(isdijet) forRatio[1]->Fill(jet_ET);
+	if(isdijet && dphi > 3*M_PI/4) forRatio[1]->Fill(jet_ET);
 	if(!cutArr[1] && isdijet) forRatio[2]->Fill(jet_ET);
 	if(!cutArr[31]) forRatio[3]->Fill(jet_ET);
 	if(!cutArr[31] && isdijet) forRatio[4]->Fill(jet_ET);
@@ -722,6 +722,10 @@ int build_chi2hists(string filebase, int runnumber)
       }
     xJ[0]->Write();
     xJ[1]->Write();
+    for(int i=0; i<nzhist; ++i)
+      {
+	zhists[i]->Write();
+      }
     outputFile->Close();
 
     //cout << "wrote" << endl;

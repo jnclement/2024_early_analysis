@@ -44,10 +44,10 @@ echo " "
 echo " "
 echo " "
 echo "after run"
-ls
+ls -larth
 echo " "
-ls $SUBDIR
-ls $SUBDIR\_chi2/*
+ls -larth $SUBDIR
+ls -larth $SUBDIR\_chi2/*
 cp -r "./${SUBDIR}/events_${1}_${3}_${2}_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_${2}_${5}.root"
 cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
 cp -r ./output/out/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/

@@ -111,7 +111,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   int prevt = 0;
   const int nh2 = 6;
   TH2F* hists2[nh2];
-  const int nz = 2;
+  const int nz = 6;
   TH1F* h1_zdist[nz];
   for(int i=0; i<nz; ++i)
     {
@@ -160,6 +160,8 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       float ljetfrcoh = -1;
       for(int j=0; j<njet; ++j)
 	{
+	  if(abs(jet_et[j]) > 0.7) continue;
+	  h1_ucspec->Fill(jet_e[j]);
 	  if(jet_e[j] > ljetET)
 	    {
 	      subjetET = ljetET;
@@ -168,18 +170,10 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	      ljetph = jet_ph[j];
 	      ljetfrcem = frcem[j];
 	      ljeteta = jet_et[j];
-	      ljetfrcoh = frcoh[j];
+	      //ljetfrcoh = frcoh[j];
 	    }
-	  else continue;
-	  if(abs(jet_et[j]) > 0.7) continue;
-	  h1_ucspec->Fill(jet_e[j]);
-	  
 	}
-      if(jet_e[j] > 8)
-	{
-	  hists2[0]->Fill(ljetfrcem,jet_e[j]);
-	  //hists[1]->Fill(
-	}
+      if(ljetET < 8) continue;
       if(subjetET > 8) isdijet = 1;
       
       float dphi = abs(ljetph - subjetph);
@@ -189,9 +183,9 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       bool bbCut = (bbfqavec >> 5) & 1;
       //bool sdPhiCut = (ljetfrcem < 0.4 && dphi < 0.15) && isdijet;
       bool lETCut = ljetfrcem < 0.1 && (ljetET > (50*ljetfrcem+20)) && (hdPhiCut || !isdijet);
-      bool hETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+80)) && (hdPhiCut || !isdijet);
-      bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
-      bool fullcut = bbCut || lETCut || hETCut;
+      bool hETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+75)) && (hdPhiCut || !isdijet);
+      //bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
+      bool fullcut = bbCut || lETCut || hETCut;// || ihCut;
       h1_forrat[2]->Fill(ljetET);
       
       if(isdijet && ljetET > 20 && subjetET > 10)
@@ -199,15 +193,23 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	  h1_forrat[3]->Fill((ljetET-subjetET)/(ljetET+subjetET));
 	  xJ[0]->Fill(subjetET/ljetET);
 	}
-      if(bbCut) h1_zhist[1]->Fill(vtx[2]);
-      if(ihCut) h1_zhist[2]->Fill(vtx[2]);
-      if(lETCut) h1_zhist[3]->Fill(vtx[2]);
-      if(hETCut) h1_zhist[4]->Fill(vtx[2]);
+      if(bbCut) h1_zdist[1]->Fill(vtx[2]);
+      //if(ihCut) h1_zdist[2]->Fill(vtx[2]);
+      if(lETCut) h1_zdist[3]->Fill(vtx[2]);
+      if(hETCut) h1_zdist[4]->Fill(vtx[2]);
+      
+      hists2[0]->Fill(ljetfrcem,ljetET);
+      //hists2[2]->Fill(ljetfrcoh,ljetET);
+      //hists2[4]->Fill(ljetfrcoh,ljetfrcem);
+      
       if(!fullcut)
 	{
+	  hists2[1]->Fill(ljetfrcem,ljetET);
+	  //hists2[3]->Fill(ljetfrcoh,ljetET);
+	  //hists2[5]->Fill(ljetfrcoh,ljetfrcem);
 	  h1_zdist[5]->Fill(vtx[2]);
 	  h1_forrat[0]->Fill(ljetET);
-	  h1_cspec->Fill(ljetET);
+	  //h1_cspec->Fill(ljetET);
 	  for(int j=0; j<njet; ++j)
 	    {
 	      if(jet_e[j] >8)
@@ -237,8 +239,16 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   h1_cspec->Write();
   xJ[0]->Write();
   xJ[1]->Write();
-  for(int i=0; i<5; ++i)  h1_forrat[i]->Write();
-
+  
+  for(int i=0; i<5; ++i) h1_forrat[i]->Write();
+  for(int i=0; i<6; ++i)
+    {
+      hists2[i]->Write();
+      if(i>0 && i<5)
+	{
+	  h1_zdist[i]->Write();
+	}
+    }
   jetfile->Write();
   return 0;
 }

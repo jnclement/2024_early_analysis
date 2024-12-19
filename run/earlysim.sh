@@ -13,6 +13,7 @@ fi
 SUBDIR=$2
 UPLN=$(( $2 + 1 ))
 mkdir -p $SUBDIR
+mkdir -p $SUBIDR\_chi2
 mkdir -p lists
 mkdir -p ./output/smg
 mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/

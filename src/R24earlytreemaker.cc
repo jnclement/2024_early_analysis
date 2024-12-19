@@ -6,6 +6,7 @@
 #include <calobase/RawTowerContainer.h>
 #include <calobase/RawTowerGeom.h>
 #include <calobase/RawTowerGeomContainer.h>
+#include <calobase/RawTowerGeomContainer_Cylinderv1.h>
 #include <calobase/TowerInfoContainer.h>
 #include <calobase/TowerInfoContainerv1.h>
 #include <calobase/TowerInfoContainerv2.h>
@@ -220,6 +221,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(!towersIH) towersIH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALIN");
   TowerInfoContainer *towersOH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALOUT");
   if(!towersOH) towersOH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
+  if(!towersOH) towersOH = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
   TowerInfoContainer *towersEMuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_CEMC");
   TowerInfoContainer *towersIHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALIN");
   TowerInfoContainer *towersOHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALOUT");
@@ -238,6 +240,12 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   RawClusterContainer *clusters = findNode::getClass<RawClusterContainer>(topNode, "CLUSTERINFO_CEMC");
   if(!clusters) clusters = findNode::getClass<RawClusterContainer>(topNode, "CLUSTER_CEMC");       
   JetContainer* truthjets = findNode::getClass<JetContainerv1>(topNode, "AntiKt_Truth_r04");
+
+  RawTowerGeomContainer *geom[3];
+  geom[0] = findNode::getClass<RawTowerGeomContainer_Cylinderv1>(topNode, "TOWERGEOM_CEMC");
+  geom[1] = findNode::getClass<RawTowerGeomContainer_Cylinderv1>(topNode, "TOWERGEOM_HCALIN");
+  geom[2] = findNode::getClass<RawTowerGeomContainer_Cylinderv1>(topNode, "TOWERGEOM_HCALOUT");
+
 
   if(mbdtow && !_datorsim)
     {
@@ -380,7 +388,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     {
       int tocheck = jets->size();
       if(_debug > 2) cout << "Found " << tocheck << " jets to check..." << endl;
-      cout << towersEM << endl;
+      //cout << towersEM << endl;
       for(int i=0; i<tocheck; ++i)
 	{
 	  Jet *jet = jets->get_jet(i);
@@ -413,18 +421,31 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      if(comp.first == 13 || comp.first == 28 || comp.first == 25)
 		{
 		  tower = towersEM->get_tower_at_channel(channel);
-		  _frcem[njet] += tower->get_energy();
+		  int key = towersEM->encode_key(channel);
+		  const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALIN, towersEM->getTowerEtaBin(key), towersEM->getTowerPhiBin(key));
+		  RawTowerGeom *tower_geom = geom[1]->get_tower_geometry(geomkey);
+		  float radius = 93.5;
+		  float ihEta = tower_geom->get_eta();
+		  float emZ = radius/(tan(2*atan(exp(-ihEta))));
+		  float newz = emZ - vtx[2];
+		  float newTheta = atan2(radius,newz);
+		  float towerEta = -log(tan(0.5*newTheta));
+		  _frcem[njet] += tower->get_energy()/cosh(towerEta);
 		}
 	      if(comp.first == 7 || comp.first == 27)
 		{
 		  tower = towersOH->get_tower_at_channel(channel);
-		  _frcoh[njet] += tower->get_energy();
+		  int key = towersOH->encode_key(channel);
+		  const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALIN, towersOH->getTowerEtaBin(key), towersOH->getTowerPhiBin(key));
+		  RawTowerGeom *tower_geom = geom[2]->get_tower_geometry(geomkey);
+		  float radius = tower_geom->get_center_radius();
+		  float newz = tower_geom->get_center_z() - vtx[2];
+		  float newTheta = atan2(radius,newz);
+		  float towerEta = -log(tan(0.5*newTheta));
+		  _frcoh[njet] += tower->get_energy()/cosh(towerEta);
 		}
 	    }
-	  _frcem[njet] /= cosh(jet_et[njet]);
 	  _frcem[njet] /= jet_e[njet];
-
-	  _frcoh[njet] /= cosh(jet_et[njet]);
 	  _frcoh[njet] /= jet_e[njet];
 
 	  /*

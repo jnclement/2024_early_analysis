@@ -25,6 +25,19 @@ void std_text(TCanvas* thecan, string* texts, int ntext, float textsize, float t
     }
 }
 
+void FormatTH1(TH1* thehist, string xTitle, string yTitle, int histColor, float yMin, float yMax)
+{
+  thehist->GetYaxis()->SetTitleOffset(2.0);
+  thehist->SetMarkerColor(histColor);
+  thehist->SetMarkerStyle(20);
+  thehist->SetMarkerSize(2);
+  thehist->SetLineColor(histColor);
+  thehist->Scale(1./thehist->GetBinWidth(1));
+  thehist->GetYaxis()->SetRangeUser(yMin, yMax);
+  thehist->GetXaxis()->SetTitle(xTitle.c_str());
+  thehist->GetYaxis()->SetTitle(yTitle.c_str());
+  thehist->GetYaxis()->SetTitleOffset(2.0);
+}
 
 void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist, 
                             string fname, const char* xTitle, const char* yTitle, const char* zTitle,
@@ -610,6 +623,131 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
   xJLeg->Draw();
   canvas->SaveAs("output/chi2img/xJ_h1.png");
+
+
+
+  
+  TH1F* dhCut_to_all = new TH1F("dhCut_to_all","",100,0,100);
+  TH1F* ihCut_to_all = new TH1F("ihCut_to_all","",100,0,100);
+  TH1F* loETCut_to_all = new TH1F("loETCut_to_all","",100,0,100);
+  TH1F* hiETCut_to_all = new TH1F("hiETCut_to_all","",100,0,100);
+
+  TH1F* dhCut_minus_all = new TH1F("dhCut_minusall","",100,0,100);
+  TH1F* ihCut_minus_all = new TH1F("ihCut_minusall","",100,0,100);
+  TH1F* loETCut_minus_all = new TH1F("loETCut_minusall","",100,0,100);
+  TH1F* hiETCut_minus_all = new TH1F("hiETCut_minusall","",100,0,100);
+
+  TH1F* dhCutfail_to_all = new TH1F("dhCutfail_to_all","",100,0,100);
+  TH1F* ihCutfail_to_all = new TH1F("ihCutfail_to_all","",100,0,100);
+  TH1F* loETCutfail_to_all = new TH1F("loETCutfail_to_all","",100,0,100);
+  TH1F* hiETCutfail_to_all = new TH1F("hiETCutfail_to_all","",100,0,100);
+  
+  jetSpectra.at(3)->Rebin(10);
+  jetSpectra.at(4)->Rebin(10);
+  jetSpectra.at(5)->Rebin(10);
+  //jetSpectra.at(2)->Scale(1./1.79769e11);
+  jetSpectra.at(3)->Scale(1./1.79769e11);
+  jetSpectra.at(4)->Scale(1./1.79769e11);
+  jetSpectra.at(5)->Scale(1./1.79769e11);
+  dhCut_to_all->Divide(jetSpectra.at(2),jetSpectra.at(0));
+  ihCut_to_all->Divide(jetSpectra.at(3),jetSpectra.at(0));
+  loETCut_to_all->Divide(jetSpectra.at(4),jetSpectra.at(0));
+  hiETCut_to_all->Divide(jetSpectra.at(5),jetSpectra.at(0));
+
+  
+  
+  
+
+  dhCut_minus_all->Add(jetSpectra.at(0),jetSpectra.at(2),1,-1);
+  ihCut_minus_all->Add(jetSpectra.at(0),jetSpectra.at(3),1,-1);
+  loETCut_minus_all->Add(jetSpectra.at(0),jetSpectra.at(4),1,-1);
+  hiETCut_minus_all->Add(jetSpectra.at(0),jetSpectra.at(5),1,-1);
+
+  dhCutfail_to_all->Divide(dhCut_minus_all,jetSpectra.at(0));
+  ihCutfail_to_all->Divide(ihCut_minus_all,jetSpectra.at(0));
+  loETCutfail_to_all->Divide(loETCut_minus_all,jetSpectra.at(0));
+  hiETCutfail_to_all->Divide(hiETCut_minus_all,jetSpectra.at(0));
+  
+  dhCut_minus_all->Draw();
+  canvas->SaveAs("output/chi2img/ihcutfail_minus_all.png");
+
+
+
+  FormatTH1(dhCut_to_all, "E_{T} [GeV]","Ratio of Passing Spectrum to No Cut Spectrum",spectraColors[0],0,1);
+  FormatTH1(ihCut_to_all, "E_{T} [GeV]","Ratio of Passing Spectrum to No Cut Spectrum",spectraColors[1],0,1);
+  FormatTH1(loETCut_to_all, "E_{T} [GeV]","Ratio of Passing Spectrum to No Cut Spectrum",spectraColors[2],0,1);
+  FormatTH1(hiETCut_to_all, "E_{T} [GeV]","Ratio of Passing Spectrum to No Cut Spectrum",spectraColors[3],0,1);
+
+  FormatTH1(dhCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[0],1e-14,1e-4);
+  FormatTH1(ihCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[1],1e-11,1e-4);
+  FormatTH1(loETCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[2],1e-11,1e-4);
+  FormatTH1(hiETCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[3],1e-11,1e-4);
+  FormatTH1(dhCutfail_to_all, "E_{T} [GeV]","Ratio of Failing Spectrum to No Cut Spectrum",spectraColors[0],0,1);
+  FormatTH1(ihCutfail_to_all, "E_{T} [GeV]","Ratio of Failing Spectrum to No Cut Spectrum",spectraColors[1],0,1);
+  FormatTH1(loETCutfail_to_all, "E_{T} [GeV]","Ratio of Failing Spectrum to No Cut Spectrum",spectraColors[2],0,1);
+  FormatTH1(hiETCutfail_to_all, "E_{T} [GeV]","Ratio of Failing Spectrum to No Cut Spectrum",spectraColors[3],0,1);
+
+  TLegend* passing_cut_to_all = new TLegend(0.57,0.55,0.9,0.65);
+  TLegend* all_minus_passing = new TLegend(0.57,0.55,0.9,0.65);
+  TLegend* failing_cut_to_all = new TLegend(0.57,0.55,0.9,0.65);
+  passing_cut_to_all->SetFillStyle(0);
+  passing_cut_to_all->SetFillColor(0);
+  passing_cut_to_all->SetTextFont(42);
+  passing_cut_to_all->SetBorderSize(0);
+  passing_cut_to_all->SetTextSize(0.02);
+
+  all_minus_passing->SetFillStyle(0);
+  all_minus_passing->SetFillColor(0);
+  all_minus_passing->SetTextFont(42);
+  all_minus_passing->SetBorderSize(0);
+  all_minus_passing->SetTextSize(0.02);
+
+  failing_cut_to_all->SetFillStyle(0);
+  failing_cut_to_all->SetFillColor(0);
+  failing_cut_to_all->SetTextFont(42);
+  failing_cut_to_all->SetBorderSize(0);
+  failing_cut_to_all->SetTextSize(0.02);
+  gPad->SetLogy(0);
+  
+  passing_cut_to_all->AddEntry(dhCut_to_all,"Strip Cut","p");
+  passing_cut_to_all->AddEntry(ihCut_to_all,"IH Fraction Cut","p");
+  passing_cut_to_all->AddEntry(loETCut_to_all,"Low EM Frac. Cut","p");
+  passing_cut_to_all->AddEntry(hiETCut_to_all,"High EM Frac. Cut","p");
+  
+  all_minus_passing->AddEntry(dhCut_minus_all,"Strip Cut","p");
+  all_minus_passing->AddEntry(ihCut_minus_all,"IH Fraction Cut","p");
+  all_minus_passing->AddEntry(loETCut_minus_all,"Low EM Frac. Cut","p");
+  all_minus_passing->AddEntry(hiETCut_minus_all,"High EM Frac. Cut","p");
+  gPad->SetLogy(0);
+  failing_cut_to_all->AddEntry(dhCutfail_to_all,"Strip Cut","p");
+  failing_cut_to_all->AddEntry(ihCutfail_to_all,"IH Fraction Cut","p");
+  failing_cut_to_all->AddEntry(loETCutfail_to_all,"Low EM Frac. Cut","p");
+  failing_cut_to_all->AddEntry(hiETCutfail_to_all,"High EM Frac. Cut","p");
+  
+
+  dhCut_to_all->Draw("P HIST");
+  ihCut_to_all->Draw("SAME P HIST");
+  loETCut_to_all->Draw("SAME P HIST");
+  hiETCut_to_all->Draw("SAME P HIST");
+  passing_cut_to_all->Draw();
+  canvas->SaveAs("output/chi2img/h1_passing_to_all.png");
+
+  dhCutfail_to_all->Draw("PHIST");
+  ihCutfail_to_all->Draw("SAME P HIST");
+  loETCutfail_to_all->Draw("SAME P HIST");
+  hiETCutfail_to_all->Draw("SAME P HIST");
+  failing_cut_to_all->Draw();
+  canvas->SaveAs("output/chi2img/h1_failing_to_all.png");
+
+  gPad->SetLogy();
+  dhCut_minus_all->Draw("P HIST");
+  ihCut_minus_all->Draw("SAME P HIST");
+  loETCut_minus_all->Draw("SAME P HIST");
+  hiETCut_minus_all->Draw("SAME P HIST");
+  all_minus_passing->Draw();
+  canvas->SaveAs("output/chi2img/h1_passing_minus_all.png");
+  gPad->SetLogy(0);
+
 
 
   int histgroup;

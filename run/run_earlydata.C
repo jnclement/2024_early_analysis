@@ -1,47 +1,24 @@
-#include <calowaveformsim/EliminateBackground.h>
-//#include <trigger/TriggerRunInfo.h>
-//#include <trigger/TriggerRunInfoReco.h>
 #include <fun4all/Fun4AllServer.h>
-
 #include <fun4all/Fun4AllInputManager.h>
 #include <fun4all/Fun4AllDstInputManager.h>
 #include <fun4all/SubsysReco.h>
-#include <jetbase/FastJetAlgo.h>
 #include <jetbase/JetReco.h>
 #include <jetbase/TowerJetInput.h>
-#include <g4jets/TruthJetInput.h>
-//#include <caloreco/CaloTowerStatus.h>
-#include <jetbackground/CopyAndSubtractJets.h>
-#include <jetbackground/DetermineTowerBackground.h>
+//#include <g4jets/TruthJetInput.h>
+#include <caloreco/CaloTowerStatus.h>
 #include <jetbackground/FastJetAlgoSub.h>
 #include <jetbackground/RetowerCEMC.h>
-#include <jetbackground/SubtractTowers.h>
-#include <jetbackground/SubtractTowersCS.h>
-//#include <jetbase/FastJetAlgo.h>
-//#include <jetbase/JetReco.h>
-//#include <jetbase/TowerJetInput.h>
-//#include <g4jets/TruthJetInput.h>
-
 #include <fstream>
 #include <phool/recoConsts.h>
 #include <TSystem.h>
-//#include <caloreco/CaloTowerCalib.h>
-
-#include <g4mbd/MbdDigitization.h>
-#include <mbd/MbdReco.h>
+#include <caloreco/CaloTowerCalib.h>
 #include <frog/FROG.h>
 #include <ffamodules/CDBInterface.h>
 #include <fun4all/Fun4AllRunNodeInputManager.h>
-#include <g4centrality/PHG4CentralityReco.h>
-#include <centrality/CentralityReco.h>
-
 #include <r24earlytreemaker/R24earlytreemaker.h>
 #include <chi2checker/Chi2checker.h>
 #include <trigzvtxchecker/Trigzvtxchecker.h>
-#include </sphenix/user/jocl/projects/macros/common/Calo_Calib.C>
-#include <CaloTowerCalib.h>
 #include <globalvertex/GlobalVertexReco.h>
-
 #include <beambackgroundfilterandqa/BeamBackgroundFilterAndQA.h>
 //#include <G4Setup_sPHENIX.C>
 using namespace std;
@@ -49,8 +26,8 @@ using namespace std;
 R__LOAD_LIBRARY(libchi2checker.so)
 R__LOAD_LIBRARY(libr24earlytreemaker.so)
 R__LOAD_LIBRARY(libg4centrality.so)
-R__LOAD_LIBRARY(libFROG.so)
-R__LOAD_LIBRARY(libg4vertex.so)
+//R__LOAD_LIBRARY(libFROG.so)
+//R__LOAD_LIBRARY(libg4vertex.so)
 R__LOAD_LIBRARY(libfun4all.so)
 R__LOAD_LIBRARY(libcalo_io.so)
 R__LOAD_LIBRARY(libcalo_reco.so)
@@ -58,7 +35,7 @@ R__LOAD_LIBRARY(libg4mbd.so)
 R__LOAD_LIBRARY(libmbd_io.so)
 R__LOAD_LIBRARY(libmbd.so)
 R__LOAD_LIBRARY(libffamodules.so)
-R__LOAD_LIBRARY(libg4jets.so)
+//R__LOAD_LIBRARY(libg4jets.so)
 R__LOAD_LIBRARY(libjetbase.so)
 R__LOAD_LIBRARY(libbeambackgroundfilterandqa.so);
 R__LOAD_LIBRARY(libjetbackground.so)
@@ -71,11 +48,6 @@ bool file_exists(const char* filename)
 }
 int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0, string dir = ".")
 {
-  TString s("libbeambackgroundfilterandqa.so");
-  const char* path = gSystem->FindDynamicLibrary(s);
-  cout << path << endl;
-
-  //cout << "test0" << endl;
   int verbosity = 0;
   string filename = dir+"/"+to_string(datorsim?rn:nproc)+"/events_"+tag+(tag==""?"":"_");
   filename += to_string(datorsim?rn:nproc)+"_";
@@ -91,7 +63,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   gSystem->Load("libg4detectors.so");
   gSystem->Load("libjetbackground.so");
   gSystem->Load("libcalo_io.so");
-  gSystem->Load("libg4dst.so");
+  //gSystem->Load("libg4dst.so");
   //gSystem->Load("libjetbackground.so");
   //gSystem->Load("/sphenix/user/jocl/projects/testinstall/lib/libbeambackgroundfilterandqa.so.0.0.0");
 
@@ -124,13 +96,14 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   if(!datorsim && list2) in_2->AddFile(line2);
   if(!datorsim) in_3->AddFile(line3);
   se->registerInputManager( in_1 );
-
+  
   if(!datorsim) se->registerInputManager( in_2 );
   //if(!datorsim) se->registerInputManager( in_3 );
 
   std::cout << "status setters" << std::endl;
   
-  Trigzvtxchecker* tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug);
+  Trigzvtxchecker* tz;
+  if(datorsim) tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug, "tzvtx");
   if(datorsim) se->registerSubsystem(tz);
   if(!datorsim)
     {
@@ -177,20 +150,19 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   cout << "registered background filter" << endl;
 
   CDBInterface::instance()->Verbosity(0);
-  int cont = 0;
-  EliminateBackground* bgelim = new EliminateBackground("bgelim");
+  //int cont = 0;
+  //EliminateBackground* bgelim = new EliminateBackground("bgelim");
   //se->registerSubsystem(bgelim);
   //auto mbddigi = new MbdDigitization();
   //auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
   if (!datorsim)
     {
-      /*
-      mbddigi->Verbosity(verbosity);
-      se->registerSubsystem(mbddigi);
-      mbdreco->Verbosity(verbosity);
-      se->registerSubsystem(mbdreco);
-      */
+      //mbddigi->Verbosity(verbosity);
+      //se->registerSubsystem(mbddigi);
+      //mbdreco->Verbosity(verbosity);
+      //se->registerSubsystem(mbdreco);
+      
       gblvertex->Verbosity(verbosity);
       se->registerSubsystem(gblvertex);
     }
@@ -207,7 +179,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   rcemc->Verbosity(verbosity);
   se->registerSubsystem(rcemc);
   cout << "set up retower emcal" << endl;
-  JetReco *truthjetreco = new JetReco();
+  //JetReco *truthjetreco = new JetReco();
+  /*
   if(!datorsim)
     {
       TruthJetInput *tji = new TruthJetInput(Jet::PARTICLE);
@@ -218,7 +191,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
       truthjetreco->set_input_node("G4TruthInfo");
       //se->registerSubsystem(truthjetreco);
     }
-
+  */
+  
   JetReco *towerjetreco = new JetReco();
   //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
   towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB"));
@@ -240,7 +214,6 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 0);
   //cout << "test3" << endl;
   if(!datorsim) se->registerSubsystem( tt );
-  
   cout << "test4" << endl;
   se->Print("NODETREE");
   cout << "run " << nevt << endl;
