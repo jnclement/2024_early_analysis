@@ -32,6 +32,71 @@
 #include <algorithm>
 #include "dlUtility.h"
 
+static const float radius_EM = 93.5;
+static const float minz_EM = -130.23;
+static const float maxz_EM = 130.23;
+
+static const float radius_IH = 127.503;
+static const float minz_IH = -170.299;
+static const float maxz_IH = 170.299;
+
+static const float radius_OH = 225.87;
+static const float minz_OH = -301.683;
+static const float maxz_OH = 301.683;
+
+float get_emcal_mineta_zcorrected(float zvertex) {
+  float z = minz_EM - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_EM);
+  return eta_zcorrected;
+}
+
+float get_emcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_EM - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_EM);
+  return eta_zcorrected;
+}
+
+float get_ihcal_mineta_zcorrected(float zvertex) {
+  float z = minz_IH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_IH);
+  return eta_zcorrected;
+}
+
+float get_ihcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_IH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_IH);
+  return eta_zcorrected;
+}
+
+float get_ohcal_mineta_zcorrected(float zvertex) {
+  float z = minz_OH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_OH);
+  return eta_zcorrected;
+}
+
+float get_ohcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_OH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_OH);
+  return eta_zcorrected;
+}
+
+bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
+  float emcal_mineta = get_emcal_mineta_zcorrected(zertex);
+  float emcal_maxeta = get_emcal_maxeta_zcorrected(zertex);
+  float ihcal_mineta = get_ihcal_mineta_zcorrected(zertex);
+  float ihcal_maxeta = get_ihcal_maxeta_zcorrected(zertex);
+  float ohcal_mineta = get_ohcal_mineta_zcorrected(zertex);
+  float ohcal_maxeta = get_ohcal_maxeta_zcorrected(zertex);
+  float minlimit = emcal_mineta;
+  if (ihcal_mineta > minlimit) minlimit = ihcal_mineta;
+  if (ohcal_mineta > minlimit) minlimit = ohcal_mineta;
+  float maxlimit = emcal_maxeta;
+  if (ihcal_maxeta < maxlimit) maxlimit = ihcal_maxeta;
+  if (ohcal_maxeta < maxlimit) maxlimit = ohcal_maxeta;
+  minlimit += jet_radius;
+  maxlimit -= jet_radius;
+  return jet_eta < minlimit || jet_eta > maxlimit;
+}
 
 int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 {
@@ -154,28 +219,37 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       float subjetET = 0;
       float ljetph = 0;
       float subjetph = 0;
+      float subjeteta = 0;
       float ljetfrcem = -1;
       int isdijet = 0;
       float ljeteta = 0;
       float ljetfrcoh = -1;
       for(int j=0; j<njet; ++j)
 	{
-	  if(abs(jet_et[j]) > 0.7) continue;
-	  h1_ucspec->Fill(jet_e[j]);
 	  if(jet_e[j] > ljetET)
 	    {
 	      subjetET = ljetET;
 	      subjetph = ljetph;
+	      subjeteta = ljeteta;
 	      ljetET = jet_e[j];
 	      ljetph = jet_ph[j];
 	      ljetfrcem = frcem[j];
 	      ljeteta = jet_et[j];
-	      //ljetfrcoh = frcoh[j];
+	      ljetfrcoh = frcoh[j];
 	    }
 	}
-      if(ljetET < 8) continue;
-      if(subjetET > 8) isdijet = 1;
       
+      bool ljetHighEta = check_bad_jet_eta(ljeteta, vtx[2], 0.4)
+      bool subjetHighEta = check_bad_jet_eta(subjeteta, vtx[2], 0.4)
+
+      if(ljetET < 8 || ljetHighEta) continue;
+      for(int j=0; j<njet; ++j)
+	{
+	  if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
+	  h1_ucspec->Fill(jet_e[j]);
+	}
+      if(subjetET > 8) isdijet = 1;
+      if(subjetHighEta) isdijet = 0;
       float dphi = abs(ljetph - subjetph);
       if(dphi > M_PI) dphi = 2*M_PI - dphi;
 
@@ -184,8 +258,8 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       //bool sdPhiCut = (ljetfrcem < 0.4 && dphi < 0.15) && isdijet;
       bool lETCut = ljetfrcem < 0.1 && (ljetET > (50*ljetfrcem+20)) && (hdPhiCut || !isdijet);
       bool hETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+75)) && (hdPhiCut || !isdijet);
-      //bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
-      bool fullcut = bbCut || lETCut || hETCut;// || ihCut;
+      bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
+      bool fullcut = bbCut || lETCut || hETCut || ihCut;
       h1_forrat[2]->Fill(ljetET);
       
       if(isdijet && ljetET > 20 && subjetET > 10)
@@ -194,27 +268,27 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	  xJ[0]->Fill(subjetET/ljetET);
 	}
       if(bbCut) h1_zdist[1]->Fill(vtx[2]);
-      //if(ihCut) h1_zdist[2]->Fill(vtx[2]);
+      if(ihCut) h1_zdist[2]->Fill(vtx[2]);
       if(lETCut) h1_zdist[3]->Fill(vtx[2]);
       if(hETCut) h1_zdist[4]->Fill(vtx[2]);
       
       hists2[0]->Fill(ljetfrcem,ljetET);
-      //hists2[2]->Fill(ljetfrcoh,ljetET);
-      //hists2[4]->Fill(ljetfrcoh,ljetfrcem);
+      hists2[2]->Fill(ljetfrcoh,ljetET);
+      hists2[4]->Fill(ljetfrcoh,ljetfrcem);
       
       if(!fullcut)
 	{
 	  hists2[1]->Fill(ljetfrcem,ljetET);
-	  //hists2[3]->Fill(ljetfrcoh,ljetET);
-	  //hists2[5]->Fill(ljetfrcoh,ljetfrcem);
+	  hists2[3]->Fill(ljetfrcoh,ljetET);
+	  hists2[5]->Fill(ljetfrcoh,ljetfrcem);
 	  h1_zdist[5]->Fill(vtx[2]);
 	  h1_forrat[0]->Fill(ljetET);
 	  //h1_cspec->Fill(ljetET);
 	  for(int j=0; j<njet; ++j)
 	    {
+	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
 	      if(jet_e[j] >8)
 		{
-		  if(abs(jet_et[j]) > 0.7) continue;
 		  h1_cspec->Fill(jet_e[j]);
 		}
 	    }

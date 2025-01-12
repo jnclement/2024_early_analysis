@@ -163,6 +163,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   }
 
 
+  std::vector<TH2*> hists2_sim;
   TList* simkeys = simfile->GetListOfKeys();
   cout << "nKey: " << keys->GetSize() << endl;
   TIter simiter(simkeys);
@@ -182,6 +183,10 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
 	{
 	  cout << "test" << endl;
 	  xJ.push_back((TH1*)obj);
+	}
+      if(histName.BeginsWith("hists2"))
+	{
+	  hists2_sim.push_back((TH2*)obj);
 	}
     }
     else cout <<"obj again: "<< obj << endl;
@@ -748,7 +753,28 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   canvas->SaveAs("output/chi2img/h1_passing_minus_all.png");
   gPad->SetLogy(0);
 
+  const int naxistitles2 = 3;
+  std::string xtitles_hists2_sim[naxistitles2] = {"Fraction of E_{T,lead jet} in EMCal","Fraction of E_{T,lead jet} in OHCal","Fraction of E_{T,lead jet} in OHCal"};
 
+  std::string ytitles_hists2_sim[naxistitles2] = {"E_{T,lead jet}","E_{T,lead jet}","Fraction of E_{T,lead jet} in EMCal"};
+
+  std::string filenames2[naxistitles2] = {"sim_frcem_et","sim_frcoh_et","sim_frcoh_frcem"};
+
+
+  for(int i=0; i<6; ++i)
+    {
+    std:string cutstring = i%2==0?"_nocuts":"_withcuts";
+      std::string texts2[1] = {i%2==0?"No cuts applied":"All cuts applied"};
+      FormatAndDrawHistogram(
+			     canvas,hists2_sim.at(i),
+			     (filenames2[i/naxistitles2]+cutstring),xtitles_hists2_sim[i/naxistitles2].c_str(),ytitles_hists2_sim[i/naxistitles2].c_str(),"N_{jet}",
+			     0.15,0.2,0.15,0.15,
+			     1.85,1.85,2,
+			     0.03,0.03,0.03,
+			     0.03,0.03,0.03,
+			     texts2
+			     );
+    }
 
   int histgroup;
   for(int i=0; i<histograms.size(); ++i)

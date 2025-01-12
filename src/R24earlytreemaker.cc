@@ -58,7 +58,7 @@
 #include <g4main/PHG4Hit.h>
 
 #include <iostream>
-
+#include <phool/recoConsts.h>
 #include <centrality/CentralityInfo.h>
 #include <calotrigger/MinimumBiasInfo.h>
 #include <calotrigger/MinimumBiasInfov1.h>
@@ -66,10 +66,78 @@
 #include <jetbase/JetMapv1.h>
 #include <jetbase/JetMap.h>
 using namespace std;
+
+static const float radius_EM = 93.5;
+static const float minz_EM = -130.23;
+static const float maxz_EM = 130.23;
+
+static const float radius_IH = 127.503;
+static const float minz_IH = -170.299;
+static const float maxz_IH = 170.299;
+
+static const float radius_OH = 225.87;
+static const float minz_OH = -301.683;
+static const float maxz_OH = 301.683;
+
+float get_emcal_mineta_zcorrected(float zvertex) {
+  float z = minz_EM - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_EM);
+  return eta_zcorrected;
+}
+
+float get_emcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_EM - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_EM);
+  return eta_zcorrected;
+}
+
+float get_ihcal_mineta_zcorrected(float zvertex) {
+  float z = minz_IH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_IH);
+  return eta_zcorrected;
+}
+
+float get_ihcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_IH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_IH);
+  return eta_zcorrected;
+}
+
+float get_ohcal_mineta_zcorrected(float zvertex) {
+  float z = minz_OH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_OH);
+  return eta_zcorrected;
+}
+
+float get_ohcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_OH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_OH);
+  return eta_zcorrected;
+}
+
+bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
+  float emcal_mineta = get_emcal_mineta_zcorrected(zertex);
+  float emcal_maxeta = get_emcal_maxeta_zcorrected(zertex);
+  float ihcal_mineta = get_ihcal_mineta_zcorrected(zertex);
+  float ihcal_maxeta = get_ihcal_maxeta_zcorrected(zertex);
+  float ohcal_mineta = get_ohcal_mineta_zcorrected(zertex);
+  float ohcal_maxeta = get_ohcal_maxeta_zcorrected(zertex);
+  float minlimit = emcal_mineta;
+  if (ihcal_mineta > minlimit) minlimit = ihcal_mineta;
+  if (ohcal_mineta > minlimit) minlimit = ohcal_mineta;
+  float maxlimit = emcal_maxeta;
+  if (ihcal_maxeta < maxlimit) maxlimit = ihcal_maxeta;
+  if (ohcal_maxeta < maxlimit) maxlimit = ohcal_maxeta;
+  minlimit += jet_radius;
+  maxlimit -= jet_radius;
+  return jet_eta < minlimit || jet_eta > maxlimit;
+}
+
 //____________________________________________________________________________..
 R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim, int dotow):
   SubsysReco("test")//).c_str())
 {
+  _rc = recoConsts::instance();
   _dotow = dotow;
   _evtnum = 0;
   _evtct = 0;
@@ -204,24 +272,20 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   njet = 0;
   sector_rtem = 0;
   //Get towerinfocontainer objects from nodetree
-  TowerInfoContainer *towersEM = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
-  if(!towersEM) towersEM = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
-  if(!towersEM) towersEM = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
+  TowerInfoContainer *towersEM = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
+  //towersEM = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
+  //if(!towersEM) towersEM = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
+  
 
-  MinimumBiasInfov1* mbinfo2 = findNode::getClass<MinimumBiasInfov1>(topNode, "mbc_bkgd");
-  if(mbinfo2)
-    {
-      _bbfqavec = mbinfo2->getBkgdType();
-    }
-
+  _bbfqavec = _rc->get_IntFlag("HasBeamBackground_StreakSidebandFilter") << 5;
   TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
   if(!rtem) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
 
   TowerInfoContainer *towersIH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALIN");
   if(!towersIH) towersIH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALIN");
-  TowerInfoContainer *towersOH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALOUT");
+  TowerInfoContainer *towersOH = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
   if(!towersOH) towersOH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
-  if(!towersOH) towersOH = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
+  if(!towersOH) towersOH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALOUT");
   TowerInfoContainer *towersEMuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_CEMC");
   TowerInfoContainer *towersIHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALIN");
   TowerInfoContainer *towersOHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALOUT");
@@ -396,6 +460,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	    {
 	      jet_r[njet] = 0.4;
 	      jet_et[njet] = jet->get_eta();
+	      if(check_bad_jet_eta(jet_et[njet],vtx[2],0.4)) continue;
 	      jet_ph[njet] = jet->get_phi();
 	      jet_e[njet] = jet->get_e()/cosh(jet_et[njet]);
 	    }
@@ -420,10 +485,12 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      TowerInfo* tower;
 	      if(comp.first == 13 || comp.first == 28 || comp.first == 25)
 		{
+		  if(_debug > 3) cout << "em component" << endl;
 		  tower = towersEM->get_tower_at_channel(channel);
 		  int key = towersEM->encode_key(channel);
 		  const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALIN, towersEM->getTowerEtaBin(key), towersEM->getTowerPhiBin(key));
 		  RawTowerGeom *tower_geom = geom[1]->get_tower_geometry(geomkey);
+		  if(_debug > 3) cout << " got tower geom" << endl;
 		  float radius = 93.5;
 		  float ihEta = tower_geom->get_eta();
 		  float emZ = radius/(tan(2*atan(exp(-ihEta))));
@@ -431,23 +498,28 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
 		  _frcem[njet] += tower->get_energy()/cosh(towerEta);
+		  if(_debug > 3) cout << "end em component" << endl;
 		}
 	      if(comp.first == 7 || comp.first == 27)
 		{
+		  if(_debug > 3) cout << "oh component" << endl;
 		  tower = towersOH->get_tower_at_channel(channel);
+		  if(_debug > 3) cout << "got tower " << tower << endl;
 		  int key = towersOH->encode_key(channel);
-		  const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALIN, towersOH->getTowerEtaBin(key), towersOH->getTowerPhiBin(key));
+		  const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALOUT, towersOH->getTowerEtaBin(key), towersOH->getTowerPhiBin(key));
 		  RawTowerGeom *tower_geom = geom[2]->get_tower_geometry(geomkey);
+		  if(_debug > 3) cout << "got tower geom " << tower_geom << endl;
 		  float radius = tower_geom->get_center_radius();
 		  float newz = tower_geom->get_center_z() - vtx[2];
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
 		  _frcoh[njet] += tower->get_energy()/cosh(towerEta);
+		  if(_debug > 3) cout << "end oh component" << endl;
 		}
 	    }
 	  _frcem[njet] /= jet_e[njet];
 	  _frcoh[njet] /= jet_e[njet];
-
+	  if(_debug > 3) cout << "end comp vector" << endl;
 	  /*
 	  for(auto comp: jet->get_comp_vec())
 	    {

@@ -19,7 +19,6 @@
 #include <chi2checker/Chi2checker.h>
 #include <trigzvtxchecker/Trigzvtxchecker.h>
 #include <globalvertex/GlobalVertexReco.h>
-#include <beambackgroundfilterandqa/BeamBackgroundFilterAndQA.h>
 //#include <G4Setup_sPHENIX.C>
 using namespace std;
 
@@ -37,9 +36,7 @@ R__LOAD_LIBRARY(libmbd.so)
 R__LOAD_LIBRARY(libffamodules.so)
 //R__LOAD_LIBRARY(libg4jets.so)
 R__LOAD_LIBRARY(libjetbase.so)
-R__LOAD_LIBRARY(libbeambackgroundfilterandqa.so);
 R__LOAD_LIBRARY(libjetbackground.so)
-R__LOAD_LIBRARY(libemulatortreemaker.so)
 R__LOAD_LIBRARY(libtrigzvtxchecker.so)
 bool file_exists(const char* filename)
 {
@@ -141,13 +138,6 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
       se->registerSubsystem(calibIHCal);
       
     }
-
-  cout << "setting up BBFAQA" << endl;
-  BeamBackgroundFilterAndQA* bfq = new BeamBackgroundFilterAndQA();
-  //bfq->setMaxAdjacentTwrEne(0.6);
-  //bfq->setMinStreakTwrEne(0.6);
-  se->registerSubsystem(bfq);
-  cout << "registered background filter" << endl;
 
   CDBInterface::instance()->Verbosity(0);
   //int cont = 0;

@@ -7,7 +7,7 @@
 #include <vector>
 #include "TTree.h"
 #include "TFile.h"
-
+#include <phool/recoConsts.h>
 class PHCompositeNode;
 class CentralityInfo;
 class R24earlytreemaker : public SubsysReco
@@ -36,6 +36,7 @@ class R24earlytreemaker : public SubsysReco
 
 
  private:
+  recoConsts* _rc;
   int ismb = 0;
   long unsigned int _bbfqavec;
   float _frcem[1000];

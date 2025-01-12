@@ -31,6 +31,71 @@
 #include <algorithm>
 #include "dlUtility.h"
 #include <TDatime.h>
+static const float radius_EM = 93.5;
+static const float minz_EM = -130.23;
+static const float maxz_EM = 130.23;
+
+static const float radius_IH = 127.503;
+static const float minz_IH = -170.299;
+static const float maxz_IH = 170.299;
+
+static const float radius_OH = 225.87;
+static const float minz_OH = -301.683;
+static const float maxz_OH = 301.683;
+
+float get_emcal_mineta_zcorrected(float zvertex) {
+  float z = minz_EM - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_EM);
+  return eta_zcorrected;
+}
+
+float get_emcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_EM - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_EM);
+  return eta_zcorrected;
+}
+
+float get_ihcal_mineta_zcorrected(float zvertex) {
+  float z = minz_IH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_IH);
+  return eta_zcorrected;
+}
+
+float get_ihcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_IH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_IH);
+  return eta_zcorrected;
+}
+
+float get_ohcal_mineta_zcorrected(float zvertex) {
+  float z = minz_OH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_OH);
+  return eta_zcorrected;
+}
+
+float get_ohcal_maxeta_zcorrected(float zvertex) {
+  float z = maxz_OH - zvertex;
+  float eta_zcorrected = asinh(z / (float)radius_OH);
+  return eta_zcorrected;
+}
+
+bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
+  float emcal_mineta = get_emcal_mineta_zcorrected(zertex);
+  float emcal_maxeta = get_emcal_maxeta_zcorrected(zertex);
+  float ihcal_mineta = get_ihcal_mineta_zcorrected(zertex);
+  float ihcal_maxeta = get_ihcal_maxeta_zcorrected(zertex);
+  float ohcal_mineta = get_ohcal_mineta_zcorrected(zertex);
+  float ohcal_maxeta = get_ohcal_maxeta_zcorrected(zertex);
+  float minlimit = emcal_mineta;
+  if (ihcal_mineta > minlimit) minlimit = ihcal_mineta;
+  if (ohcal_mineta > minlimit) minlimit = ohcal_mineta;
+  float maxlimit = emcal_maxeta;
+  if (ihcal_maxeta < maxlimit) maxlimit = ihcal_maxeta;
+  if (ohcal_maxeta < maxlimit) maxlimit = ohcal_maxeta;
+  minlimit += jet_radius;
+  maxlimit -= jet_radius;
+  return jet_eta < minlimit || jet_eta > maxlimit;
+}
 
 void get_scaledowns(int runnumber, int scaledowns[])
 {
@@ -474,7 +539,7 @@ int build_chi2hists(string filebase, int runnumber)
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
 	if(abs(zvtx) > 150) continue;
-	if(abs(eta) > 0.7) continue;
+	if(check_bad_jet_eta(eta,zvtx,0.4)) continue;
 	bool dPhiCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	bool dhCut = ((bbfqavec >> 5) & 1);
 	bool ihCut = (frcem+frcoh) < 0.65;
@@ -526,7 +591,7 @@ int build_chi2hists(string filebase, int runnumber)
 	      {
 		for(int k=0; k<jet_n; ++k)
 		  {
-		    if(abs(jet_eta[k]) < 0.7 && jet_et[k] > 8)
+		    if(jet_et[k] > 8)
 		      {
 			jetSpectra[j]->Fill(jet_et[k]);		
 		      }
