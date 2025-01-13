@@ -261,7 +261,7 @@ int build_chi2hists(string filebase, int runnumber)
     int isdijet, nBadChi2, maxETowChi2Det, maxETowIsZS;
     Float_t jetcompE[3][512], jetcompEta[3][512], jetcompPhi[3][512];
     Float_t maxTowChi2[3];
-    float jet_eta[10], jet_phi[10], jet_et[10];
+    float jet_eta[10], jet_phi[10], jet_et[10], alljetfrcem[10], alljetfrcoh[10];
     int jet_n;
     long long unsigned int triggervec;
     unsigned int bbfqavec, elmbgvec;
@@ -294,7 +294,8 @@ int build_chi2hists(string filebase, int runnumber)
     jet_tree->SetBranchAddress("jet_eta",jet_eta);
     jet_tree->SetBranchAddress("jet_phi",jet_phi);
     jet_tree->SetBranchAddress("jet_n",&jet_n);
-    
+    jet_tree->SetBranchAddress("alljetfrcem",alljetfrcem);
+    jet_tree->SetBranchAddress("alljetfrcoh",alljetfrcoh);
 
 
     //std:://cerr << "set branches" << endl;
