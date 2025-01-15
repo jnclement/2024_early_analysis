@@ -41,7 +41,7 @@ mv $CALOCLF ./dsts/$2/calo_cluster_${2}.root
 mv $GLOBALF ./dsts/$2/global_${2}.root
 ls ./dsts/$2
 #cp -r $TRTHJET ./dsts/$2/truth_jet_${2}.root
-root -b -q 'run_earlydata.C("'${1}'",'${2}',0,'${5}','${2}','${4}',0,'${6}')'
+root -b -q 'run_earlydata.C("'${1}'",'${2}',10,'${5}','${2}','${4}',0,'${6}')'
 ls
 echo " "
 ls $SUBDIR

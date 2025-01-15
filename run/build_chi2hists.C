@@ -117,7 +117,7 @@ void get_scaledowns(int runnumber, int scaledowns[])
   TString cmd = "";
   char sql[1000];
 
-  cout << runnumber << endl;
+  //cout << runnumber << endl;
   for (int is = 0; is < 64; is++)
     {
       sprintf(sql, "select scaledown%02d from gl1_scaledown where runnumber = %d;", is, runnumber);
@@ -140,7 +140,7 @@ void get_scaledowns(int runnumber, int scaledowns[])
 
       delete res;
     }
-  cout << endl;
+  //cout << endl;
   delete db;
 }
 
@@ -261,8 +261,9 @@ int build_chi2hists(string filebase, int runnumber)
     int isdijet, nBadChi2, maxETowChi2Det, maxETowIsZS;
     Float_t jetcompE[3][512], jetcompEta[3][512], jetcompPhi[3][512];
     Float_t maxTowChi2[3];
-    float jet_eta[10], jet_phi[10], jet_et[10], alljetfrcem[10], alljetfrcoh[10];
-    int jet_n;
+    float dPhi2pc[1000], dEta2pc[1000];
+    float jet_eta[10], jet_phi[10], jet_et[10], alljetfrcem[10], alljetfrcoh[10], emLayerJetPhi[10], emLayerJetEta[10], emLayerJetET[10], ohLayerJetPhi[10], ohLayerJetEta[10], ohLayerJetET[10], dPhiLayer[10];
+    int jet_n, n2pc;//, nLayerEm, nLayerOh;
     long long unsigned int triggervec;
     unsigned int bbfqavec, elmbgvec;
     // Set branch addresses
@@ -296,6 +297,30 @@ int build_chi2hists(string filebase, int runnumber)
     jet_tree->SetBranchAddress("jet_n",&jet_n);
     jet_tree->SetBranchAddress("alljetfrcem",alljetfrcem);
     jet_tree->SetBranchAddress("alljetfrcoh",alljetfrcoh);
+    jet_tree->SetBranchAddress("n2pc",&n2pc);
+    //jet_tree->SetBranchAddress("nLayerEm",&nLayerEm);
+    //jet_tree->SetBranchAddress("nLayerOh",&nLayerOh);
+    jet_tree->SetBranchAddress("dPhiLayer",dPhiLayer);
+    jet_tree->SetBranchAddress("dPhi2pc",dPhi2pc);
+    jet_tree->SetBranchAddress("dEta2pc",dEta2pc);
+    /*
+    jet_tree->SetBranchAddress("emLayerJetPhi",emLayerJetPhi);
+    jet_tree->SetBranchAddress("emLayerJetEta",emLayerJetEta);
+    jet_tree->SetBranchAddress("emLayerJetET",emLayerJetET);
+    jet_tree->SetBranchAddress("ohLayerJetPhi",ohLayerJetPhi);
+    jet_tree->SetBranchAddress("ohLayerJetEta",ohLayerJetEta);
+    jet_tree->SetBranchAddress("ohLayerJetET",ohLayerJetET);
+    */
+
+
+    TH2F* h2_n2pc[2];
+    TH2F* h2_dPhiLayer[2];
+
+    for(int i=0; i<2; ++i)
+      {
+	h2_n2pc[i] = new TH2F(("dancheck_n2pc"+to_string(i)).c_str(),"",101,-1.2,1.2,257,-M_PI,M_PI);
+	h2_dPhiLayer[i] = new TH2F(("dancheck_dPhiLayer"+to_string(i)).c_str(),"",80,-0.4,0.4,120,-0.1,1.1);
+      }
 
 
     //std:://cerr << "set branches" << endl;
@@ -303,7 +328,7 @@ int build_chi2hists(string filebase, int runnumber)
     const int numHistograms = 24; // Number of histograms in each array
     const int numTypes = 92;
     // Arrays to hold the histograms
-    cout << "got branches" << endl;
+    //cout << "got branches" << endl;
     TH2F* h2_maxETowChi2_nBadChi2[numHistograms];
     TH2F* h2_maxETowChi2_maxTowDiff[numHistograms];
     TH2F* h2_maxETowChi2_chi2[numHistograms];
@@ -409,7 +434,7 @@ int build_chi2hists(string filebase, int runnumber)
     TH2F* h2_subjet_ET_dphi[numHistograms];
 
     TH2F* h2_AJ_dphi[numHistograms];
-    cout << "made all hist pointers" << endl;
+    //cout << "made all hist pointers" << endl;
     TH2F** allhists[numTypes] = {
       h2_maxETowChi2_nBadChi2, h2_maxETowChi2_maxTowDiff, h2_maxETowChi2_chi2, h2_maxETowChi2_frcoh, h2_maxETowChi2_frcem, h2_maxETowChi2_eta, h2_maxETowChi2_phi, h2_maxETowChi2_jet_ET, h2_maxETowChi2_dphi, h2_maxETowChi2_subjet_ET, h2_maxETowChi2_ecc, h2_maxETowChi2_maxTowE, h2_maxETowChi2_subTowE,
 
@@ -428,7 +453,7 @@ int build_chi2hists(string filebase, int runnumber)
       h2_subjet_ET_dphi,
       h2_AJ_dphi
     };
-    cout << "put hists in array" << endl;
+    //cout << "put hists in array" << endl;
     // Create the histograms using a loop
     const char* names[] = {
       "maxETowChi2_nBadChi2", "maxETowChi2_maxTowDiff", "maxETowChi2_chi2", "maxETowChi2_frcoh", "maxETowChi2_frcem", "maxETowChi2_eta", "maxETowChi2_phi", "maxETowChi2_jet_ET", "maxETowChi2_dphi", "maxETowChi2_subjet_ET", "maxETowChi2_ecc", "maxETowChi2_maxTowE", "maxETowChi2_subTowE",
@@ -481,7 +506,7 @@ int build_chi2hists(string filebase, int runnumber)
       3.15
     };
     //std:://cerr << "prep to make hists" << std::endl;
-    std::cout << "got all arrays for making hists" << endl;
+    //std:://cout << "got all arrays for making hists" << endl;
     // Loop to create histograms
     for (int i = 0; i < numTypes; ++i) {
       for (int j = 0; j < numHistograms; ++j) {
@@ -508,7 +533,7 @@ int build_chi2hists(string filebase, int runnumber)
       }
     }
     //std:://cerr << "made hists" << endl;
-    std::cout << "made hists" << endl;
+    //cout << "made hists" << endl;
     // Loop over entries in the tree
     const int nRatio = 7;
     TH1F* forRatio[nRatio];
@@ -524,7 +549,7 @@ int build_chi2hists(string filebase, int runnumber)
     for(int i=0; i<nSpectra; ++i)
       {
 	jetSpectra[i] = new TH1F(("h1_jetSpectra_"+to_string(i)).c_str(),"",1000,0,100);
-	cout << jetSpectra[i] << endl;
+	//cout << jetSpectra[i] << endl;
       }
     bool cutArr[nSpectra];
     
@@ -539,7 +564,7 @@ int build_chi2hists(string filebase, int runnumber)
     Long64_t nEntries = jet_tree->GetEntries();
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
-	if(abs(zvtx) > 150) continue;
+	if(abs(zvtx) > 30) continue;
 	if(check_bad_jet_eta(eta,zvtx,0.4)) continue;
 	bool dPhiCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	bool dhCut = ((bbfqavec >> 5) & 1);
@@ -594,11 +619,25 @@ int build_chi2hists(string filebase, int runnumber)
 		  {
 		    if(jet_et[k] > 8)
 		      {
-			jetSpectra[j]->Fill(jet_et[k]);		
+			jetSpectra[j]->Fill(jet_et[k]);
+			
 		      }
 		  }
 	      }
 	  }
+	//cout << "test" << endl;
+	for(int j=0; j<n2pc; ++j)
+	  {
+	    h2_n2pc[0]->Fill(dEta2pc[j],dPhi2pc[j]);
+	    if(!cutArr[31]) h2_n2pc[1]->Fill(dEta2pc[j],dPhi2pc[j]);
+	  }
+	
+	for(int j=0; j<jet_n; ++j)
+	  {
+	    h2_dPhiLayer[0]->Fill(dPhiLayer[j],alljetfrcem[j]);
+	    if(!cutArr[31]) h2_dPhiLayer[1]->Fill(dPhiLayer[j],alljetfrcem[j]);
+	  }
+	//cout << "test2" << endl;
 	forRatio[0]->Fill(jet_ET);
 	if(isdijet && dphi > 3*M_PI/4) forRatio[1]->Fill(jet_ET);
 	if(!cutArr[1] && isdijet) forRatio[2]->Fill(jet_ET);
@@ -638,7 +677,7 @@ int build_chi2hists(string filebase, int runnumber)
 	  {
 	    h2_AJ_dphi[whichhist]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),dphi);
 	  }
-	//if(maxTowE > 15 && maxETowChi2 < 100) cout << "Detector: " << det << " tower ET: " << maxTowE << " chi2: " << maxETowChi2 << " is ZS: " << maxETowIsZS <<endl;
+	//if(maxTowE > 15 && maxETowChi2 < 100) //cout << "Detector: " << det << " tower ET: " << maxTowE << " chi2: " << maxETowChi2 << " is ZS: " << maxETowIsZS <<endl;
 	//if(cutArr[31]) continue;
 	h2_maxETowChi2_nBadChi2[whichhist]->Fill(maxETowChi2, nBadChi2);
 	h2_maxETowChi2_maxTowDiff[whichhist]->Fill(maxETowChi2, maxTowDiff);
@@ -764,21 +803,21 @@ int build_chi2hists(string filebase, int runnumber)
     int sd17 = get_scaledown17(runnumber);
     int sd10 = get_scaledown10(runnumber);
     int nmb = get_nmb(runnumber);
-    cout << sd17 << " " << sd10 << " " << nmb << endl;
+    //cout << sd17 << " " << sd10 << " " << nmb << endl;
     for(int i=0; i<nSpectra; ++i)
       {
-	cout << "jetSpectrum: " << jetSpectra[i] << endl;
+	//cout << "jetSpectrum: " << jetSpectra[i] << endl;
 	if(sd17 >= 0 && sd10 >= 0 && nmb > 0 && std::isfinite(sd17) && std::isfinite(sd10) && std::isfinite(nmb))
 	  {
 	    float effevt = (((1.*(1+sd10))/(1+sd17))*nmb);
 	    //jetSpectra[i]->Scale(1./effevt);
-	    cout << "effevt: " << effevt << endl;
+	    //cout << "effevt: " << effevt << endl;
 	    jetSpectra[i]->Write();
 	  }
 	else
 	  {
 	    jetSpectra[i]->Clear();
-	    cout << "PANIC IN " << runnumber << " " << filebase << " " << i << endl;
+	    //cout << "PANIC IN " << runnumber << " " << filebase << " " << i << endl;
 	  }
       }
     
@@ -792,11 +831,16 @@ int build_chi2hists(string filebase, int runnumber)
       {
 	zhists[i]->Write();
       }
+    for(int i=0; i<2; ++i)
+      {
+	h2_n2pc[i]->Write();
+	h2_dPhiLayer[i]->Write();
+      }
     outputFile->Close();
 
     //cout << "wrote" << endl;
     // Clean up
     file->Close();
-    delete file;
+    //delete file;
     return 0;
   }

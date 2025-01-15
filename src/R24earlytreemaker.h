@@ -100,6 +100,22 @@ class R24earlytreemaker : public SubsysReco
   float maxTowerET[3];
   float maxTowerChi2[3];
   float caloEfrac[3];
+
+  float _dPhi2pc[1000];
+  float _dEta2pc[1000];
+  /*
+  float _emLayerJetPhi[10];
+  float _ohLayerJetPhi[10];
+  float _emLayerJetEta[10];
+  float _ohLayerJetEta[10];
+  float _emLayerJetET[10];
+  float _ohLayerJetET[10];
+  int _nLayerEm;
+  int _nLayerOh;
+  */
+  int _n2pc;
+  float _dPhiLayer[10];
+  float _l2pcEta;
   //int emcaladc[24576];
   //int ihcaladc[1536];
   //int ohcaladc[1536];

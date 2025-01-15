@@ -53,7 +53,7 @@
 #include <jetbackground/SubtractTowersCS.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>  // for gsl_rng_uniform_pos
-
+#include <TLorentzVector.h>
 #include <g4main/PHG4HitContainer.h>
 #include <g4main/PHG4Hit.h>
 
@@ -203,6 +203,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   //_tree->Branch("ohcalt",ohcalt,"ohcalt[sectoroh]/F");
   _tree->Branch("vtx",vtx,"vtx[3]/F");
   if(_dotow) _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
+  _tree->Branch("l2pcEta",&_l2pcEta,"l2pcEta/F");
   _tree->Branch("njet",&njet,"njet/I");
   _tree->Branch("frcem",_frcem,"frcem[njet]");
   _tree->Branch("frcoh",_frcoh,"frcoh[njet]");
@@ -240,6 +241,22 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   //if(!_datorsim) _tree->Branch("tjet_e",tjet_e,"tjet_e[ntj]/F");
   //if(!_datorsim) _tree->Branch("tjet_eta",tjet_eta,"tjet_eta[ntj]/F");
   _tree->Branch("bbfqavec",&_bbfqavec,"bbfqavec/i");
+
+  //_tree->Branch("nLayerEm",&_nLayerEm,"nLayerEm/I");
+  //_tree->Branch("nLayerOh",&_nLayerOh,"nLayerOh/I");
+  _tree->Branch("n2pc",&_n2pc,"n2pc/I");
+  _tree->Branch("dPhi2pcd",_dPhi2pc,"dPhi2pc[n2pc]/F");
+  _tree->Branch("dEta2pcd",_dEta2pc,"dEta2pc[n2pc]/F");
+  /*
+  _tree->Branch("emLayerJetPhi",_emLayerJetPhi,"emLayerJetPhi[nLayerEm]/F");
+  _tree->Branch("ohLayerJetPhi",_ohLayerJetPhi,"ohLayerJetPhi[nLayerOh]/F");
+  _tree->Branch("emLayerJetEta",_emLayerJetEta,"emLayerJetEta[nLayerEm]/F");
+  _tree->Branch("ohLayerJetEta",_ohLayerJetEta,"ohLayerJetEta[nLayerOh]/F");
+  _tree->Branch("emLayerJetET",_emLayerJetET,"emLayerJetET[nLayerEm]/F");
+  _tree->Branch("ohLayerJetET",_ohLayerJetET,"ohLayerJetET[nLayerOh]/F");
+  */
+  _tree->Branch("dPhiLayer",_dPhiLayer,"dPhiLayer[njet]/F");
+
   //if(!_datorsim) _tree->Branch("tjet_phi",tjet_phi,"tjet_phi[ntj]/F");
   if(_debug > 1) cout << "Init done"  << endl;
   
@@ -415,31 +432,126 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       return Fun4AllReturnCodes::ABORTEVENT;
     }
   int outfailscut = 0;
+
+  float zvtx = vtx[2];
+
+  //JetContainer* emjets = findNode::getClass<JetContainerv1>(topNode, "emtowjet");
+  //JetContainer* ohjets = findNode::getClass<JetContainerv1>(topNode, "ohtowjet");
+
+  //_nLayerEm = 0;
+  //_nLayerOh = 0;
+  _n2pc = 0;
   /*
-  MinimumBiasInfov1* mbinfo = findNode::getClass<MinimumBiasInfov1>(topNode, "mbc_bkgd");
-  MinimumBiasInfov1* mbinfo2 = findNode::getClass<MinimumBiasInfov1>(topNode, "mbc_bkgd2");
-  if(_debug > 3) cout << "mbinfo: " << mbinfo << endl;
-  if(mbinfo)
+  if(emjets)
     {
-      //cout << "mbinfo exists - setting failscut to" << mbinfo->isAuAuMinimumBias() << endl
-      outfailscut = mbinfo->isAuAuMinimumBias()?1:0; //THIS IS ACTUALLY CUT FAILURE
+      int tocheck = emjets->size();
+      for(int i=0; i<tocheck; ++i)
+        {
+          Jet* jet = emjets->get_jet(i);
+          if(jet)
+            {
+              float testJetET = jet->get_e()/cosh(jet->get_eta());
+              if(testJetET < 8) continue;
+              _emLayerJetEta[_nLayerEm] = jet->get_eta();
+              if(check_bad_jet_eta(_emLayerJetEta[_nLayerEm],zvtx,0.4)) continue;
+              _emLayerJetPhi[_nLayerEm] = jet->get_phi();
+              _emLayerJetET[_nLayerEm] = testJetET;
+              _nLayerEm++;
+            }
+        }
     }
-  else
+
+  if(ohjets)
     {
-      if(_debug > 3) cout << "NO MBINFO NODE!" << endl;
-    }
-  if(mbinfo2)
-    {
-      int outfailscut2 = mbinfo2->isAuAuMinimumBias()?1:0;
-      outfailscut += 2*outfailscut2;
-    }
-  failscut = outfailscut;
-  /*
-  else
-    {
-      ismb = 1;
+      int tocheck = ohjets->size();
+      for(int i=0; i<tocheck; ++i)
+        {
+          Jet* jet = ohjets->get_jet(i);
+          if(jet)
+            {
+              float testJetET = jet->get_e()/cosh(jet->get_eta());
+              if(testJetET < 8) continue;
+              _ohLayerJetEta[_nLayerOh] = jet->get_eta();
+              if(check_bad_jet_eta(_ohLayerJetEta[_nLayerOh],zvtx,0.4)) continue;
+              _ohLayerJetPhi[_nLayerOh] = jet->get_phi();
+              _ohLayerJetET[_nLayerOh] = testJetET;
+              _nLayerOh++;
+            }
+        }
     }
   */
+  int nchan = 1536;
+  vector<vector<float>> emTowAbove1GeV;
+  vector<vector<float>> ohTowAbove1GeV;
+  float maxTowET
+  if(towersEM)
+    {
+      for(int i=0; i<nchan; ++i)
+        {
+          TowerInfo* tower = towersEM->get_tower_at_channel(i);
+          if(!tower->get_isGood()) continue;
+          int key = towersEM->encode_key(i);
+          const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALIN, towersEM->getTowerEtaBin(key), towersEM->getTowerPhiBin(key));
+          RawTowerGeom *tower_geom = geom[1]->get_tower_geometry(geomkey); //encode tower geometry                                                                                              
+
+          float radius = 93.5;
+          float ihEta = tower_geom->get_eta();
+          float emZ = radius/(tan(2*atan(exp(-ihEta))));
+          float newz = emZ - zvtx;
+          float newTheta = atan2(radius,newz);
+          float towerEta = -log(tan(0.5*newTheta));
+          float towerPhi = tower_geom->get_phi();
+	  float towerET = tower->get_energy()/cosh(towerEta);
+	  if(towerET < 1) continue;
+          if(towerET > maxTowET)
+            {
+              maxTowET = towerET;
+              _l2pcEta = towerEta;
+            }
+          vector<float> toPush = {towerEta, towerPhi};
+          emTowAbove1GeV.push_back(toPush);
+        }
+    }
+
+  if(towersOH)
+    {
+      for(int i=0; i<nchan; ++i)
+        {
+          TowerInfo* tower = towersOH->get_tower_at_channel(i);
+          if(!tower->get_isGood()) continue;
+          int key = towersOH->encode_key(i);
+          const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALOUT, towersOH->getTowerEtaBin(key), towersOH->getTowerPhiBin(key));
+          RawTowerGeom *tower_geom = geom[2]->get_tower_geometry(geomkey); //encode tower geometry                                                                                              
+
+          float radius = tower_geom->get_center_radius();
+          float newz = tower_geom->get_center_z() - zvtx;
+          float newTheta = atan2(radius,newz);
+          float towerEta = -log(tan(0.5*newTheta));
+          float towerPhi = tower_geom->get_phi();
+	  float towerET = tower->get_energy()/cosh(towerEta);
+	  if(towerET < 1) continue;
+          if(towerET > maxTowET)
+            {
+              maxTowET = towerET;
+              _l2pcEta = towerEta;
+            }
+          vector<float> toPush = {towerEta, towerPhi};
+          ohTowAbove1GeV.push_back(toPush);
+        }
+    }
+
+  for(int i=0; i<emTowAbove1GeV.size(); ++i)
+    {
+      for(int j=0; j<ohTowAbove1GeV.size(); ++j)
+        {
+          _dPhi2pc[_n2pc] = emTowAbove1GeV.at(i).at(1) - ohTowAbove1GeV.at(j).at(1);
+          if(_dPhi2pc[_n2pc] > M_PI) _dPhi2pc[_n2pc] -= 2*M_PI;
+          if(_dPhi2pc[_n2pc] < -M_PI) _dPhi2pc[_n2pc] += 2*M_PI;
+          _dEta2pc[_n2pc] = emTowAbove1GeV.at(i).at(0) - ohTowAbove1GeV.at(j).at(0);
+          ++_n2pc;
+        }
+    }
+
   allcomp = 0;
   for(int i=0; i<3; ++i)
     {
@@ -471,6 +583,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  _frcem[njet] = 0;
 	  _frcoh[njet] = 0;
 	  if(jet_e[njet] < 8) continue;
+	  
 	  if(_debug > 2) cout << "found a good jet!" << endl;
 	  float maxeovertot = 0;
 	  float hcale = 0;
@@ -478,7 +591,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  float ohcale = 0;
 	  float ecale = 0;
 	  int ncomp = 0;
-	  
+	  TLorentzVector emAxis;
+	  TLorentzVector ohAxis;
 	  for(auto comp: jet->get_comp_vec())
 	    {
 	      unsigned int channel = comp.second;
@@ -497,6 +611,9 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  float newz = emZ - vtx[2];
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
+		  TLorentzVector tempEM;
+		  tempEM.SetPtEtaPhiE(tower->get_energy()/cosh(towerEta),towerEta,tower_geom->get_phi(),tower->get_energy());
+		  emAxis += tempEM;
 		  _frcem[njet] += tower->get_energy()/cosh(towerEta);
 		  if(_debug > 3) cout << "end em component" << endl;
 		}
@@ -513,6 +630,9 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  float newz = tower_geom->get_center_z() - vtx[2];
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
+		  TLorentzVector tempOH;
+		  tempOH.SetPtEtaPhiE(tower->get_energy()/cosh(towerEta),towerEta,tower_geom->get_phi(),tower->get_energy());
+		  ohAxis += tempOH;
 		  _frcoh[njet] += tower->get_energy()/cosh(towerEta);
 		  if(_debug > 3) cout << "end oh component" << endl;
 		}
@@ -602,6 +722,9 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  //if(maxeovertot > 0.7) continue;
 	  //seedD[njet] = maxeovertot;
 	  //jet_ph[njet] = (jet_ph[njet]>0?jet_ph[njet]-M_PI:jet_ph[njet]+M_PI);
+	  _dPhiLayer[njet] = emAxis.Phi() - ohAxis.Phi();
+	  if(_dPhiLayer[njet] > M_PI) _dPhiLayer[njet] -= 2*M_PI;
+	  if(_dPhiLayer[njet] < -M_PI) _dPhiLayer[njet] += 2*M_PI;
 	  ++njet;
 	}
     }

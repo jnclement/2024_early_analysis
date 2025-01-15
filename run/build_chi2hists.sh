@@ -16,8 +16,10 @@ mkdir -p output/err
 mkdir -p output/out
 
 name=`tail -n +$NJOB /sphenix/user/jocl/projects/run2024_earlydata/run/chi2lists/chi2list.list | head -n 1`
+echo $name
 cp $name.root ./put
 name2=`ls put/* | awk -F'.' '{print $1}'`
+echo $name2
 rn=`ls put/* | awk -F'_' '{print $3}'`
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/build_chi2hists.C .
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/dlUtility.h .

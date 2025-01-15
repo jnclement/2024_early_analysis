@@ -159,6 +159,10 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   float frcem[100];
   float jet_ph[100];
   float frcoh[100];
+  float dPhiLayer[100];
+  float dPhi2pc[1000];
+  float dEta2pc[1000];
+  int n2pc;
   tree->SetBranchAddress("bbfqavec",&bbfqavec);
   tree->SetBranchAddress("vtx",vtx);
   tree->SetBranchAddress("njet",&njet);
@@ -167,6 +171,10 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   tree->SetBranchAddress("jet_e",jet_e);
   tree->SetBranchAddress("jet_et",jet_et);
   tree->SetBranchAddress("frcoh",frcoh);
+  tree->SetBranchAddress("n2pc",&n2pc);
+  tree->SetBranchAddress("dPhiLayer",dPhiLayer);
+  tree->SetBranchAddress("dPhi2pcd",dPhi2pc);
+  tree->SetBranchAddress("dEta2pcd",dEta2pc);
   cout << "end getting branches" << endl;
   
   TFile* jetfile = TFile::Open(("output/simhists/run_jet10_"+idstr+"_"+to_string(njob)+"_simhists.root").c_str(),"RECREATE");
@@ -197,6 +205,16 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
     {
       hists2[i] = new TH2F(("hists2"+to_string(i)).c_str(),"",100,xlo[i],xhi[i],100,ylo[i],yhi[i]);
     }
+
+  TH2F* h2_n2pc[2];
+  TH2F* h2_dPhiLayer[2];
+
+  for(int i=0; i<2; ++i)
+    {
+      h2_n2pc[i] = new TH2F(("dancheck_n2pc"+to_string(i)).c_str(),"",101,-1.2,1.2,257,-M_PI,M_PI);
+      h2_dPhiLayer[i] = new TH2F(("dancheck_dPhiLayer"+to_string(i)).c_str(),"",80,-0.4,0.4,120,-0.1,1.1);
+    }
+
   
   TH1F* h1_ucspec = new TH1F("h1_ucspec","",1000,0,100);
   TH1F* h1_cspec = new TH1F("h1_cspec","",1000,0,100);
@@ -239,14 +257,15 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	    }
 	}
       
-      bool ljetHighEta = check_bad_jet_eta(ljeteta, vtx[2], 0.4)
-      bool subjetHighEta = check_bad_jet_eta(subjeteta, vtx[2], 0.4)
+      bool ljetHighEta = check_bad_jet_eta(ljeteta, vtx[2], 0.4);
+      bool subjetHighEta = check_bad_jet_eta(subjeteta, vtx[2], 0.4);
 
       if(ljetET < 8 || ljetHighEta) continue;
       for(int j=0; j<njet; ++j)
 	{
 	  if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
 	  h1_ucspec->Fill(jet_e[j]);
+	  h2_dPhiLayer[0]->Fill(dPhiLayer[j],frcem[j]);
 	}
       if(subjetET > 8) isdijet = 1;
       if(subjetHighEta) isdijet = 0;
@@ -276,8 +295,17 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       hists2[2]->Fill(ljetfrcoh,ljetET);
       hists2[4]->Fill(ljetfrcoh,ljetfrcem);
       
+      for(int j=0; j<n2pc; ++j)
+	{
+	  h2_n2pc[0]->Fill(dEta2pc[j],dPhi2pc[j]);
+	}
+
       if(!fullcut)
 	{
+	  for(int j=0; j<n2pc; ++j)
+	    {
+	      h2_n2pc[1]->Fill(dEta2pc[j],dPhi2pc[j]);
+	    }
 	  hists2[1]->Fill(ljetfrcem,ljetET);
 	  hists2[3]->Fill(ljetfrcoh,ljetET);
 	  hists2[5]->Fill(ljetfrcoh,ljetfrcem);
@@ -290,6 +318,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	      if(jet_e[j] >8)
 		{
 		  h1_cspec->Fill(jet_e[j]);
+		  h2_dPhiLayer[1]->Fill(dPhiLayer[j],frcem[j]);
 		}
 	    }
 	  if(isdijet)
@@ -322,6 +351,11 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	{
 	  h1_zdist[i]->Write();
 	}
+    }
+  for(int i=0; i<2; ++i)
+    {
+      h2_n2pc[i]->Write();
+      h2_dPhiLayer[i]->Write();
     }
   jetfile->Write();
   return 0;
