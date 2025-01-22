@@ -118,13 +118,12 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
     }
   if(profy)
     {
-      hist->Draw("COLZ");
-      std_text(canvas,texts,1,0.025,0.25,0.98,0);
       profy->SetMarkerStyle(20);
       profy->SetMarkerSize(1);
       profy->SetMarkerColor(kRed);
       profy->SetLineColor(kRed);
-      profy->Draw("SAME PS");
+      profy->Draw("PS");
+      std_text(canvas,texts,1,0.025,0.25,0.98,0);
       canvas->SaveAs((fname + "_profy.png").c_str());
     }
   canvas->Update();
@@ -204,28 +203,60 @@ void draw_dancheck(const TString& fileName, const TString& simFileName) {
   string ct[1] = {"Cuts applied"};
   string nct[1] = {"No cuts applied"};
 
-  histograms.at(0)->RebinY(4);
-  histograms.at(2)->RebinY(4);
-  hists2_sim.at(0)->RebinY(4);
-  hists2_sim.at(2)->RebinY(4);
+  //histograms.at(0)->RebinY(4);
+  //histograms.at(2)->RebinY(4);
+  //hists2_sim.at(0)->RebinY(4);
+  //hists2_sim.at(2)->RebinY(4);
 
   TProfile* profx[8];
   TProfile* profy[8];
 
   for(int i=0; i<4; ++i)
     {
-      profx[i] = histograms.at(i)->ProfileX(("pfxdat"+to_string(i)).c_str(),(i%2==0?20:1),(i%2==0?44:-1));
-      profy[i] = histograms.at(i)->ProfileY(("pfydat"+to_string(i)).c_str());
-      histograms.at(i)->GetYaxis()->SetRangeUser(-0.5,0.5);
-      if(i%2==0) histograms.at(i)->GetXaxis()->SetRangeUser(-0.5,0.5);
+      
+      if(i%2==0)
+	{
+	  for(int j=0; j<histograms.at(i)->GetNbinsX(); ++j)
+	    {
+	      for(int k=0; k<histograms.at(i)->GetNbinsY()/3; ++k)
+		{
+		  histograms.at(i)->SetBinContent(histograms.at(i)->GetBin(j,k),0);
+		}
+	      for(int k=2*histograms.at(i)->GetNbinsY()/3; k<histograms.at(i)->GetNbinsY()+1; ++k)
+		{
+		  histograms.at(i)->SetBinContent(histograms.at(i)->GetBin(j,k),0);
+		}
+	    }
+	}
+      
+      profx[i] = histograms.at(i)->ProfileX(("pfxdat"+to_string(i)).c_str(),1,-1,"S");//(i%2==0?100:1),(i%2==0?140:-1),"S");
+      profy[i] = histograms.at(i)->ProfileY(("pfydat"+to_string(i)).c_str(),1,-1,"S");
+      if(i%2==0)histograms.at(i)->GetYaxis()->SetRangeUser(-0.1,0.1);
+      //if(i%2==0) histograms.at(i)->GetXaxis()->SetRangeUser(-0,0.5);
     }
 
   for(int i=0; i<4; ++i)
     {
-      profx[i+4] = hists2_sim.at(i)->ProfileX(("pfxsim"+to_string(i+4)).c_str(),(i%2==0?20:1),(i%2==0?44:-1));
-      profy[i+4] = hists2_sim.at(i)->ProfileY(("pfysim"+to_string(i+4)).c_str());
-      hists2_sim.at(i)->GetYaxis()->SetRangeUser(-0.5,0.5);
-      if(i%2==0) hists2_sim.at(i)->GetXaxis()->SetRangeUser(-0.5,0.5);
+     
+      if(i%2==0)
+	{
+	  for(int j=0; j<hists2_sim.at(i)->GetNbinsX(); ++j)
+	    {
+	      for(int k=0; k<hists2_sim.at(i)->GetNbinsY()/3; ++k)
+		{
+		  hists2_sim.at(i)->SetBinContent(hists2_sim.at(i)->GetBin(j,k),0);
+		}
+	      for(int k=2*hists2_sim.at(i)->GetNbinsY()/3; k<hists2_sim.at(i)->GetNbinsY()+1; ++k)
+		{
+		  hists2_sim.at(i)->SetBinContent(hists2_sim.at(i)->GetBin(j,k),0);
+		}
+	    }
+	}
+      
+      profx[i+4] = hists2_sim.at(i)->ProfileX(("pfxsim"+to_string(i+4)).c_str(),1,-1,"S");//(i%2==0?100:1),(i%2==0?140:-1),"S");
+      profy[i+4] = hists2_sim.at(i)->ProfileY(("pfysim"+to_string(i+4)).c_str(),1,-1,"S");
+      if(i%2==0)hists2_sim.at(i)->GetYaxis()->SetRangeUser(-0.1,0.1);
+      //if(i%2==0) hists2_sim.at(i)->GetXaxis()->SetRangeUser(-0.5,0.5);
     }
   
 

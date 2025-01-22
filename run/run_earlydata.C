@@ -20,7 +20,10 @@
 #include <chi2checker/Chi2checker.h>
 #include <trigzvtxchecker/Trigzvtxchecker.h>
 #include <globalvertex/GlobalVertexReco.h>
-//#include <G4Setup_sPHENIX.C>
+#include <Calo_Calib.C>
+#include <TruthJetInput.h>//#include <G4Setup_sPHENIX.C>
+//#include <MbdDigitization.h>
+#include <MbdReco.h>
 using namespace std;
 
 R__LOAD_LIBRARY(libchi2checker.so)
@@ -37,7 +40,7 @@ R__LOAD_LIBRARY(libg4mbd.so)
 R__LOAD_LIBRARY(libmbd_io.so)
 R__LOAD_LIBRARY(libmbd.so)
 R__LOAD_LIBRARY(libffamodules.so)
-//R__LOAD_LIBRARY(libg4jets.so)
+R__LOAD_LIBRARY(libg4jets.so)
 R__LOAD_LIBRARY(libjetbase.so)
 R__LOAD_LIBRARY(libjetbackground.so)
 R__LOAD_LIBRARY(libtrigzvtxchecker.so)
@@ -67,16 +70,21 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //gSystem->Load("libjetbackground.so");
   //gSystem->Load("/sphenix/user/jocl/projects/testinstall/lib/libbeambackgroundfilterandqa.so.0.0.0");
 
-  //cout << "test1" << endl;
+  if(debug > 1) cout << "test1" << endl;
   Fun4AllServer *se = Fun4AllServer::instance();
-
-  se->Verbosity( verbosity );
-  // just if we set some flags somewhere in this macro
   recoConsts *rc =  recoConsts::instance();
-  if(datorsim) rc->set_StringFlag("CDB_GLOBALTAG","2024p007");
+  if(datorsim) rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2024");
   else rc->set_StringFlag("CDB_GLOBALTAG","MDC2");
   if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
   else rc->set_uint64Flag("TIMESTAMP",21);
+  //Fun4AllInputManager *ingeo0 = new Fun4AllRunNodeInputManager("DST_GEO");
+  //std::string geoLocation0 = CDBInterface::instance()->getUrl("calo_geo");
+  //ingeo0->AddFile(geoLocation0);
+  //se->registerInputManager(ingeo0);
+
+  se->Verbosity(verbosity);
+  // just if we set some flags somewhere in this macro
+
 
   Trigzvtxchecker* tz;
   if(datorsim) tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug, "tzvtx");
@@ -85,31 +93,35 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
   Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
   Fun4AllInputManager *in_3 = new Fun4AllDstInputManager("DSTin3");
+  Fun4AllInputManager *in_4 = new Fun4AllDstInputManager("DSTin4");
 
   ifstream list3, list2, list1;
-  //if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
+  if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
   //if(!datorsim && !list3) list3.open("lists/g4hits.list");
   if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
-  string line1, line2, line3;
+string line1, line2, line3, line4;
   if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
   else line1 = "./dsts/"+to_string(nproc)+"/calo_cluster_"+to_string(nproc)+".root";
   line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
-  //if(list3) line3 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
+line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
+line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
   //else line3 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
-  if(!datorsim && list2) in_2->AddFile(line2);
-  //if(!datorsim) in_3->AddFile(line3);
+  if(!datorsim) in_2->AddFile(line2);
+  if(!datorsim) in_3->AddFile(line3);
+if(!datorsim) in_4->AddFile(line4);
   se->registerInputManager( in_1 );
   
   if(!datorsim) se->registerInputManager( in_2 );
-  //if(!datorsim) se->registerInputManager( in_3 );
+  if(!datorsim) se->registerInputManager( in_3 );
+  if(!datorsim) se->registerInputManager(in_4);
 
   std::cout << "status setters" << std::endl;
  
-  Fun4AllInputManager *ingeo = new Fun4AllRunNodeInputManager("DST_GEO");
+  Fun4AllInputManager *ingeo = new Fun4AllRunNodeInputManager("DST_GEO2");
   std::string geoLocation = CDBInterface::instance()->getUrl("calo_geo");
   ingeo->AddFile(geoLocation);
-  //se->registerInputManager(ingeo);
+  se->registerInputManager(ingeo);
   /*
   //////////////////////////////
   // set statuses on raw towers
@@ -145,8 +157,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
   calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
   se->registerSubsystem(calibIHCal);
+  
   */
-
   if(!datorsim)
     {
       CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
@@ -185,17 +197,19 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
     }
   CDBInterface::instance()->Verbosity(0);
   //int cont = 0;
-  BeamBackgroundFilterAndQA* bgelim = new BeamBackgroundFilterAndQA("bgelim");
+  BeamBackgroundFilterAndQA::Config bcfg;
+  bcfg.debug = false;
+  BeamBackgroundFilterAndQA* bgelim = new BeamBackgroundFilterAndQA(bcfg);
   se->registerSubsystem(bgelim);
-  //auto mbddigi = new MbdDigitization();
-  //auto mbdreco = new MbdReco();
+  //  auto mbddigi = new MbdDigitization();
+  auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
   if (!datorsim)
     {
-      //mbddigi->Verbosity(verbosity);
+      //      mbddigi->Verbosity(verbosity);
       //se->registerSubsystem(mbddigi);
-      //mbdreco->Verbosity(verbosity);
-      //se->registerSubsystem(mbdreco);
+      mbdreco->Verbosity(verbosity);
+      se->registerSubsystem(mbdreco);
       
       gblvertex->Verbosity(verbosity);
       se->registerSubsystem(gblvertex);
@@ -213,32 +227,32 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   rcemc->Verbosity(verbosity);
   se->registerSubsystem(rcemc);
   cout << "set up retower emcal" << endl;
-  //JetReco *truthjetreco = new JetReco();
-  /*
+  JetReco *truthjetreco = new JetReco();
+  
   if(!datorsim)
     {
       TruthJetInput *tji = new TruthJetInput(Jet::PARTICLE);
       tji->add_embedding_flag(0);  // changes depending on signal vs. embedded
       truthjetreco->add_input(tji);
-      truthjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Truth_r04");
+      truthjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Truth_r04");
       truthjetreco->set_algo_node("ANTIKT");
-      truthjetreco->set_input_node("G4TruthInfo");
+      truthjetreco->set_input_node("TRUTH");
       //se->registerSubsystem(truthjetreco);
     }
-  */
+  
   
   JetReco *towerjetreco = new JetReco();
   //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
-  towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB"));
+  towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO,"TOWERINFO_CALIB"));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALIN_TOWERINFO));
   towerjetreco->add_input(new TowerJetInput(Jet::HCALOUT_TOWERINFO));
   towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
   towerjetreco->set_algo_node("ANTIKT");
   towerjetreco->set_input_node("TOWER");
-  //towerjetreco->Verbosity(verbosity);
+  towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
 
-
+  /*
   JetReco *emtowerjet = new JetReco();
   emtowerjet->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB"));
   emtowerjet->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "emtowjet");
@@ -254,7 +268,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   ohtowerjet->set_input_node("TOWER");
   //ohtowerjet->Verbosity(verbosity);
   se->registerSubsystem(ohtowerjet);
-
+  */
   cout << "set up jetreco" << endl;
   
   Chi2checker* chi2c;
@@ -282,8 +296,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   delete se;
   cout << "Deleted server" << endl;
   //cout << "wrote " << filename << endl;
-  gSystem->Exit(0);
-  cout << "Exited gSystem" << endl;
+  //gSystem->Exit(0);
+  //cout << "Exited gSystem" << endl;
   return 0;
 
 }

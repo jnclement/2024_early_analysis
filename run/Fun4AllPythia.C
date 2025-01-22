@@ -27,7 +27,7 @@
 
 //R__LOAD_LIBRARY(libjetHistogrammer.so)
 
-void Fun4AllPythia(int nEvents = 10000,
+void Fun4AllPythia(int nEvents = 100,
 		   const string &Jet_Trigger = "Jet10", // or "PhotonJet"
 		   int doCrossSection = 1,
 		   const string &outname = "jetHistogrammer"

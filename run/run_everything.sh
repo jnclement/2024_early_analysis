@@ -16,9 +16,9 @@ PREFIX="." #"/sphenix/user/hanpuj/test"
 SUBNAME="${BASENAME}.sub"
 
 echo "executable = earlydata.sh" > $PREFIX/$SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:350" >> $PREFIX/$SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:250" >> $PREFIX/$SUBNAME
 echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C}" >> $PREFIX/$SUBNAME
-echo "priority = 0" >> $SUBNAME
+echo "priority = 100000000" >> $SUBNAME
 echo "output = output/out/output_${BASENAME}_\$(Process).out" >> $PREFIX/$SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $PREFIX/$SUBNAME
 echo "when_to_transfer_output = ON_EXIT" >> $PREFIX/$SUBNAME

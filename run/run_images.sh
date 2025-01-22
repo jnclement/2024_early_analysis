@@ -14,7 +14,7 @@ BASENAME="condor_${TAG}_${NJOB}_imagemaker"
 SUBNAME="${BASENAME}.sub"
 
 echo "executable = quick_jet10.sh" > $SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:200" >> $SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:100" >> $SUBNAME
 echo "arguments = ${1} \$(Process)" >> $SUBNAME
 echo "output = output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME

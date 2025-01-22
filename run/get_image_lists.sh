@@ -6,5 +6,5 @@ rm lists/sim.imagelist
 #done
 
 for i in {0..9999}; do
-    ls /sphenix/tg/tg01/jets/jocl/evt/$i/*goodcuts20240114* >> lists/sim.imagelist
+    ls /sphenix/tg/tg01/jets/jocl/evt/$i/*20250120* >> lists/sim.imagelist
 done

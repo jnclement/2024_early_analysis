@@ -51,7 +51,6 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
     std::cerr << "Error: Histogram is null." << std::endl;
     return;
   }
-
   float zmax = 0;
   float zmin = 100000000;
 
@@ -75,7 +74,6 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
   hist->SetXTitle(xTitle);
   hist->SetYTitle(yTitle);
   hist->SetZTitle(zTitle);
-
   // Set title offsets
   hist->GetXaxis()->SetTitleOffset(xTitleOffset);
   hist->GetYaxis()->SetTitleOffset(yTitleOffset);
@@ -92,7 +90,6 @@ void FormatAndDrawHistogram(TCanvas* canvas, TH2* hist,
   hist->GetXaxis()->SetLabelSize(xLabelSize);
   hist->GetYaxis()->SetLabelSize(yLabelSize);
   hist->GetZaxis()->SetLabelSize(zLabelSize);
-
   // Draw the histogram
   hist->Draw("COLZ"); // Use "COLZ" to draw with color palet
   // Update the canvas to display changes
@@ -164,6 +161,7 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
 
 
   std::vector<TH2*> hists2_sim;
+  std::vector<TH2*> corPlotsLJet;
   TList* simkeys = simfile->GetListOfKeys();
   cout << "nKey: " << keys->GetSize() << endl;
   TIter simiter(simkeys);
@@ -188,6 +186,10 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
 	{
 	  hists2_sim.push_back((TH2*)obj);
 	}
+      if(histName.BeginsWith("lJet"))
+	{
+	  corPlotsLJet.push_back((TH2*)obj);
+	}
     }
     else cout <<"obj again: "<< obj << endl;
   }
@@ -199,6 +201,11 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     cout << hist << endl;
     std::cout << hist->GetName() << std::endl;
   }
+
+
+  string xtcp[6] = {"E_{T,EM}/E_{T,lead jet}","E_{T,EM}/E_{T,lead jet}","E_{T,EM}/E_{T,lead jet}","E_{T,lead jet}","E_{T,lead jet}","#eta"};
+
+  string ytcp[6] = {"E_{T,lead jet}","#eta","#phi","#eta","#phi","#phi"};
 
   string xtitles[nhist] = {
     "#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower","#chi^{2} of Maximum Energy Tower",
@@ -225,9 +232,9 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     "maxTowE_chi2", "maxTowE_frcoh", "maxTowE_frcem", "maxTowE_eta", "maxTowE_phi", "maxTowE_jet_ET", "maxTowE_dphi", "maxTowE_subjet_ET","maxTowE_ecc",
     "ecc_chi2", "ecc_frcoh", "ecc_frcem", "ecc_eta", "ecc_phi", "ecc_jet_ET", "ecc_dphi", "ecc_subjet_ET",
     "chi2_frcoh", "chi2_frcem", "chi2_eta", "chi2_phi", "chi2_jet_ET", "chi2_dphi", "chi2_subjet_ET",
-    "frcoh_frcem_h1", "frcoh_eta", "frcoh_phi", "frcoh_jet_ET", "frcoh_dphi", "frcoh_subjet_ET",
-    "frcem_eta", "frcem_phi", "frcem_jet_ET", "frcem_dphi_h1", "frcem_subjet_ET",
-    "eta_phi_h1", "eta_jet_ET", "eta_dphi", "eta_subjet_ET",
+    "frcoh_frcem", "frcoh_eta", "frcoh_phi", "frcoh_jet_ET", "frcoh_dphi", "frcoh_subjet_ET",
+    "frcem_eta", "frcem_phi", "frcem_jet_ET", "frcem_dphi", "frcem_subjet_ET",
+    "eta_phi", "eta_jet_ET", "eta_dphi", "eta_subjet_ET",
     "phi_jet_ET", "phi_dphi", "phi_subjet_ET",
     "jet_ET_dphi", "jet_ET_subjet_ET",
     "subjet_ET_dphi",
@@ -292,8 +299,8 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   jetSpectra.at(43)->Rebin(10);
   jetSpectra.at(44)->Rebin(10);
   jetSpectra.at(45)->Rebin(10);
-  //jetSpectra.at(46)->Rebin(10);
-  //jetSpectra.at(47)->Rebin(10);
+  jetSpectra.at(46)->Rebin(10);
+  jetSpectra.at(47)->Rebin(10);
   string texts[ntext] =
     {
       "Calorimeter Anti-k_{T} R=0.4",
@@ -316,20 +323,31 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   jetSpectra.at(46)->Scale(1./jetSpectra.at(46)->Integral());
 
   ratios[0]->Divide(jetSpectra.at(34),jetSpectra.at(33));
+  cout << "1" << endl;
   ratios[1]->Divide(jetSpectra.at(35),jetSpectra.at(33));
+  cout << "2" << endl;
   ratios[2]->Divide(jetSpectra.at(36),jetSpectra.at(33));
+  cout << "3" << endl;
   ratios[3]->Divide(jetSpectra.at(37),jetSpectra.at(33));
+  cout << "4" << endl;
   ratios[4]->Divide(jetSpectra.at(37),jetSpectra.at(36));
+  cout << "5" << endl;
   ratios[5]->Divide(jetSpectra.at(44),jetSpectra.at(43));
+  cout << "6" << endl;
   ratios[6]->Divide(jetSpectra.at(44),jetSpectra.at(45));
+  cout << "7" << endl;
   ratios[7]->Divide(jetSpectra.at(38),jetSpectra.at(46));
+  cout << "8" << endl;
   ratios[8]->Divide(jetSpectra.at(39),jetSpectra.at(47));
+  cout << "9" << endl;
   gPad->SetLogy();
-  for(int i=0; i<48; ++i)
+  gStyle->SetOptTitle();
+  for(int i=0; i<54; ++i)
     {
       jetSpectra.at(i)->Draw();
       canvas->SaveAs(("output/chi2img/spectra"+to_string(i)+".pdf").c_str());
     }
+  gStyle->SetOptTitle(0);
   gPad->SetLogy(0);
   string ratLegNames[nRatio] = {"Data No Cuts","2+ Jets & Hard #Delta#phi / All Jets","All cuts / All Jets","2+ Jets & All Cuts / All Jets","Data All Cuts","Sim All Cuts","Sim No Cuts","Data No Cuts / Sim No Cuts","Data All Cuts / Sim All Cuts"};
   canvas->SetRightMargin(0.05);
@@ -462,11 +480,36 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     jetSpectra.at(0)->GetXaxis()->SetTitle(xSpectraTitle.c_str());
     jetSpectra.at(0)->GetYaxis()->SetTitle(ySpectraTitle.c_str());
 
+    jetSpectra.at(30)->Rebin(10);
+    jetSpectra.at(30)->GetYaxis()->SetTitleOffset(2.0);
+    jetSpectra.at(30)->SetMarkerColor(kBlue);
+    jetSpectra.at(30)->SetMarkerStyle(20);
+    jetSpectra.at(30)->SetMarkerSize(2);
+    jetSpectra.at(30)->SetLineColor(spectraColors[0]);
+    jetSpectra.at(30)->Scale(1./jetSpectra.at(30)->GetBinWidth(1));
+    jetSpectra.at(30)->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    jetSpectra.at(30)->GetXaxis()->SetTitle(xSpectraTitle.c_str());
+    jetSpectra.at(30)->GetYaxis()->SetTitle(ySpectraTitle.c_str());
+    //jetSpectra.at(30)->Scale(24381./19910);
+    jetSpectra.at(30)->Scale(1./1.79769e11);
   //jetSpectra.at(0)->GetXaxis()->SetTitleSize(0.02);
   //jetSpectra.at(0)->GetYaxis()->SetTitleSize(0.02);
   //jetSpectra.at(0)->GetXaxis()->SetLabelSize();
   //jetSpectra.at(0)->GetYaxis()->SetTitle();
   
+    cout << jetSpectra.size() << endl;
+    jetSpectra.at(52)->Rebin(10);
+    jetSpectra.at(52)->GetYaxis()->SetTitleOffset(2.0);
+    jetSpectra.at(52)->SetMarkerColor(kRed);
+    jetSpectra.at(52)->SetMarkerStyle(21);
+    jetSpectra.at(52)->SetMarkerSize(2);
+    jetSpectra.at(52)->SetLineColor(spectraColors[0]);
+    jetSpectra.at(52)->Scale(1./jetSpectra.at(52)->GetBinWidth(1));
+    //jetSpectra.at(52)->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    jetSpectra.at(52)->GetXaxis()->SetTitle(xSpectraTitle.c_str());
+    jetSpectra.at(52)->GetYaxis()->SetTitle(ySpectraTitle.c_str());
+    jetSpectra.at(52)->Draw("PE");
+    gPad->SaveAs("output/chi2img/tjetspec.png");
   jetSpectra.at(0)->Draw("PE");
   cout << "drew 0" << endl;
   canvas->SaveAs("testimg.pdf");
@@ -475,6 +518,11 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   TH1F* prespcr = new TH1F("prespcr","",100,0,100);
   TH1F* specrat = new TH1F("specrat","",100,0,100);
 
+  //touse[0]->Scale(24381./19910);
+  //touse[1]->Scale(24381./19910);
+  //touse[2]->Scale(24381./19910);
+  //touse[3]->Scale(24381./19910);
+  //jetSpectra.at(0)->Scale(24381./19910);
   spectraLegend->AddEntry(jetSpectra.at(0),spectraLegendNames[0].c_str(),"p");
   jetSpectra.at(0)->Scale(1./1.79769e11);
   TLegend* specL2 = new TLegend(*spectraLegend);
@@ -514,6 +562,10 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     }
   int bitset = 0;
   if(bitset) return 0;
+  specL2->AddEntry(jetSpectra.at(30),"Data All Cuts (No Dijet Check)","p");
+  specL2->AddEntry(jetSpectra.at(52),"Truth PYTHIA","p");
+  jetSpectra.at(52)->Draw("SAME PE");
+  jetSpectra.at(30)->Draw("SAME PE");
   specL2->Draw();
   std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
   canvas->SaveAs(("output/chi2img/jetSpectrumWithCuts-1_h1.png"));
@@ -758,13 +810,14 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
 
   std::string ytitles_hists2_sim[naxistitles2] = {"E_{T,lead jet}","E_{T,lead jet}","Fraction of E_{T,lead jet} in EMCal"};
 
-  std::string filenames2[naxistitles2] = {"sim_frcem_et","sim_frcoh_et","sim_frcoh_frcem"};
+  std::string filenames2[naxistitles2] = {"output/chi2img/sim_frcem_et","output/chi2img/sim_frcoh_et","output/chi2img/sim_frcoh_frcem"};
 
 
   for(int i=0; i<6; ++i)
     {
     std:string cutstring = i%2==0?"_nocuts":"_withcuts";
-      std::string texts2[1] = {i%2==0?"No cuts applied":"All cuts applied"};
+      std::string texts2[2] = {i%2==0?"No cuts applied":"All cuts applied",""};
+      cout << hists2_sim.at(i) << endl;
       FormatAndDrawHistogram(
 			     canvas,hists2_sim.at(i),
 			     (filenames2[i/naxistitles2]+cutstring),xtitles_hists2_sim[i/naxistitles2].c_str(),ytitles_hists2_sim[i/naxistitles2].c_str(),"N_{jet}",
@@ -799,24 +852,31 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
       //histograms.at(i)->Scale(1/histograms.at(i)->Integral("WIDTH"));
       //cout << "scaled hist" << endl;
       string outdrawname = "output/chi2img/"+names[i%nhist] + "_" + to_string(i/nhist);
-      const int ntype = 24;
+      const int ntype = 36;
       string texts[2];
-      int threshes[ntype/2] = {8,15,20,25,35,40,45,50,55,60,65,70};
-      int slt[ntype/2] = {8,8,10,10,15,15,20,20,25,25,30,30};
+      int threshes[ntype/6] = {8,15,20,25,35,40};
+      //int slt[ntype/2] = {8,8,10,10,15,15,20,20,25,25,30,30};
       //texts[0] = "E_{T,lead jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
-	if(i>(ntype/4)*nhist) texts[0] = "Events contain only one jet with E_{T,jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
-	else
+      texts[0] = "Events contain leading jet with E_{T,jet} > "+to_string(threshes[(i/nhist)%6])+" GeV, "+((i/nhist)%ntype>=24?"inclusive jets":"dijets only");
+      /*
+      else
 	{
 	  texts[0] = "Events contain at least one jet with E_{T,jet} > 8 GeV";//+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
 	}
-
+      */
+	/*
 	if(i<(ntype/4)*nhist) texts[1] = "And at least one subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";
 	else
 	{
 	  texts[1] = "And no subleading jet with E_{T,jet} > "+to_string(slt[(i/nhist)%(ntype/2)])+" GeV";
 	}
-	texts[1] = "No cuts applied";
-      //if(i<(ntype/2)*nhist) histograms.at(i)->Add(histograms.at(i),histograms.at(i+180));
+	*/
+      if((i/nhist)%ntype < ntype/6) texts[1] = "All jet quality cuts applied, #Delta#phi < 3#pi/4, no EM fraction cut";
+      else if((i/nhist)%ntype < ntype/3) texts[1] = "All jet quality cuts applied, #Delta#phi > 3#pi/4, no EM fraction cut";
+      else if((i/nhist)%ntype < ntype/2) texts[1] = "All jet quality cuts applied, #Delta#phi_{closest non-lead} > #pi/4, no EM fraction cut";
+      else if((i/nhist)%ntype < 2*ntype/3) texts[1] = "All jet quality cuts applied,  #Delta#phi_{closest non-lead} < #pi/4, no EM fraction cut";
+      else if((i/nhist)%ntype < 5*ntype/6) texts[1] = "All jet quality cuts applied, E_{T,EM}/E_{T,jet} > 0.9";
+      else texts[1]="All jet quality cuts applied, E_{T,EM}/E_{T,jet} < 0.9";
       cout << "prep to draw" << endl;
       //histograms.at(i)->Rebin2D(4,4);
       FormatAndDrawHistogram(
@@ -829,6 +889,39 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
 			     texts
 			     );
     }
+
+
+  for(int i=0; i<corPlotsLJet.size(); ++i)
+    {
+      const int ntype = 36;
+      cout << corPlotsLJet.at(i)->GetName() << endl;
+      //corPlotsLJet.at(i)->Scale(1/corPlotsLJet.at(i)->Integral("WIDTH"));
+      //cout << "scaled hist" << endl;
+      int threshes[ntype/6] = {8,15,20,25,35,40};      
+      string outdrawname = "output/chi2img/"+string(corPlotsLJet.at(i)->GetName()) + "_" + to_string(i/6);
+      //int slt[ntype/2] = {8,8,10,10,15,15,20,20,25,25,30,30};
+      //texts[0] = "E_{T,lead jet} > "+to_string(threshes[(i/nhist)%(ntype/2)])+" GeV";
+      texts[0] = "Events contain leading jet with E_{T,jet} > "+to_string(threshes[(i/6)%6])+" GeV, "+((i/6)%ntype>=24?"inclusive jets":"dijets only");
+      if((i/6)%ntype < ntype/6) texts[1] = "All jet quality cuts applied, #Delta#phi < 3#pi/4, no EM fraction cut";
+      else if((i/6)%ntype < ntype/3) texts[1] = "All jet quality cuts applied, #Delta#phi > 3#pi/4, no EM fraction cut";
+      else if((i/6)%ntype < ntype/2) texts[1] = "All jet quality cuts applied,  #Delta#phi_{closest non-lead} > #pi/4, no EM fraction cut";
+      else if((i/6)%ntype < 2*ntype/3) texts[1] = "All jet quality cuts applied,  #Delta#phi_{closest non-lead} < #pi/4, no EM fraction cut";
+      else if((i/6)%ntype < 5*ntype/6) texts[1] = "All jet quality cuts applied, E_{T,EM}/E_{T,jet} > 0.9";
+      else texts[1]="All jet quality cuts applied, E_{T,EM}/E_{T,jet} > 0.9";
+      //if(i<(ntype/2)*nhist) corPlotsLJet.at(i)->Add(corPlotsLJet.at(i),corPlotsLJet.at(i+180));
+      cout << "prep to draw" << endl;
+      //corPlotsLJet.at(i)->Rebin2D(4,4);
+      FormatAndDrawHistogram(
+			     canvas,corPlotsLJet.at(i),
+			     outdrawname,xtcp[i%6].c_str(),ytcp[i%6].c_str(),"N_{jet}",
+			     0.15,0.2,0.15,0.15,
+			     1.85,1.85,2,
+			     0.03,0.03,0.03,
+			     0.03,0.03,0.03,
+			     texts
+			     );
+    }
+
   // Clean up
   file->Close();
   return 0;

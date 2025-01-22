@@ -23,6 +23,7 @@ for rn in `ls  lists/dst_calo_run2pp*.list | awk -F'.' '{print $1}' | awk -F'/' 
 #    nfile=$(( ($nfile + 9) / 10 ))
     mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$rn
     mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$rn
+    echo $rn $filecounter
     bash run_everything.sh $1 $nfile $rn 1 $evt $c2c
 done
 

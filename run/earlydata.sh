@@ -1,7 +1,7 @@
 #!/bin/bash
 # file name: firstcondor.sh
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n new
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.450
 source /opt/sphenix/core/bin/setup_local.sh "/sphenix/user/jocl/projects/testinstall"
 export HOME=/sphenix/u/jocl
 export TESTINSTALL=/sphenix/user/jocl/projects/testinstall
@@ -50,6 +50,4 @@ ls -larth $SUBDIR
 ls -larth $SUBDIR\_chi2/*
 cp -r "./${SUBDIR}/events_${1}_${3}_${2}_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_${2}_${5}.root"
 cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
-cp -r ./output/out/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/
-cp -r ./output/err/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/err/
 cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/

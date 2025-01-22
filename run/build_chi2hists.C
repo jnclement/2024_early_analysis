@@ -260,7 +260,7 @@ int build_chi2hists(string filebase, int runnumber)
     Float_t ecc, theta, frcoh, frcem, eta, phi, jet_ET, dphi, subjet_ET, maxTowE, subTowE, maxTowDiff, maxETowChi2, zvtx;
     int isdijet, nBadChi2, maxETowChi2Det, maxETowIsZS;
     Float_t jetcompE[3][512], jetcompEta[3][512], jetcompPhi[3][512];
-    Float_t maxTowChi2[3];
+    Float_t maxTowChi2[3], l2pcEta;
     float dPhi2pc[1000], dEta2pc[1000];
     float jet_eta[10], jet_phi[10], jet_et[10], alljetfrcem[10], alljetfrcoh[10], emLayerJetPhi[10], emLayerJetEta[10], emLayerJetET[10], ohLayerJetPhi[10], ohLayerJetEta[10], ohLayerJetET[10], dPhiLayer[10];
     int jet_n, n2pc;//, nLayerEm, nLayerOh;
@@ -303,6 +303,7 @@ int build_chi2hists(string filebase, int runnumber)
     jet_tree->SetBranchAddress("dPhiLayer",dPhiLayer);
     jet_tree->SetBranchAddress("dPhi2pc",dPhi2pc);
     jet_tree->SetBranchAddress("dEta2pc",dEta2pc);
+    jet_tree->SetBranchAddress("l2pcEta",&l2pcEta);
     /*
     jet_tree->SetBranchAddress("emLayerJetPhi",emLayerJetPhi);
     jet_tree->SetBranchAddress("emLayerJetEta",emLayerJetEta);
@@ -315,17 +316,24 @@ int build_chi2hists(string filebase, int runnumber)
 
     TH2F* h2_n2pc[2];
     TH2F* h2_dPhiLayer[2];
-
+    TH2F* h2_n2pcMinus[2];
+    TH2F* h2_dPhiLayerMinus[2];
+    TH2F* h2_n2pcPlus[2];
+    TH2F* h2_dPhiLayerPlus[2];
     for(int i=0; i<2; ++i)
       {
-	h2_n2pc[i] = new TH2F(("dancheck_n2pc"+to_string(i)).c_str(),"",101,-1.2,1.2,257,-M_PI,M_PI);
+	h2_n2pc[i] = new TH2F(("dancheck_n2pc"+to_string(i)).c_str(),"",121,-1.2,1.2,257,-M_PI,M_PI);
+	h2_n2pcMinus[i] = new TH2F(("dancheck_n2pcMinus"+to_string(i)).c_str(),"",121,-1.2,1.2,257,-M_PI,M_PI);
+	h2_n2pcPlus[i] = new TH2F(("dancheck_n2pcPlus"+to_string(i)).c_str(),"",121,-1.2,1.2,257,-M_PI,M_PI);
 	h2_dPhiLayer[i] = new TH2F(("dancheck_dPhiLayer"+to_string(i)).c_str(),"",80,-0.4,0.4,120,-0.1,1.1);
+	h2_dPhiLayerMinus[i] = new TH2F(("dancheck_dPhiLayerMinus"+to_string(i)).c_str(),"",80,-0.4,0.4,120,-0.1,1.1);
+	h2_dPhiLayerPlus[i] = new TH2F(("dancheck_dPhiLayerPlus"+to_string(i)).c_str(),"",80,-0.4,0.4,120,-0.1,1.1);
       }
 
 
     //std:://cerr << "set branches" << endl;
     // Create 2D histograms for all combinations of variables
-    const int numHistograms = 24; // Number of histograms in each array
+    const int numHistograms = 36; // Number of histograms in each array
     const int numTypes = 92;
     // Arrays to hold the histograms
     //cout << "got branches" << endl;
@@ -572,6 +580,8 @@ int build_chi2hists(string filebase, int runnumber)
 	bool loETCut = ((frcem < 0.1) && (jet_ET > (50*frcem+20))) && (dPhiCut || !isdijet);
 	bool hiETCut = ((frcem > 0.9) && (jet_ET > (-50*frcem+75))) && (dPhiCut || !isdijet);
 	bool chi2cut = jet_ET > 25 && maxETowChi2 < 10;
+	bool specialLoETCut = (frcem < 0.1) && (jet_ET > (50*frcem+20));
+	bool specialHiETCut = (frcem > 0.9) && (jet_ET > (-50*frcem+75));
 	zhists[0]->Fill(zvtx);
 	if(dhCut) zhists[1]->Fill(zvtx);
 	if(ihCut) zhists[2]->Fill(zvtx);
@@ -607,10 +617,19 @@ int build_chi2hists(string filebase, int runnumber)
 	cutArr[27]=(dPhiCut || dhCut || ihCut || hiETCut);
 	cutArr[28]=(dPhiCut || dhCut || loETCut || hiETCut);
 	cutArr[29]=(dPhiCut || ihCut || loETCut || hiETCut);
-	cutArr[30]=(dhCut || ihCut || loETCut || hiETCut);
+	cutArr[30]=(dhCut || ihCut || specialLoETCut || specialHiETCut);
 	cutArr[31]=(dhCut || ihCut || loETCut || hiETCut);// || chi2cut);
 	cutArr[32]=chi2cut;
 	if(!cutArr[31]) zhists[5]->Fill(zvtx);
+	float closejetdphi = M_PI;
+	for(int j=0; j<jet_n; ++j)
+	  {
+	    float testdphi = phi - jet_phi[j];
+	    if(testdphi < 0.05) continue;
+	    if(check_bad_jet_eta(jet_eta[j],zvtx,0.4)) continue;
+	    if(testdphi > M_PI) testdphi = 2*M_PI - testdphi;
+	    if(testdphi < closejetdphi) closejetdphi = testdphi;
+	  }
 	for(int j=0; j<nSpectra; ++j)
 	  {
 	    if(!cutArr[j])
@@ -629,13 +648,27 @@ int build_chi2hists(string filebase, int runnumber)
 	for(int j=0; j<n2pc; ++j)
 	  {
 	    h2_n2pc[0]->Fill(dEta2pc[j],dPhi2pc[j]);
-	    if(!cutArr[31]) h2_n2pc[1]->Fill(dEta2pc[j],dPhi2pc[j]);
+	    if(l2pcEta > 0) h2_n2pcPlus[0]->Fill(dEta2pc[j],dPhi2pc[j]);
+	    else h2_n2pcMinus[0]->Fill(dEta2pc[j],dPhi2pc[j]);
+	    if(!cutArr[31]) 
+	      {
+		h2_n2pc[1]->Fill(dEta2pc[j],dPhi2pc[j]);
+		if(l2pcEta > 0) h2_n2pcPlus[1]->Fill(dEta2pc[j],dPhi2pc[j]);
+		else h2_n2pcMinus[1]->Fill(dEta2pc[j],dPhi2pc[j]);
+	      }
 	  }
 	
 	for(int j=0; j<jet_n; ++j)
 	  {
 	    h2_dPhiLayer[0]->Fill(dPhiLayer[j],alljetfrcem[j]);
-	    if(!cutArr[31]) h2_dPhiLayer[1]->Fill(dPhiLayer[j],alljetfrcem[j]);
+	    if(l2pcEta > 0) h2_dPhiLayerPlus[0]->Fill(dPhiLayer[j],alljetfrcem[j]);
+	    else h2_dPhiLayerMinus[0]->Fill(dPhiLayer[j],alljetfrcem[j]);
+	    if(!cutArr[31])
+	      {
+		h2_dPhiLayer[1]->Fill(dPhiLayer[j],alljetfrcem[j]);
+		if(l2pcEta > 0) h2_dPhiLayerPlus[1]->Fill(dPhiLayer[j],alljetfrcem[j]);
+		else h2_dPhiLayerMinus[1]->Fill(dPhiLayer[j],alljetfrcem[j]);
+	      }
 	  }
 	//cout << "test2" << endl;
 	forRatio[0]->Fill(jet_ET);
@@ -662,129 +695,140 @@ int build_chi2hists(string filebase, int runnumber)
 	else if(maxETowChi2Det == 2) det = "OHCal";
 	else det = "Error";
 	//int whichhist = isdijet%2 + 2*maxETowIsZS;
-	int whichhist = -1;
-	int threshes[numHistograms/4] = {8,15,20,25,35,40};
-	int slt[numHistograms/4] = {8,8,10,10,15,15};
-	for(int j=0; j<numHistograms/4; ++j)
+	int whichhist[3];
+	int threshes[numHistograms/6] = {8,15,20,25,35,40};
+	int slt[numHistograms/6] = {8,8,10,10,15,15};
+	for(int j=0; j<numHistograms/6; ++j)
 	  {
-	    if(jet_ET < threshes[j] && j < numHistograms/4) continue;
-	    whichhist = j + (cutArr[31]?numHistograms/4:0); //((subjet_ET > slt[j] && isdijet)?numHistograms/4:0);// + ();
+	    if(jet_ET < threshes[j]) continue;
+	    if(cutArr[31]) continue;
+	    whichhist[2] = j+ 2*numHistograms/3;
+	    if(isdijet)
+	      {
+		whichhist[0] = j + (dphi>3*M_PI/4?numHistograms/6:0);
+		whichhist[1] = j+ numHistograms/3 + (closejetdphi < M_PI/4? numHistograms/6:0);
 
-	if(whichhist < 0 || whichhist > numHistograms-1) continue;
+	      }
+	    else
+	      {
+		whichhist[0] = -1;
+		whichhist[1] = -1;
+	      }
+	    for(int k=0; k<3; ++k)
+	      {
+		if(whichhist[k] < 0 || whichhist[k] > numHistograms-1) continue;
 
 
-	if(isdijet)
-	  {
-	    h2_AJ_dphi[whichhist]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),dphi);
-	  }
+		if(isdijet)
+		  {
+		    h2_AJ_dphi[whichhist[k]]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),dphi);
+		  }
 	//if(maxTowE > 15 && maxETowChi2 < 100) //cout << "Detector: " << det << " tower ET: " << maxTowE << " chi2: " << maxETowChi2 << " is ZS: " << maxETowIsZS <<endl;
 	//if(cutArr[31]) continue;
-	h2_maxETowChi2_nBadChi2[whichhist]->Fill(maxETowChi2, nBadChi2);
-	h2_maxETowChi2_maxTowDiff[whichhist]->Fill(maxETowChi2, maxTowDiff);
-	h2_maxETowChi2_subTowE[whichhist]->Fill(maxETowChi2, subTowE);
-	h2_maxETowChi2_maxTowE[whichhist]->Fill(maxETowChi2, maxTowE);
-	h2_maxETowChi2_ecc[whichhist]->Fill(maxETowChi2, ecc);
-	h2_maxETowChi2_chi2[whichhist]->Fill(maxETowChi2, chi2);
-        h2_maxETowChi2_frcoh[whichhist]->Fill(maxETowChi2, frcoh);
-        h2_maxETowChi2_frcem[whichhist]->Fill(maxETowChi2, frcem);
-        h2_maxETowChi2_eta[whichhist]->Fill(maxETowChi2, eta);
-        h2_maxETowChi2_phi[whichhist]->Fill(maxETowChi2, phi);
-        h2_maxETowChi2_jet_ET[whichhist]->Fill(maxETowChi2, jet_ET);
-        h2_maxETowChi2_dphi[whichhist]->Fill(maxETowChi2, dphi);
-        h2_maxETowChi2_subjet_ET[whichhist]->Fill(maxETowChi2, subjet_ET);
-	
-	h2_nBadChi2_maxTowDiff[whichhist]->Fill(nBadChi2, maxTowDiff);
-	h2_nBadChi2_subTowE[whichhist]->Fill(nBadChi2, subTowE);
-	h2_nBadChi2_maxTowE[whichhist]->Fill(nBadChi2, maxTowE);
-	h2_nBadChi2_ecc[whichhist]->Fill(nBadChi2, ecc);
-	h2_nBadChi2_chi2[whichhist]->Fill(nBadChi2, chi2);
-        h2_nBadChi2_frcoh[whichhist]->Fill(nBadChi2, frcoh);
-        h2_nBadChi2_frcem[whichhist]->Fill(nBadChi2, frcem);
-        h2_nBadChi2_eta[whichhist]->Fill(nBadChi2, eta);
-        h2_nBadChi2_phi[whichhist]->Fill(nBadChi2, phi);
-        h2_nBadChi2_jet_ET[whichhist]->Fill(nBadChi2, jet_ET);
-        h2_nBadChi2_dphi[whichhist]->Fill(nBadChi2, dphi);
-        h2_nBadChi2_subjet_ET[whichhist]->Fill(nBadChi2, subjet_ET);
-	
-	h2_maxTowDiff_subTowE[whichhist]->Fill(maxTowDiff, subTowE);
-	h2_maxTowDiff_maxTowE[whichhist]->Fill(maxTowDiff, maxTowE);
-	h2_maxTowDiff_ecc[whichhist]->Fill(maxTowDiff, ecc);
-	h2_maxTowDiff_chi2[whichhist]->Fill(maxTowDiff, chi2);
-        h2_maxTowDiff_frcoh[whichhist]->Fill(maxTowDiff, frcoh);
-        h2_maxTowDiff_frcem[whichhist]->Fill(maxTowDiff, frcem);
-        h2_maxTowDiff_eta[whichhist]->Fill(maxTowDiff, eta);
-        h2_maxTowDiff_phi[whichhist]->Fill(maxTowDiff, phi);
-        h2_maxTowDiff_jet_ET[whichhist]->Fill(maxTowDiff, jet_ET);
-        h2_maxTowDiff_dphi[whichhist]->Fill(maxTowDiff, dphi);
-        h2_maxTowDiff_subjet_ET[whichhist]->Fill(maxTowDiff, subjet_ET);
-
-	h2_subTowE_maxTowE[whichhist]->Fill(subTowE, maxTowE);
-	h2_subTowE_ecc[whichhist]->Fill(subTowE, ecc);
-	h2_subTowE_chi2[whichhist]->Fill(subTowE, chi2);
-        h2_subTowE_frcoh[whichhist]->Fill(subTowE, frcoh);
-        h2_subTowE_frcem[whichhist]->Fill(subTowE, frcem);
-        h2_subTowE_eta[whichhist]->Fill(subTowE, eta);
-        h2_subTowE_phi[whichhist]->Fill(subTowE, phi);
-        h2_subTowE_jet_ET[whichhist]->Fill(subTowE, jet_ET);
-        h2_subTowE_dphi[whichhist]->Fill(subTowE, dphi);
-        h2_subTowE_subjet_ET[whichhist]->Fill(subTowE, subjet_ET);
-	
-	h2_maxTowE_ecc[whichhist]->Fill(maxTowE, ecc);
-	h2_maxTowE_chi2[whichhist]->Fill(maxTowE, chi2);
-        h2_maxTowE_frcoh[whichhist]->Fill(maxTowE, frcoh);
-        h2_maxTowE_frcem[whichhist]->Fill(maxTowE, frcem);
-        h2_maxTowE_eta[whichhist]->Fill(maxTowE, eta);
-        h2_maxTowE_phi[whichhist]->Fill(maxTowE, phi);
-        h2_maxTowE_jet_ET[whichhist]->Fill(maxTowE, jet_ET);
-        h2_maxTowE_dphi[whichhist]->Fill(maxTowE, dphi);
-        h2_maxTowE_subjet_ET[whichhist]->Fill(maxTowE, subjet_ET);
-
-        h2_ecc_chi2[whichhist]->Fill(ecc, chi2);
-        h2_ecc_frcoh[whichhist]->Fill(ecc, frcoh);
-        h2_ecc_frcem[whichhist]->Fill(ecc, frcem);
-        h2_ecc_eta[whichhist]->Fill(ecc, eta);
-        h2_ecc_phi[whichhist]->Fill(ecc, phi);
-        h2_ecc_jet_ET[whichhist]->Fill(ecc, jet_ET);
-        h2_ecc_dphi[whichhist]->Fill(ecc, dphi);
-        h2_ecc_subjet_ET[whichhist]->Fill(ecc, subjet_ET);
-	//cout << "filled first block" << endl;
-        h2_chi2_frcoh[whichhist]->Fill(chi2, frcoh);
-        h2_chi2_frcem[whichhist]->Fill(chi2, frcem);
-        h2_chi2_eta[whichhist]->Fill(chi2, eta);
-        h2_chi2_phi[whichhist]->Fill(chi2, phi);
-        h2_chi2_jet_ET[whichhist]->Fill(chi2, jet_ET);
-        h2_chi2_dphi[whichhist]->Fill(chi2, dphi);
-        h2_chi2_subjet_ET[whichhist]->Fill(chi2, subjet_ET);
-	//cout << "filled second block" << endl;
-        h2_frcoh_frcem[whichhist]->Fill(frcoh, frcem);
-	if(whichhist < numHistograms/4) h2_frcoh_frcem[whichhist+numHistograms/4]->Fill(frcoh,frcem);
-        h2_frcoh_eta[whichhist]->Fill(frcoh, eta);
-        h2_frcoh_phi[whichhist]->Fill(frcoh, phi);
-        h2_frcoh_jet_ET[whichhist]->Fill(frcoh, jet_ET);
-        h2_frcoh_dphi[whichhist]->Fill(frcoh, dphi);
-        h2_frcoh_subjet_ET[whichhist]->Fill(frcoh, subjet_ET);
-	//cout << "filled third block" << endl;
-        h2_frcem_eta[whichhist]->Fill(frcem, eta);
-        h2_frcem_phi[whichhist]->Fill(frcem, phi);
-        h2_frcem_jet_ET[whichhist]->Fill(frcem, jet_ET);
-        h2_frcem_dphi[whichhist]->Fill(frcem, dphi);
-        h2_frcem_subjet_ET[whichhist]->Fill(frcem, subjet_ET);
-	//cout << "filled fourth block" << endl;
-        h2_eta_phi[whichhist]->Fill(eta, phi);
-	if(whichhist < numHistograms/4) h2_eta_phi[whichhist+numHistograms/4]->Fill(eta,phi);
-        h2_eta_jet_ET[whichhist]->Fill(eta, jet_ET);
-        h2_eta_dphi[whichhist]->Fill(eta, dphi);
-        h2_eta_subjet_ET[whichhist]->Fill(eta, subjet_ET);
-	//cout << "filled fifth block" << endl;
-        h2_phi_jet_ET[whichhist]->Fill(phi, jet_ET);
-        h2_phi_dphi[whichhist]->Fill(phi, dphi);
-        h2_phi_subjet_ET[whichhist]->Fill(phi, subjet_ET);
-	//cout << "filled sixth block" << endl;
-        h2_jet_ET_dphi[whichhist]->Fill(jet_ET, dphi);
-	if(whichhist < numHistograms/4) h2_jet_ET_dphi[whichhist+numHistograms/4]->Fill(jet_ET,dphi);
-        h2_jet_ET_subjet_ET[whichhist]->Fill(jet_ET, subjet_ET);
-	//cout << "filled seventh block" << endl;
-	h2_subjet_ET_dphi[whichhist]->Fill(subjet_ET, dphi);
+		h2_maxETowChi2_nBadChi2[whichhist[k]]->Fill(maxETowChi2, nBadChi2);
+		h2_maxETowChi2_maxTowDiff[whichhist[k]]->Fill(maxETowChi2, maxTowDiff);
+		h2_maxETowChi2_subTowE[whichhist[k]]->Fill(maxETowChi2, subTowE);
+		h2_maxETowChi2_maxTowE[whichhist[k]]->Fill(maxETowChi2, maxTowE);
+		h2_maxETowChi2_ecc[whichhist[k]]->Fill(maxETowChi2, ecc);
+		h2_maxETowChi2_chi2[whichhist[k]]->Fill(maxETowChi2, chi2);
+		h2_maxETowChi2_frcoh[whichhist[k]]->Fill(maxETowChi2, frcoh);
+		h2_maxETowChi2_frcem[whichhist[k]]->Fill(maxETowChi2, frcem);
+		h2_maxETowChi2_eta[whichhist[k]]->Fill(maxETowChi2, eta);
+		h2_maxETowChi2_phi[whichhist[k]]->Fill(maxETowChi2, phi);
+		h2_maxETowChi2_jet_ET[whichhist[k]]->Fill(maxETowChi2, jet_ET);
+		h2_maxETowChi2_dphi[whichhist[k]]->Fill(maxETowChi2, dphi);
+		h2_maxETowChi2_subjet_ET[whichhist[k]]->Fill(maxETowChi2, subjet_ET);
+		
+		h2_nBadChi2_maxTowDiff[whichhist[k]]->Fill(nBadChi2, maxTowDiff);
+		h2_nBadChi2_subTowE[whichhist[k]]->Fill(nBadChi2, subTowE);
+		h2_nBadChi2_maxTowE[whichhist[k]]->Fill(nBadChi2, maxTowE);
+		h2_nBadChi2_ecc[whichhist[k]]->Fill(nBadChi2, ecc);
+		h2_nBadChi2_chi2[whichhist[k]]->Fill(nBadChi2, chi2);
+		h2_nBadChi2_frcoh[whichhist[k]]->Fill(nBadChi2, frcoh);
+		h2_nBadChi2_frcem[whichhist[k]]->Fill(nBadChi2, frcem);
+		h2_nBadChi2_eta[whichhist[k]]->Fill(nBadChi2, eta);
+		h2_nBadChi2_phi[whichhist[k]]->Fill(nBadChi2, phi);
+		h2_nBadChi2_jet_ET[whichhist[k]]->Fill(nBadChi2, jet_ET);
+		h2_nBadChi2_dphi[whichhist[k]]->Fill(nBadChi2, dphi);
+		h2_nBadChi2_subjet_ET[whichhist[k]]->Fill(nBadChi2, subjet_ET);
+		
+		h2_maxTowDiff_subTowE[whichhist[k]]->Fill(maxTowDiff, subTowE);
+		h2_maxTowDiff_maxTowE[whichhist[k]]->Fill(maxTowDiff, maxTowE);
+		h2_maxTowDiff_ecc[whichhist[k]]->Fill(maxTowDiff, ecc);
+		h2_maxTowDiff_chi2[whichhist[k]]->Fill(maxTowDiff, chi2);
+		h2_maxTowDiff_frcoh[whichhist[k]]->Fill(maxTowDiff, frcoh);
+		h2_maxTowDiff_frcem[whichhist[k]]->Fill(maxTowDiff, frcem);
+		h2_maxTowDiff_eta[whichhist[k]]->Fill(maxTowDiff, eta);
+		h2_maxTowDiff_phi[whichhist[k]]->Fill(maxTowDiff, phi);
+		h2_maxTowDiff_jet_ET[whichhist[k]]->Fill(maxTowDiff, jet_ET);
+		h2_maxTowDiff_dphi[whichhist[k]]->Fill(maxTowDiff, dphi);
+		h2_maxTowDiff_subjet_ET[whichhist[k]]->Fill(maxTowDiff, subjet_ET);
+		
+		h2_subTowE_maxTowE[whichhist[k]]->Fill(subTowE, maxTowE);
+		h2_subTowE_ecc[whichhist[k]]->Fill(subTowE, ecc);
+		h2_subTowE_chi2[whichhist[k]]->Fill(subTowE, chi2);
+		h2_subTowE_frcoh[whichhist[k]]->Fill(subTowE, frcoh);
+		h2_subTowE_frcem[whichhist[k]]->Fill(subTowE, frcem);
+		h2_subTowE_eta[whichhist[k]]->Fill(subTowE, eta);
+		h2_subTowE_phi[whichhist[k]]->Fill(subTowE, phi);
+		h2_subTowE_jet_ET[whichhist[k]]->Fill(subTowE, jet_ET);
+		h2_subTowE_dphi[whichhist[k]]->Fill(subTowE, dphi);
+		h2_subTowE_subjet_ET[whichhist[k]]->Fill(subTowE, subjet_ET);
+		
+		h2_maxTowE_ecc[whichhist[k]]->Fill(maxTowE, ecc);
+		h2_maxTowE_chi2[whichhist[k]]->Fill(maxTowE, chi2);
+		h2_maxTowE_frcoh[whichhist[k]]->Fill(maxTowE, frcoh);
+		h2_maxTowE_frcem[whichhist[k]]->Fill(maxTowE, frcem);
+		h2_maxTowE_eta[whichhist[k]]->Fill(maxTowE, eta);
+		h2_maxTowE_phi[whichhist[k]]->Fill(maxTowE, phi);
+		h2_maxTowE_jet_ET[whichhist[k]]->Fill(maxTowE, jet_ET);
+		h2_maxTowE_dphi[whichhist[k]]->Fill(maxTowE, dphi);
+		h2_maxTowE_subjet_ET[whichhist[k]]->Fill(maxTowE, subjet_ET);
+		
+		h2_ecc_chi2[whichhist[k]]->Fill(ecc, chi2);
+		h2_ecc_frcoh[whichhist[k]]->Fill(ecc, frcoh);
+		h2_ecc_frcem[whichhist[k]]->Fill(ecc, frcem);
+		h2_ecc_eta[whichhist[k]]->Fill(ecc, eta);
+		h2_ecc_phi[whichhist[k]]->Fill(ecc, phi);
+		h2_ecc_jet_ET[whichhist[k]]->Fill(ecc, jet_ET);
+		h2_ecc_dphi[whichhist[k]]->Fill(ecc, dphi);
+		h2_ecc_subjet_ET[whichhist[k]]->Fill(ecc, subjet_ET);
+		//cout << "filled first block" << endl;
+		h2_chi2_frcoh[whichhist[k]]->Fill(chi2, frcoh);
+		h2_chi2_frcem[whichhist[k]]->Fill(chi2, frcem);
+		h2_chi2_eta[whichhist[k]]->Fill(chi2, eta);
+		h2_chi2_phi[whichhist[k]]->Fill(chi2, phi);
+		h2_chi2_jet_ET[whichhist[k]]->Fill(chi2, jet_ET);
+		h2_chi2_dphi[whichhist[k]]->Fill(chi2, dphi);
+		h2_chi2_subjet_ET[whichhist[k]]->Fill(chi2, subjet_ET);
+		//cout << "filled second block" << endl;
+		h2_frcoh_frcem[whichhist[k]]->Fill(frcoh, frcem);
+		h2_frcoh_eta[whichhist[k]]->Fill(frcoh, eta);
+		h2_frcoh_phi[whichhist[k]]->Fill(frcoh, phi);
+		h2_frcoh_jet_ET[whichhist[k]]->Fill(frcoh, jet_ET);
+		h2_frcoh_dphi[whichhist[k]]->Fill(frcoh, dphi);
+		h2_frcoh_subjet_ET[whichhist[k]]->Fill(frcoh, subjet_ET);
+		//cout << "filled third block" << endl;
+		h2_frcem_eta[whichhist[k]]->Fill(frcem, eta);
+		h2_frcem_phi[whichhist[k]]->Fill(frcem, phi);
+		h2_frcem_jet_ET[whichhist[k]]->Fill(frcem, jet_ET);
+		h2_frcem_dphi[whichhist[k]]->Fill(frcem, dphi);
+		h2_frcem_subjet_ET[whichhist[k]]->Fill(frcem, subjet_ET);
+		//cout << "filled fourth block" << endl;
+		h2_eta_phi[whichhist[k]]->Fill(eta, phi);
+		h2_eta_jet_ET[whichhist[k]]->Fill(eta, jet_ET);
+		h2_eta_dphi[whichhist[k]]->Fill(eta, dphi);
+		h2_eta_subjet_ET[whichhist[k]]->Fill(eta, subjet_ET);
+		//cout << "filled fifth block" << endl;
+		h2_phi_jet_ET[whichhist[k]]->Fill(phi, jet_ET);
+		h2_phi_dphi[whichhist[k]]->Fill(phi, dphi);
+		h2_phi_subjet_ET[whichhist[k]]->Fill(phi, subjet_ET);
+		//cout << "filled sixth block" << endl;
+		h2_jet_ET_dphi[whichhist[k]]->Fill(jet_ET, dphi);
+		h2_jet_ET_subjet_ET[whichhist[k]]->Fill(jet_ET, subjet_ET);
+		//cout << "filled seventh block" << endl;
+		h2_subjet_ET_dphi[whichhist[k]]->Fill(subjet_ET, dphi);
+	      }
 	  }
     }
     //std:://cerr << "filled" << endl;
@@ -835,6 +879,15 @@ int build_chi2hists(string filebase, int runnumber)
       {
 	h2_n2pc[i]->Write();
 	h2_dPhiLayer[i]->Write();
+      }
+
+
+    for(int i=0; i<2; ++i)
+      {
+	h2_n2pcMinus[i]->Write();
+	h2_n2pcPlus[i]->Write();
+	h2_dPhiLayerMinus[i]->Write();
+	h2_dPhiLayerPlus[i]->Write();
       }
     outputFile->Close();
 

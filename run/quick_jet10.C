@@ -158,6 +158,10 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   float jet_et[100];
   float frcem[100];
   float jet_ph[100];
+  int ntj;
+  float tjet_et[100];
+  float tjet_phi[100];
+  float tjet_eta[100];
   float frcoh[100];
   float dPhiLayer[100];
   float dPhi2pc[1000];
@@ -172,6 +176,12 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   tree->SetBranchAddress("jet_et",jet_et);
   tree->SetBranchAddress("frcoh",frcoh);
   tree->SetBranchAddress("n2pc",&n2pc);
+
+  tree->SetBranchAddress("ntj",&ntj);
+  tree->SetBranchAddress("tjet_et",tjet_et);
+  tree->SetBranchAddress("tjet_eta",tjet_eta);
+  tree->SetBranchAddress("tjet_phi",tjet_phi);
+  
   tree->SetBranchAddress("dPhiLayer",dPhiLayer);
   tree->SetBranchAddress("dPhi2pcd",dPhi2pc);
   tree->SetBranchAddress("dEta2pcd",dEta2pc);
@@ -186,6 +196,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   TH2F* hists2[nh2];
   const int nz = 6;
   TH1F* h1_zdist[nz];
+  const int maxJetToUse = 100;
   for(int i=0; i<nz; ++i)
     {
       h1_zdist[i] = new TH1F(("h1_zdist"+to_string(i)).c_str(),"",200,-150,150);
@@ -193,7 +204,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   TH1F* h1_forrat[5];
   for(int i=0; i<5; ++i)
     {
-      h1_forrat[i] = new TH1F(("h2_forrat_tosee"+to_string(i)).c_str(),"",i<3?1000:100,0,i<3?100:1);
+      h1_forrat[i] = new TH1F(("h1_forrat_tosee"+to_string(i)).c_str(),"",1000,0,i<3?100:1);
     }
 
   float xlo[nh2] = {-0.2,-0.2,-0.2,-0.2,-0.2,-0.2};
@@ -215,13 +226,35 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       h2_dPhiLayer[i] = new TH2F(("dancheck_dPhiLayer"+to_string(i)).c_str(),"",80,-0.4,0.4,120,-0.1,1.1);
     }
 
+  const int numTh2f = 36;
+  TH2F* lJetEtaPhi[numTh2f];
+  TH2F* lJetFrcemET[numTh2f];
+  TH2F* lJetFrcemEta[numTh2f];
+  TH2F* lJetFrcemPhi[numTh2f];
+  TH2F* lJetEtaET[numTh2f];
+  TH2F* lJetPhiET[numTh2f];
+
+  for(int i=0; i<numTh2f; ++i)
+    {
+      lJetEtaPhi[i] = new TH2F(("lJetEtaPhi"+to_string(i)).c_str(),"",150,-1.5,1.5,128,-M_PI,M_PI);
+      lJetFrcemET[i] = new TH2F(("lJetFrcemET"+to_string(i)).c_str(),"",150,-0.25,1.25,100,0,100);
+      lJetFrcemEta[i] = new TH2F(("lJetFrcemEta"+to_string(i)).c_str(),"",150,-0.25,1.25,150,-1.5,1.5);
+      lJetFrcemPhi[i] = new TH2F(("lJetFrcemPhi"+to_string(i)).c_str(),"",150,-0.25,1.25,128,-M_PI,M_PI);
+      lJetEtaET[i] = new TH2F(("lJetEtaET"+to_string(i)).c_str(),"",150,-1.5,1.5,100,0,100);
+      lJetPhiET[i] = new TH2F(("lJetPhiET"+to_string(i)).c_str(),"",128,-M_PI,M_PI,100,0,100);
+    }
+      
+      
+  TH1F* h1_g20_dijet = new TH1F("anotherdancheck","",60,-0.1,1.1);
   
-  TH1F* h1_ucspec = new TH1F("h1_ucspec","",1000,0,100);
-  TH1F* h1_cspec = new TH1F("h1_cspec","",1000,0,100);
+  TH1F* h1_ucspec = new TH1F("h1_ucspec","ucspec",1000,0,100);
+  TH1F* h1_cspec = new TH1F("h1_cspec","cspec",1000,0,100);
+  TH1F* h1_tjetspec = new TH1F("h1_tjetspec","tjetspec",1000,0,100);
   TH1F* xJ[2];
   xJ[0]=new TH1F("xJ0_sim","",100,0,1);
   xJ[1]=new TH1F("xJ1_sim","",100,0,1);
-
+  int whichhist[3];
+  float thresh[numTh2f/6] = {8,15,20,25,35,40};
   cout << "start processing: " << endl;
   for(int i=0; i<tree->GetEntries(); ++i)
     {
@@ -229,7 +262,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       tree->GetEntry(i);   
       
 
-      if(abs(vtx[2]) > 150)
+      if(abs(vtx[2]) > 30)
 	{
 	  continue;
 	}
@@ -242,6 +275,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       int isdijet = 0;
       float ljeteta = 0;
       float ljetfrcoh = -1;
+      float closejetdphi = M_PI;
       for(int j=0; j<njet; ++j)
 	{
 	  if(jet_e[j] > ljetET)
@@ -255,8 +289,16 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	      ljeteta = jet_et[j];
 	      ljetfrcoh = frcoh[j];
 	    }
+   	}
+      for(int j=0; j<njet; ++j)
+	{
+	  float testdphi = ljetph - jet_ph[j];
+	  if(testdphi < 0.05) continue;
+	  if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
+	  if(testdphi > M_PI) testdphi = 2*M_PI - testdphi;
+	  if(testdphi < closejetdphi) closejetdphi = testdphi;
 	}
-      
+      //cout << "got cut params" << endl;
       bool ljetHighEta = check_bad_jet_eta(ljeteta, vtx[2], 0.4);
       bool subjetHighEta = check_bad_jet_eta(subjeteta, vtx[2], 0.4);
 
@@ -266,6 +308,12 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	  if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
 	  h1_ucspec->Fill(jet_e[j]);
 	  h2_dPhiLayer[0]->Fill(dPhiLayer[j],frcem[j]);
+	}
+      cout << "ntj: " << ntj << endl;
+      for(int j=0; j<ntj; ++j)
+	{
+	  if(check_bad_jet_eta(tjet_eta[j],vtx[2],0.4)) continue;
+	  h1_tjetspec->Fill(tjet_et[j]);
 	}
       if(subjetET > 8) isdijet = 1;
       if(subjetHighEta) isdijet = 0;
@@ -280,7 +328,33 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
       bool fullcut = bbCut || lETCut || hETCut || ihCut;
       h1_forrat[2]->Fill(ljetET);
-      
+      //cout << "before th2f filling" << endl;
+      for(int j=0; j<numTh2f/6; ++j)
+	{
+	  if(ljetET < thresh[j]) continue;
+	  if(fullcut) continue;
+	  if(isdijet) whichhist[0] = j + (dphi>3*M_PI/4?numTh2f/6:0);
+	  else whichhist[0] = -1;
+	  if(isdijet) whichhist[1] = j + numTh2f/3 + (closejetdphi < M_PI/4? numTh2f/6:0);
+	  else whichhist[1] = -1;
+	  whichhist[2] = j + 2*numTh2f/3;
+	  for(int k=0; k<3; ++k)
+	    {
+	      if(whichhist[k] < 0 || whichhist[k] > numTh2f - 1) continue;
+	      lJetFrcemET[whichhist[k]]->Fill(ljetfrcem,ljetET);
+	      lJetFrcemEta[whichhist[k]]->Fill(ljetfrcem,ljeteta);
+	      lJetFrcemPhi[whichhist[k]]->Fill(ljetfrcem,ljetph);
+	      lJetEtaET[whichhist[k]]->Fill(ljeteta,ljetET);
+	      lJetPhiET[whichhist[k]]->Fill(ljetph,ljetET);
+	      lJetEtaPhi[whichhist[k]]->Fill(ljeteta,ljetph);
+	    }
+	}
+      //cout << "after th2f filling" << endl;
+      if(ljetET > 20 && dphi > 7*M_PI/8)
+	{
+	  h1_g20_dijet->Fill(ljetfrcem);
+	}
+
       if(isdijet && ljetET > 20 && subjetET > 10)
 	{
 	  h1_forrat[3]->Fill((ljetET-subjetET)/(ljetET+subjetET));
@@ -294,7 +368,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       hists2[0]->Fill(ljetfrcem,ljetET);
       hists2[2]->Fill(ljetfrcoh,ljetET);
       hists2[4]->Fill(ljetfrcoh,ljetfrcem);
-      
+      //cout << "filled hists2" << endl;
       for(int j=0; j<n2pc; ++j)
 	{
 	  h2_n2pc[0]->Fill(dEta2pc[j],dPhi2pc[j]);
@@ -334,7 +408,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       h1_zdist[0]->Fill(vtx[2]); 
     }
 
-
+  cout << "finished filling" << endl;
   h1_zdist[0]->Write();
   h1_ucspec->Scale(4e-5/2.8e6);
   h1_ucspec->Write();
@@ -342,8 +416,9 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   h1_cspec->Write();
   xJ[0]->Write();
   xJ[1]->Write();
-  
+  cout << "wrote spectra" << endl;
   for(int i=0; i<5; ++i) h1_forrat[i]->Write();
+  cout << "writing hists2" << endl;
   for(int i=0; i<6; ++i)
     {
       hists2[i]->Write();
@@ -352,11 +427,26 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	  h1_zdist[i]->Write();
 	}
     }
+  cout << "writing truth spectra" << endl;
+  h1_tjetspec->Scale(4e-5/2.8e6);
+  h1_tjetspec->Write();
+  cout << "writing n2pc" << endl;
   for(int i=0; i<2; ++i)
     {
       h2_n2pc[i]->Write();
       h2_dPhiLayer[i]->Write();
     }
+  cout << "writing th2f" << endl;
+  for(int i=0; i<numTh2f; ++i)
+    {
+      lJetFrcemET[i]->Write();
+      lJetFrcemEta[i]->Write();
+      lJetFrcemPhi[i]->Write();
+      lJetEtaET[i]->Write();
+      lJetPhiET[i]->Write();
+      lJetEtaPhi[i]->Write();
+    }
+
   jetfile->Write();
   return 0;
 }
