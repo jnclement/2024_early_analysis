@@ -15,7 +15,7 @@ BASENAME="condor_${TAG}_${NFILE}_${RN}_${ZS}_${EVT}"
 PREFIX="." #"/sphenix/user/hanpuj/test"
 SUBNAME="${BASENAME}.sub"
 
-echo "executable = earlydata.sh" > $PREFIX/$SUBNAME
+echo "executable = containerscripts/earlydata.sh" > $PREFIX/$SUBNAME
 echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:250" >> $PREFIX/$SUBNAME
 echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C}" >> $PREFIX/$SUBNAME
 echo "priority = 100000000" >> $SUBNAME

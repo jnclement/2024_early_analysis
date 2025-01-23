@@ -31,7 +31,9 @@
 #include <TFile.h>
 #include <algorithm>
 #include "dlUtility.h"
-
+#include <RooUnfold.h>
+#include <RooUnfoldBayes.h>
+#include <RooUnfoldResponse.h>
 static const float radius_EM = 93.5;
 static const float minz_EM = -130.23;
 static const float maxz_EM = 130.23;
@@ -44,6 +46,44 @@ static const float radius_OH = 225.87;
 static const float minz_OH = -301.683;
 static const float maxz_OH = 301.683;
 
+void jetMatch(int nt, int nr, float truthJet[][2], float recoJet[][2], int *whichMatch)
+{
+  const int nMaxJet = 100;
+  float dRMat[nMaxJet][nMaxJet];
+  for(int i=0; i<nMaxJet; ++i)
+    {
+      whichMatch[i] = -1;
+    }
+  for(int i=0; i<nt; ++i)
+    {
+      for(int j=0; j<nr; ++j)
+	{
+	  dRMat[i][j] = sqrt(pow(truthJet[i][0]-recoJet[j][0],2)+pow(truthJet[i][1]-recoJet[j][1],2));
+	}
+    }
+
+  for(int i=0; i<nt; ++i)
+    {
+      float drMin = 10;
+      int ri = -1;
+      int ti = -1;
+      for(int j=0; j<nt; ++j)
+	{
+	  if(whichMatch[j] != -1) continue;
+	  for(int k=0; k<nr; ++k)
+	    {
+	      if(dRMat[j][k] < drMin && dRMat[j][k] < 0.3)
+		{
+		  ti = j;
+		  ri = k;
+		  drMin = dRMat[j][k];
+		}
+	    }
+	}
+      if(ti != -1) whichMatch[ti] = ri;
+    }
+}
+	  
 float get_emcal_mineta_zcorrected(float zvertex) {
   float z = minz_EM - zvertex;
   float eta_zcorrected = asinh(z / (float)radius_EM);
@@ -244,12 +284,22 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       lJetPhiET[i] = new TH2F(("lJetPhiET"+to_string(i)).c_str(),"",128,-M_PI,M_PI,100,0,100);
     }
       
-      
+  
   TH1F* h1_g20_dijet = new TH1F("anotherdancheck","",60,-0.1,1.1);
   
-  TH1F* h1_ucspec = new TH1F("h1_ucspec","ucspec",1000,0,100);
-  TH1F* h1_cspec = new TH1F("h1_cspec","cspec",1000,0,100);
-  TH1F* h1_tjetspec = new TH1F("h1_tjetspec","tjetspec",1000,0,100);
+
+  const int nbin = 11;
+  float bins[nbin];
+  for(int i=-2; i<nbin-2; ++i)
+    {
+      bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
+    }
+
+  TH1F* h1_ucspec = new TH1F("h1_ucspec","ucspec",nbin-1,bins);
+  TH1F* h1_cspec = new TH1F("h1_cspec","cspec",nbin-1,bins);
+  TH1F* h1_tjetspec = new TH1F("h1_tjetspec","tjetspec",nbin-1,bins);
+  TH2D* h2_resp = new TH2D("response_matrix","respmat",nbin-1,bins,nbin-1,bins);
+  RooUnfoldResponse response(h1_cspec,h1_tjetspec,h2_resp);
   TH1F* xJ[2];
   xJ[0]=new TH1F("xJ0_sim","",100,0,1);
   xJ[1]=new TH1F("xJ1_sim","",100,0,1);
@@ -301,7 +351,8 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       //cout << "got cut params" << endl;
       bool ljetHighEta = check_bad_jet_eta(ljeteta, vtx[2], 0.4);
       bool subjetHighEta = check_bad_jet_eta(subjeteta, vtx[2], 0.4);
-
+      float truthJet[100][2];
+      float recoJet[100][2];
       if(ljetET < 8 || ljetHighEta) continue;
       for(int j=0; j<njet; ++j)
 	{
@@ -309,12 +360,18 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	  h1_ucspec->Fill(jet_e[j]);
 	  h2_dPhiLayer[0]->Fill(dPhiLayer[j],frcem[j]);
 	}
-      cout << "ntj: " << ntj << endl;
+      //cout << "ntj: " << ntj << endl;
       for(int j=0; j<ntj; ++j)
 	{
 	  if(check_bad_jet_eta(tjet_eta[j],vtx[2],0.4)) continue;
 	  h1_tjetspec->Fill(tjet_et[j]);
+	  truthJet[j][0] = tjet_eta[j];
+	  truthJet[j][1] = tjet_phi[j];
 	}
+
+
+
+      
       if(subjetET > 8) isdijet = 1;
       if(subjetHighEta) isdijet = 0;
       float dphi = abs(ljetph - subjetph);
@@ -328,6 +385,10 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
       bool fullcut = bbCut || lETCut || hETCut || ihCut;
       h1_forrat[2]->Fill(ljetET);
+
+
+      
+
       //cout << "before th2f filling" << endl;
       for(int j=0; j<numTh2f/6; ++j)
 	{
@@ -391,6 +452,8 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
 	      if(jet_e[j] >8)
 		{
+		  recoJet[j][0] = jet_et[j];
+		  recoJet[j][1] = jet_ph[j];
 		  h1_cspec->Fill(jet_e[j]);
 		  h2_dPhiLayer[1]->Fill(dPhiLayer[j],frcem[j]);
 		}
@@ -404,6 +467,35 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 		  xJ[1]->Fill(subjetET/ljetET);
 		}
 	    }
+	}
+      int whichMatch[100];
+      jetMatch(ntj,njet,truthJet,recoJet,whichMatch);
+      for(int j=0; j<ntj; ++j)
+	{
+	  if(whichMatch[j] != -1)
+	    {
+	      response.Fill(jet_e[whichMatch[j]],tjet_et[j]);
+	    }
+	  else
+	    {
+	      response.Miss(tjet_et[j]);
+	    }
+	}
+      bool isFake[100];
+      for(int j=0; j<njet; ++j)
+	{
+	  isFake[j] = true;
+	}
+      for(int j=0; j<ntj; ++j)
+	{
+	  if(whichMatch[j] != -1)
+	    {
+	      isFake[whichMatch[j]] = false;
+	    }
+	}
+      for(int j=0; j<njet; ++j)
+	{
+	  if(isFake[j]) response.Fake(jet_e[j]);
 	}
       h1_zdist[0]->Fill(vtx[2]); 
     }
@@ -446,7 +538,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       lJetPhiET[i]->Write();
       lJetEtaPhi[i]->Write();
     }
-
+  response.Hresponse()->Write("hresponse");
   jetfile->Write();
   return 0;
 }

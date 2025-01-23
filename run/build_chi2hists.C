@@ -545,6 +545,9 @@ int build_chi2hists(string filebase, int runnumber)
     // Loop over entries in the tree
     const int nRatio = 7;
     TH1F* forRatio[nRatio];
+    const int nbin = 11;
+    float bins[nbin];
+    for(int i=-2; i<nbin-2; ++i) bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
     for(int i=0; i<nRatio; ++i)
       {
 	forRatio[i] = new TH1F(("h1_forRatio_"+to_string(i)).c_str(),"",i<5?1000:100,0,i<5?100:1);
@@ -556,7 +559,7 @@ int build_chi2hists(string filebase, int runnumber)
     xJ[1] = new TH1F("xJ1","",100,0,1);
     for(int i=0; i<nSpectra; ++i)
       {
-	jetSpectra[i] = new TH1F(("h1_jetSpectra_"+to_string(i)).c_str(),"",1000,0,100);
+	jetSpectra[i] = new TH1F(("h1_jetSpectra_"+to_string(i)).c_str(),"",nbin,bins);
 	//cout << jetSpectra[i] << endl;
       }
     bool cutArr[nSpectra];
