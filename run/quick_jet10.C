@@ -138,7 +138,7 @@ bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
   return jet_eta < minlimit || jet_eta > maxlimit;
 }
 
-int quick_jet10(string filebase="", int njob=0, int dotow = 0)
+int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int dotow = 0)
 {
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
   //gROOT->SetStyle("Plain");
@@ -226,8 +226,8 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   tree->SetBranchAddress("dPhi2pcd",dPhi2pc);
   tree->SetBranchAddress("dEta2pcd",dEta2pc);
   cout << "end getting branches" << endl;
-  
-  TFile* jetfile = TFile::Open(("output/simhists/run_jet10_"+idstr+"_"+to_string(njob)+"_simhists.root").c_str(),"RECREATE");
+
+  TFile* jetfile = TFile::Open(("output/simhists/run_"+samplestring+"_"+idstr+"_"+to_string(njob)+"_simhists.root").c_str(),"RECREATE");
   
 
   int eventbase = {0};
@@ -288,17 +288,23 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
   TH1F* h1_g20_dijet = new TH1F("anotherdancheck","",60,-0.1,1.1);
   
 
-  const int nbin = 11;
-  float bins[nbin];
-  for(int i=-2; i<nbin-2; ++i)
+  const int nbinx = 11;
+  float binsx[nbinx+1] = {10,12,14,17,20,24,28,33,38,44,50,70};
+  const int nbiny = 10;
+  float binsy[nbiny+1] = {12,14,17,20,24,28,33,38,44,50,70};
+  /*
+    for(int i=-2; i<nbin-2; ++i)
     {
       bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
     }
+  */
+  TH1F* h1_ucspec = new TH1F("h1_ucspec","ucspec",nbiny,binsy);
+  TH1F* h1_cspec = new TH1F("h1_cspec","cspec",nbiny,binsy);
+  TH1F* h1_tjetspec = new TH1F("h1_tjetspec","tjetspec",nbinx,binsx);
+  TH2D* h2_resp = new TH2D("response_matrix","respmat",nbiny,binsy,nbinx,binsx);
 
-  TH1F* h1_ucspec = new TH1F("h1_ucspec","ucspec",nbin-1,bins);
-  TH1F* h1_cspec = new TH1F("h1_cspec","cspec",nbin-1,bins);
-  TH1F* h1_tjetspec = new TH1F("h1_tjetspec","tjetspec",nbin-1,bins);
-  TH2D* h2_resp = new TH2D("response_matrix","respmat",nbin-1,bins,nbin-1,bins);
+  TH1F* h1_miss = new TH1F("h1_miss","miss",nbinx,binsx);
+  TH1F* h1_fake = new TH1F("h1_fake","fake",nbiny,binsy);
   RooUnfoldResponse response(h1_cspec,h1_tjetspec,h2_resp);
   TH1F* xJ[2];
   xJ[0]=new TH1F("xJ0_sim","",100,0,1);
@@ -479,6 +485,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	  else
 	    {
 	      response.Miss(tjet_et[j]);
+	      h1_miss->Fill(tjet_et[j]);
 	    }
 	}
       bool isFake[100];
@@ -496,15 +503,16 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
       for(int j=0; j<njet; ++j)
 	{
 	  if(isFake[j]) response.Fake(jet_e[j]);
+	  h1_fake->Fill(jet_e[j]);
 	}
       h1_zdist[0]->Fill(vtx[2]); 
     }
 
   cout << "finished filling" << endl;
   h1_zdist[0]->Write();
-  h1_ucspec->Scale(4e-5/2.8e6);
+  //h1_ucspec->Scale(4e-5/2.8e6);
   h1_ucspec->Write();
-  h1_cspec->Scale(4e-5/2.8e6);
+  //h1_cspec->Scale(4e-5/2.8e6);
   h1_cspec->Write();
   xJ[0]->Write();
   xJ[1]->Write();
@@ -520,7 +528,7 @@ int quick_jet10(string filebase="", int njob=0, int dotow = 0)
 	}
     }
   cout << "writing truth spectra" << endl;
-  h1_tjetspec->Scale(4e-5/2.8e6);
+  //h1_tjetspec->Scale(4e-5/2.8e6);
   h1_tjetspec->Write();
   cout << "writing n2pc" << endl;
   for(int i=0; i<2; ++i)

@@ -17,7 +17,7 @@ SUBNAME="${BASENAME}.sub"
 
 echo "executable = earlysim.sh" > $SUBNAME
 echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:250" >> $SUBNAME
-echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C}" >> $SUBNAME
+echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C} ${7}" >> $SUBNAME
 echo "output = /sphenix/user/jocl/projects/run2024_earlydata/run/output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME
 echo "when_to_transfer_output = ON_EXIT" >> $SUBNAME

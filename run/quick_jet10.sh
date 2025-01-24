@@ -28,5 +28,5 @@ done < ./output/templist_$NJOB.list
 ls treefiles_$NJOB/* > $FILENAME
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/quick_jet10.C .
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/dlUtility.h .
-root -b -q 'quick_jet10.C("'${FILENAME}'",'${2}',1)'
+root -b -q 'quick_jet10.C("'${FILENAME}'","'${3}'",'${2}',1)'
 cp -r output/simhists/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/simhists/

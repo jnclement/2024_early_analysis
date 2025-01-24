@@ -546,8 +546,8 @@ int build_chi2hists(string filebase, int runnumber)
     const int nRatio = 7;
     TH1F* forRatio[nRatio];
     const int nbin = 11;
-    float bins[nbin];
-    for(int i=-2; i<nbin-2; ++i) bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
+    float bins[nbin+1] = {10,12,14,17,20,24,28,33,38,44,50,70};
+    //for(int i=-2; i<nbin-2; ++i) bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
     for(int i=0; i<nRatio; ++i)
       {
 	forRatio[i] = new TH1F(("h1_forRatio_"+to_string(i)).c_str(),"",i<5?1000:100,0,i<5?100:1);

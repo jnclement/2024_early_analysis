@@ -32,7 +32,9 @@ echo "copied root script here"
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calo_run2pp-000$3.list ./lists/$3.list
 echo "copied dstlist here"
 DSTFILE=`sed -n "${UPLN}"p "./lists/${3}.list"`
-getinputfiles.pl $DSTFILE
+#getinputfiles.pl $DSTFILE
+FULLPATH=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${DSTFILE}';"`
+cp $FULLPATH ./$DSTFILE
 echo "got input files"
 mv $DSTFILE ./dsts/$3/${3}_${2}.root
 echo "Running Fun4All now"

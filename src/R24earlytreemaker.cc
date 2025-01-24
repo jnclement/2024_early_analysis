@@ -134,7 +134,7 @@ bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
 }
 
 //____________________________________________________________________________..
-R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim, int dotow):
+R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim, int dotow, int sampleType):
   SubsysReco("test")//).c_str())
 {
   _rc = recoConsts::instance();
@@ -145,6 +145,7 @@ R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, i
   _debug = debug;
   mbevt = 0;
   _datorsim = datorsim;
+  _sampleType = sampleType;
 }
 
 //____________________________________________________________________________..
@@ -203,6 +204,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   //_tree->Branch("ohcalt",ohcalt,"ohcalt[sectoroh]/F");
   _tree->Branch("vtx",vtx,"vtx[3]/F");
   if(_dotow) _tree->Branch("sector_rtem",&sector_rtem,"sector_rtem/I");
+  _tree->Branch("sampleType",&_sampleType,"sampleType/I");
   _tree->Branch("l2pcEta",&_l2pcEta,"l2pcEta/F");
   _tree->Branch("njet",&njet,"njet/I");
   _tree->Branch("frcem",_frcem,"frcem[njet]");
@@ -400,6 +402,30 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  ntj++;
 	}
     }
+  float max_tjet_et = 0;
+  for(int i=0; i<ntj; ++i)
+    {
+      if(tjet_et[i] > max_tjet_et) max_tjet_et = tjet_et[i];
+    }
+  float truthhighcut = 0;
+  float truthlowcut = 0;
+  if(_sampleType == 0)
+    {
+      truthhighcut = 14;
+      truthlowcut = 8;
+    }
+  else if(_sampleType == 1)
+    {
+      truthhighcut = 30;
+      truthlowcut = 14;
+    }
+  else if(_sampleType == 2)
+    {
+      truthhighcut = 9999;
+      truthlowcut = 30;
+    }
+  if(_debug > 0 && ntj) cout << "max_jet_ET: " << max_tjet_et << endl;
+  if(max_tjet_et > truthhighcut || max_tjet_et < truthlowcut) return Fun4AllReturnCodes::ABORTEVENT;
 
   vtx[0] = 0;
   vtx[1] = 0;

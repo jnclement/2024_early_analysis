@@ -53,7 +53,7 @@ bool file_exists(const char* filename)
   std::ifstream infile(filename);
   return infile.good();
 }
-int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0, string dir = ".")
+int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0, int sampletype = -1, string dir = ".")
 {
   int verbosity = 0;
   string filename = dir+"/"+to_string(datorsim?rn:nproc)+"/events_"+tag+(tag==""?"":"_");
@@ -91,28 +91,28 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   if(datorsim) se->registerSubsystem(tz);
 
   Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
-  Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
+  //Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
   Fun4AllInputManager *in_3 = new Fun4AllDstInputManager("DSTin3");
   Fun4AllInputManager *in_4 = new Fun4AllDstInputManager("DSTin4");
 
   ifstream list3, list2, list1;
   if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
   //if(!datorsim && !list3) list3.open("lists/g4hits.list");
-  if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
+//if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
 string line1, line2, line3, line4;
   if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
   else line1 = "./dsts/"+to_string(nproc)+"/calo_cluster_"+to_string(nproc)+".root";
-  line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
+//line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
 line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
 line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
   //else line3 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
-  if(!datorsim) in_2->AddFile(line2);
+  //if(!datorsim) in_2->AddFile(line2);
   if(!datorsim) in_3->AddFile(line3);
 if(!datorsim) in_4->AddFile(line4);
   se->registerInputManager( in_1 );
   
-  if(!datorsim) se->registerInputManager( in_2 );
+  //if(!datorsim) se->registerInputManager( in_2 );
   if(!datorsim) se->registerInputManager( in_3 );
   if(!datorsim) se->registerInputManager(in_4);
 
@@ -277,7 +277,7 @@ if(!datorsim) in_4->AddFile(line4);
   cout << "set up chi2check" << endl;
   
   //cout << "test2" << endl;
-  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 0);
+  R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 0, sampletype);
   //cout << "test3" << endl;
   if(!datorsim) se->registerSubsystem( tt );
   cout << "test4" << endl;

@@ -14,7 +14,7 @@ class R24earlytreemaker : public SubsysReco
 {
  public:
 
-  R24earlytreemaker(const std::string &name = "R24earlytreemaker", const int debug = 0, int datorsim = 1, int dotow = 0);
+  R24earlytreemaker(const std::string &name = "R24earlytreemaker", const int debug = 0, int datorsim = 1, int dotow = 0, int sampleType = 1);
 
   virtual ~R24earlytreemaker();
 
@@ -100,7 +100,7 @@ class R24earlytreemaker : public SubsysReco
   float maxTowerET[3];
   float maxTowerChi2[3];
   float caloEfrac[3];
-
+  int _sampleType;
   float _dPhi2pc[1000];
   float _dEta2pc[1000];
   /*
