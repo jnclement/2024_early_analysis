@@ -1,7 +1,7 @@
 #!/bin/bash
 
 NJOB=`wc -l < chi2lists/chi2list.list`
-NJOB=10
+#NJOB=10
 BASENAME="condor_chi2hist_${NJOB}"
 SUBNAME="${BASENAME}.sub"
 
