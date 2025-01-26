@@ -545,8 +545,8 @@ int build_chi2hists(string filebase, int runnumber)
     // Loop over entries in the tree
     const int nRatio = 7;
     TH1F* forRatio[nRatio];
-    const int nbin = 11;
-    float bins[nbin+1] = {10,12,14,17,20,24,28,33,38,44,50,70};
+    const int nbin = 10;
+    float bins[nbin+1] = {12,14,17,20,24,28,33,38,44,50,70};
     //for(int i=-2; i<nbin-2; ++i) bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
     for(int i=0; i<nRatio; ++i)
       {
