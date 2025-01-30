@@ -34,7 +34,7 @@ void FormatTH1(TH1* thehist, string xTitle, string yTitle, int histColor, float 
   thehist->SetMarkerStyle(20);
   thehist->SetMarkerSize(2);
   thehist->SetLineColor(histColor);
-  thehist->Scale(1./thehist->GetBinWidth(1));
+  //thehist->Scale(1./thehist->GetBinWidth(1));
   thehist->GetYaxis()->SetRangeUser(yMin, yMax);
   thehist->GetXaxis()->SetTitle(xTitle.c_str());
   thehist->GetYaxis()->SetTitle(yTitle.c_str());
@@ -164,29 +164,40 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   j10r = static_cast<TH2F*>(simfile->Get("hresponse"));
   mbr = static_cast<TH2F*>(mbfile->Get("hresponse"));
   j30r = static_cast<TH2F*>(j30file->Get("hresponse"));
+
+  RooUnfoldResponse* simresp = static_cast<RooUnfoldResponse*>(simfile->Get("roounfold_response"));
+  RooUnfoldResponse* j30resp = static_cast<RooUnfoldResponse*>(j30file->Get("roounfold_response"));
+  
+  //simresp->Add(*j30resp);
+
   TF1* fturn = new TF1("fturn","[0]*(TMath::Erf((x-[1])/[2]) + 1)", 4, 30);
   fturn->SetParameter(0,0.478683);
   fturn->SetParameter(1,9.76439);
   fturn->SetParameter(2,4.29056);
-  //double jet10scale = 3.646e-6 / 4.197e-2;
-  //double jet30scale = 2.505e-9 / 4.197e-2;
-  double jet30scale = 2.505e-9 / 3.646e-6;
+  double jet10scale = 3.646e-6 / 4.197e-2;
+  double jet30scale = 2.505e-9 / 4.197e-2;
+  jet30scale /= 2.505e-9 / 3.646e-6;
   for(int i=1; i<5; ++i)
     {
       datnocut->SetBinContent(i,datnocut->GetBinContent(i)/fturn->Eval(datnocut->GetBinCenter(i)));
       datallcut->SetBinContent(i,datallcut->GetBinContent(i)/fturn->Eval(datallcut->GetBinCenter(i)));
       datspeccut->SetBinContent(i,datspeccut->GetBinContent(i)/fturn->Eval(datspeccut->GetBinCenter(i)));
+
+      datnocut->SetBinError(i,datnocut->GetBinError(i)/fturn->Eval(datnocut->GetBinCenter(i)));
+      datallcut->SetBinError(i,datallcut->GetBinError(i)/fturn->Eval(datallcut->GetBinCenter(i)));
+      datspeccut->SetBinError(i,datspeccut->GetBinError(i)/fturn->Eval(datspeccut->GetBinCenter(i)));
+
     }
-
-  //j10allcut->Scale(jet10scale);
-  //j10nocut->Scale(jet10scale);
-  //j10tp->Scale(jet10scale);
-  j30allcut->Scale(jet30scale);
-  j30nocut->Scale(jet30scale);
-  j30tp->Scale(jet30scale);
-  //j10r->Scale(jet10scale);
-  j30r->Scale(jet30scale);
-
+  
+  j10allcut->Scale(1./jet10scale);
+  j10nocut->Scale(1./jet10scale);
+  j10tp->Scale(1./jet10scale);
+  j30allcut->Scale(1./jet30scale);
+  j30nocut->Scale(1./jet30scale);
+  j30tp->Scale(1./jet30scale);
+  j10r->Scale(1./jet10scale);
+  j30r->Scale(1./jet30scale);
+  /*
   float xpoints[24] = {14.8, 17.3, 19.9, 22.2, 24.9, 27.4, 29.8, 32.5, 34.8,37.4,39.9,42.4,44.8,47.5,50,52.3,54.9,57.4,59.9,62.3,67.5,69.9,72.4};
   float ypoints[24] = {0.0000068815953765315700,
 		       0.00000262743707983794,
@@ -211,9 +222,20 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
 		       2.01367322688913E-12,
 		       8.16520302177809E-13,
 		       3.11752667949471E-13};
-
-  TGraph* datathief = new TGraph(24,xpoints,ypoints);
-  datathief->SetMarkerStyle(20);
+  */
+  //TGraph* datathief = new TGraph(24,xpoints,ypoints);
+  float ppScaleFactor = 28*(2.0*M_PI*2.5*2.0)/(1.e12);
+  ifstream tjetfile;
+  tjetfile.open("jets_newphenix_sc1.dat");
+  TGraph* tjet = new TGraph();
+  tjet->SetMarkerStyle(20);
+  for (int index=0; index<38; index++) {
+    double pt; double yield;
+    tjetfile >> pt >> yield;
+    // rescale points 
+    yield = yield * ppScaleFactor*pt / 2.5;
+    tjet->SetPoint(index,pt,yield);
+  }
   /*
   TH1F* comball = mballcut;
   TH1F* combno = mbnocut;
@@ -239,24 +261,34 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   const int nbiny = 8;
   float binsx[nbinx+1] = {14,17,20,24,28,33,38,44,50,70};
   float binsy[nbiny+1] = {17,20,24,28,33,38,44,50,70};
-
+  /*
+  TH1F* tempcomball = comball;
+  TH1F* tempcombtp = combtp;
+  TH1F* tempdatall = datallcut;
+  TH2F* tempr = combr;
+  */
+  
   TH1F* tempcomball = new TH1F("tempcomball","",nbiny,binsy);
   TH1F* tempcombtp = new TH1F("tempcombtp","",nbinx,binsx);
   TH1F* tempdatall = new TH1F("tempdatall","",nbiny,binsy);
   TH2F* tempr = new TH2F("tempr","",nbiny,binsy,nbinx,binsx);
-
+  
   for(int i=3; i<nbinx+3; ++i)
     {
-      tempdatall->SetBinContent(i-2,datallcut->GetBinContent(i));
       tempcombtp->SetBinContent(i-2,combtp->GetBinContent(i));
-      cout << datallcut->GetBinContent(i) << " " << tempdatall->GetBinContent(i-2) << endl;
+      tempcombtp->SetBinError(i-2,combtp->GetBinError(i));
+
       for(int j=3; j<nbiny+3; ++j)
 	{
 	  if(i==3)
 	    {
+	      tempdatall->SetBinContent(j-2,datallcut->GetBinContent(j+1));
+	      tempdatall->SetBinError(j-2,datallcut->GetBinError(j+1));
 	      tempcomball->SetBinContent(j-2,comball->GetBinContent(j));
+	      tempcomball->SetBinError(j-2,comball->GetBinError(j));
 	    }
 	  tempr->SetBinContent(j-2,i-2,combr->GetBinContent(j,i));
+	  tempr->SetBinError(j-2,i-2,combr->GetBinError(j,i));
 	}
     }
   
@@ -270,7 +302,7 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   cout << tempdatall->GetNbinsX() << endl;
   cout << tempdatall->GetBinLowEdge(1) << endl;
   cout << tempr->GetNbinsX() << endl;
-  RooUnfoldBayes unfold(&response, tempdatall, 3);
+  RooUnfoldBayes unfold(&response, tempdatall, 4, false, true);
   TH1D* hUnfold = (TH1D*) unfold.Hunfold(RooUnfold::kErrors);
   cout <<"HUNFOLD PARAMS:" << endl << hUnfold->GetNbinsX() << endl << hUnfold->GetXaxis()->GetBinWidth(1) << endl;
   for(int i=1; i<nbiny+1; ++i)
@@ -278,9 +310,9 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
       cout << hUnfold->GetBinContent(i) << endl;
     }
 
-  tempcomball->Scale(0.5/1e10);
-  combno->Scale(0.5/1e10);
-  tempcombtp->Scale(0.5/1e10);
+  tempcomball->Scale(4e-5/2.8e6);
+  combno->Scale(4e-5/2.8e6);
+  tempcombtp->Scale(4e-5/2.8e6);
   tempdatall->Scale(1./1.79769e11);
   /*
   FormatTH1(comball, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kViolet+2,1e-12,1e-4);
@@ -291,10 +323,11 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   FormatTH1(datspeccut, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kBlue,1e-12,1e-4);
   FormatTH1(hUnfold, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kGreen,1e-12,1e-4);
   */
-  hUnfold->Scale(1./1.79769e11);
+  //hUnfold->Scale(1./1.79769e11);
+  hUnfold->Scale(4e-5/2.8e6);
   FormatTH1(tempcomball, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kViolet+2,1e-13,1e-5);
-  FormatTH1(tempdatall, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kGreen+2,1e-13,1e-45);
-  FormatTH1(hUnfold, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kGreen,1e-13,1e-5);
+  FormatTH1(tempdatall, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kGreen+2,1e-13,1e-5);
+  FormatTH1(hUnfold, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kGreen,1e-12,1e-5);
   FormatTH1(tempcombtp, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kRed,1e-13,1e-5);
   TLegend* theleg = new TLegend(0.2,0.23,0.5,0.4);
   theleg->SetFillStyle(0);
@@ -306,7 +339,7 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   theleg->AddEntry(tempdatall,"Data all cuts","p");
   //theleg->AddEntry(datspeccut,"Data all cuts (no dijet check)","p");
   theleg->AddEntry(hUnfold,"Unfolded","p");
-  theleg->AddEntry(datathief,"NLO PQCD Calc.","p");
+  theleg->AddEntry(tjet,"NLO PQCD Calc.","p");
   TCanvas* c1 = new TCanvas("","",1000,1000);
   c1->cd();
   c1->SetLeftMargin(0.2);
@@ -318,6 +351,11 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
       tempcomball->SetBinContent(i,tempcomball->GetBinContent(i)/tempcomball->GetBinWidth(i));
       tempdatall->SetBinContent(i,tempdatall->GetBinContent(i)/tempdatall->GetBinWidth(i));
       hUnfold->SetBinContent(i,hUnfold->GetBinContent(i)/hUnfold->GetBinWidth(i));
+
+      tempcombtp->SetBinError(i,tempcombtp->GetBinError(i)/tempcombtp->GetBinWidth(i));
+      tempcomball->SetBinError(i,tempcomball->GetBinError(i)/tempcomball->GetBinWidth(i));
+      tempdatall->SetBinError(i,tempdatall->GetBinError(i)/tempdatall->GetBinWidth(i));
+      hUnfold->SetBinError(i,hUnfold->GetBinError(i)/hUnfold->GetBinWidth(i));
     }
   tempcombtp->SetMarkerStyle(21);
   tempcomball->SetMarkerStyle(21);
@@ -329,7 +367,7 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   //datspeccut->Draw("SAME PE");
   
   hUnfold->Draw("SAME PE");
-  datathief->Draw("SAME P");
+  tjet->Draw("SAME P");
   theleg->Draw();
   const int ntext = 5;
   string texts[ntext] =
@@ -348,7 +386,7 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   TH1F* cdattprat = new TH1F("cdattprat","",nbinx,binsx);
   TH1F* csimtprat = new TH1F("csimtprat","",nbinx,binsx);
   TH1F* cdcsrat = new TH1F("cdcsrat","",nbinx,binsx);
-
+  TH1F* uftprat = new TH1F("uftprat","",nbinx,binsx);
   
       
 
@@ -356,9 +394,18 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
     {
       if(comball->GetBinContent(i-1) != 0)
 	{
-	  cdcsrat->SetBinContent(i,tempdatall->GetBinContent(i-1)/tempcomball->GetBinContent(i-1));
+	  if(tempcomball->GetBinContent(i-1) != 0) cdcsrat->SetBinContent(i,tempdatall->GetBinContent(i-1)/tempcomball->GetBinContent(i-1));
+	  float cderr = tempdatall->GetBinError(i-1) / tempdatall->GetBinContent(i-1);
+	  float cserr = tempcomball->GetBinError(i-1) / tempcomball->GetBinContent(i-1);
+	  float tperr = tempcombtp->GetBinError(i) / tempcombtp->GetBinContent(i);
+	  float uferr = hUnfold->GetBinError(i) / hUnfold->GetBinContent(i);
+	  cdcsrat->SetBinError(i,cdcsrat->GetBinContent(i)*sqrt(cderr*cderr+cserr*cserr));
 	  cdattprat->SetBinContent(i,tempdatall->GetBinContent(i-1)/tempcombtp->GetBinContent(i));
+	  cdattprat->SetBinError(i,cdattprat->GetBinContent(i)*sqrt(cderr*cderr+tperr*tperr));
 	  csimtprat->SetBinContent(i,tempcomball->GetBinContent(i-1)/tempcombtp->GetBinContent(i));
+	  csimtprat->SetBinError(i,csimtprat->GetBinContent(i)*sqrt(tperr*tperr+cserr*cserr));
+	  uftprat->SetBinContent(i,hUnfold->GetBinContent(i)/tempcombtp->GetBinContent(i));
+	  uftprat->SetBinError(i,uftprat->GetBinContent(i)*sqrt(tperr*tperr+uferr*uferr));
 	}
       else
 	{
@@ -369,15 +416,21 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
     }
   FormatTH1(cdattprat, "E_{T,jet} [GeV]","Ratio Data/Truth PYTHIA",kBlack,1e-3,1);
   FormatTH1(csimtprat, "E_{T,jet} [GeV]","Ratio Reco Sim/Truth PYTHIA",kBlack,1e-3,1);
-  FormatTH1(cdcsrat, "E_{T,jet} [GeV]","Ratio Data/Reco Sim",kBlack,1e-3,1);
-  cdattprat->GetYaxis()->SetRangeUser(0,0.1);
-  csimtprat->GetYaxis()->SetRangeUser(0,0.1);
+  FormatTH1(cdcsrat, "E_{T,jet} [GeV]","Ratio Data/Reco Sim",kBlack,0,2);
+
+  FormatTH1(uftprat, "E_{T,jet} [GeV]","Ratio Unfolded/Truth PYTHIA",kBlack,0,2.5);
+  cdattprat->GetYaxis()->SetRangeUser(0,1);
+  csimtprat->GetYaxis()->SetRangeUser(0,1);
+  uftprat->GetYaxis()->SetRangeUser(0.9,1.1);
   cdattprat->Draw("PE");
   c1->SaveAs("output/chi2img/cdattprat.png");
   csimtprat->Draw("PE");
   c1->SaveAs("output/chi2img/csimtprat.png");
+  //cdcsrat->GetXaxis()->SetRangeUser(0,100);
   cdcsrat->Draw("PE");
   c1->SaveAs("output/chi2img/cdcsrat.png");
+  uftprat->Draw("PE");
+  c1->SaveAs("output/chi2img/uftprat.png");
   c1->SetLogz();
   c1->SetRightMargin(0.2);
   c1->SetTopMargin(0.2);

@@ -7,6 +7,7 @@
 //#include <g4jets/TruthJetInput.h>
 #include <caloreco/CaloTowerStatus.h>
 #include <jetbackground/FastJetAlgoSub.h>
+#include <jetbase/FastJetAlgo.h>
 #include <jetbackground/RetowerCEMC.h>
 #include <jetbackground/BeamBackgroundFilterAndQA.h>
 #include <fstream>
@@ -96,16 +97,16 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   Fun4AllInputManager *in_4 = new Fun4AllDstInputManager("DSTin4");
 
   ifstream list3, list2, list1;
-  if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
-  //if(!datorsim && !list3) list3.open("lists/g4hits.list");
+//if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
+//if(!datorsim) list3.open("lists/g4hits.list");
 //if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
 string line1, line2, line3, line4;
   if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
   else line1 = "./dsts/"+to_string(nproc)+"/calo_cluster_"+to_string(nproc)+".root";
 //line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
 line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
-line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
-  //else line3 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
+line4 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
+//line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
   //if(!datorsim) in_2->AddFile(line2);
   if(!datorsim) in_3->AddFile(line3);
@@ -251,6 +252,19 @@ if(!datorsim) in_4->AddFile(line4);
   towerjetreco->set_input_node("TOWER");
   towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
+  if(!datorsim)
+    {
+      JetReco *truthjetreco = new JetReco("TRUTHJETS");
+      TruthJetInput *tji = new TruthJetInput(Jet::PARTICLE);
+      truthjetreco->add_input(tji);
+      //truthjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.2), "AntiKt_Truth_r02");
+      truthjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Truth_r04");
+      //truthjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.6), "AntiKt_Truth_r06");
+      truthjetreco->set_algo_node("ANTIKT");
+      truthjetreco->set_input_node("TRUTH");
+      truthjetreco->Verbosity(verbosity);
+      se->registerSubsystem(truthjetreco);
+    }
 
   /*
   JetReco *emtowerjet = new JetReco();

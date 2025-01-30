@@ -11,12 +11,12 @@ else
 fi
 mkdir -p lists
 mkdir -p output/simhists
-cp /sphenix/user/jocl/projects/run2024_earlydata/run/lists/sim.imagelist .
+cp /sphenix/user/jocl/projects/run2024_earlydata/run/lists/$3.imagelist .
 
 NJOB=$(( ($2 * 10) + 1))
 mkdir -p treefiles_$NJOB
 FILENAME=lists/$NJOB.imagelist
-cat sim.imagelist | tail -n +$NJOB | head -n 10 > ./output/templist_$NJOB.list
+cat $3.imagelist | tail -n +$NJOB | head -n 10 > ./output/templist_$NJOB.list
 
 cat ./output/templist_$NJOB.list
 

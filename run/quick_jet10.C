@@ -148,7 +148,12 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   gStyle->SetPadTickY(1);
   gStyle->SetOptTitle(0);
 
+  float scale;
   string filename=filebase;
+  if(samplestring == "jet10") scale = 3.646e-6/4.197e-2;
+  else if(samplestring == "jet30") scale = 2.505e-9/4.197e-2;
+  else if(samplestring == "mb") scale = 0.1;
+  else return 1;
   TChain* tree;
   ifstream list;
   string line;
@@ -363,14 +368,14 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       for(int j=0; j<njet; ++j)
 	{
 	  if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
-	  h1_ucspec->Fill(jet_e[j]);
+	  h1_ucspec->Fill(jet_e[j],scale);
 	  h2_dPhiLayer[0]->Fill(dPhiLayer[j],frcem[j]);
 	}
       //cout << "ntj: " << ntj << endl;
       for(int j=0; j<ntj; ++j)
 	{
 	  if(check_bad_jet_eta(tjet_eta[j],vtx[2],0.4)) continue;
-	  h1_tjetspec->Fill(tjet_et[j]);
+	  h1_tjetspec->Fill(tjet_et[j],scale);
 	  truthJet[j][0] = tjet_eta[j];
 	  truthJet[j][1] = tjet_phi[j];
 	}
@@ -460,7 +465,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 		{
 		  recoJet[j][0] = jet_et[j];
 		  recoJet[j][1] = jet_ph[j];
-		  h1_cspec->Fill(jet_e[j]);
+		  h1_cspec->Fill(jet_e[j],scale);
 		  h2_dPhiLayer[1]->Fill(dPhiLayer[j],frcem[j]);
 		}
 	    }
@@ -480,12 +485,12 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	{
 	  if(whichMatch[j] != -1)
 	    {
-	      response.Fill(jet_e[whichMatch[j]],tjet_et[j]);
+	      response.Fill(jet_e[whichMatch[j]],tjet_et[j],scale);
 	    }
 	  else
 	    {
-	      response.Miss(tjet_et[j]);
-	      h1_miss->Fill(tjet_et[j]);
+	      response.Miss(tjet_et[j],scale);
+	      h1_miss->Fill(tjet_et[j],scale);
 	    }
 	}
       bool isFake[100];
@@ -502,8 +507,8 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	}
       for(int j=0; j<njet; ++j)
 	{
-	  if(isFake[j]) response.Fake(jet_e[j]);
-	  h1_fake->Fill(jet_e[j]);
+	  if(isFake[j]) response.Fake(jet_e[j],scale);
+	  h1_fake->Fill(jet_e[j],scale);
 	}
       h1_zdist[0]->Fill(vtx[2]); 
     }
@@ -546,6 +551,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       lJetPhiET[i]->Write();
       lJetEtaPhi[i]->Write();
     }
+  response.Write("roounfold_response");
   response.Hresponse()->Write("hresponse");
   jetfile->Write();
   return 0;

@@ -390,6 +390,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   //int isjettrig = ((triggervec >> 16) & 1) | ((triggervec >> 17) & 1) | ((triggervec >> 18) & 1) | ((triggervec >> 19) & 1);
   //if(!ismb &! isjettrig) return Fun4AllReturnCodes::EVENT_OK;
   ntj = 0;
+  if(_debug > 0) cout << truthjets->size() << endl;
   if(truthjets && !_datorsim)
     {
       for(int i=0; i<truthjets->size(); ++i)
@@ -401,6 +402,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  tjet_phi[ntj] = jet->get_phi();
 	  ntj++;
 	}
+    }
+  else if(!truthjets && _debug > 0)
+    {
+      cout << "NO TRUTH JET CONTAINER; ABORT EVENT!" << endl;
+      return Fun4AllReturnCodes::ABORTEVENT;
     }
   float max_tjet_et = 0;
   for(int i=0; i<ntj; ++i)
@@ -425,7 +431,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       truthlowcut = 30;
     }
   if(_debug > 0 && ntj) cout << "max_jet_ET: " << max_tjet_et << endl;
-  if(max_tjet_et > truthhighcut || max_tjet_et < truthlowcut) return Fun4AllReturnCodes::ABORTEVENT;
+  else if(_debug > 0 && !ntj) cout << "no jets!" << endl;
+  //if(max_tjet_et > truthhighcut || max_tjet_et < truthlowcut) return Fun4AllReturnCodes::ABORTEVENT;
 
   vtx[0] = 0;
   vtx[1] = 0;

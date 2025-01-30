@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 TAG=`echo $1 | awk -F'/' '{print $2}' | awk -F'.' '{print $1}'`

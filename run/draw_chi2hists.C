@@ -10,9 +10,9 @@
 #include <TH2D.h>
 #include <TGaxis.h>
 #include "dlUtility.h"
-#include <RooUnfold.h>
-#include <RooUnfoldResponse.h>
-#include <RooUnfoldBayes.h>
+//#include <RooUnfold.h>
+//#include <RooUnfoldResponse.h>
+//#include <RooUnfoldBayes.h>
 void std_text(TCanvas* thecan, string* texts, int ntext, float textsize, float textx, float texty, int rightalign)
 {
 
@@ -214,17 +214,18 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
   }
   */
   cout <<"hresp: " << hResp << endl;
-  RooUnfoldResponse response(jetSpectra.at(41),jetSpectra.at(52),hResp);
+  //RooUnfoldResponse response(jetSpectra.at(41),jetSpectra.at(52),hResp);
 
-  RooUnfoldBayes unfold(&response, jetSpectra.at(31), 4);
+  //RooUnfoldBayes unfold(&response, jetSpectra.at(31), 4);
 
-  TH1D* hUnfold = (TH1D*) unfold.Hunfold(RooUnfold::kErrors);
-  cout <<"HUNFOLD PARAMS:" << endl << hUnfold->GetNbinsX() << endl <<hUnfold->GetXaxis()->GetBinWidth(1) << endl;
+  //TH1D* hUnfold = (TH1D*) unfold.Hunfold(RooUnfold::kErrors);
+  //cout <<"HUNFOLD PARAMS:" << endl << hUnfold->GetNbinsX() << endl <<hUnfold->GetXaxis()->GetBinWidth(1) << endl;
+  /*
   for(int i=1; i<11; ++i)
     {
       cout << hUnfold->GetBinContent(i) << endl;
     }
-
+  */
   string xtcp[6] = {"E_{T,EM}/E_{T,lead jet}","E_{T,EM}/E_{T,lead jet}","E_{T,EM}/E_{T,lead jet}","E_{T,lead jet}","E_{T,lead jet}","#eta"};
 
   string ytcp[6] = {"E_{T,lead jet}","#eta","#phi","#eta","#phi","#phi"};
@@ -541,8 +542,10 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     //jetSpectra.at(52)->GetYaxis()->SetRangeUser(1e-12,1e-4);
     jetSpectra.at(52)->GetXaxis()->SetTitle(xSpectraTitle.c_str());
     jetSpectra.at(52)->GetYaxis()->SetTitle(ySpectraTitle.c_str());
+    jetSpectra.at(52)->Scale(1.11e-11);
     jetSpectra.at(52)->Draw("PE");
     gPad->SaveAs("output/chi2img/tjetspec.png");
+    /*
     hUnfold->GetYaxis()->SetTitleOffset(2.0);
     hUnfold->SetMarkerColor(kRed);
     hUnfold->SetMarkerStyle(20);
@@ -560,10 +563,13 @@ void draw_chi2hists(const TString& fileName, const TString& simFileName) {
     gPad->SaveAs("output/chi2img/tjetandunfold.png");
     hUnfold->Draw("PE");
     gPad->SaveAs("output/chi2img/unfold.png");
+    */
   jetSpectra.at(0)->Draw("PE");
   cout << "drew 0" << endl;
   canvas->SaveAs("testimg.pdf");
   //sleep(30);
+  jetSpectra.at(41)->Scale(1.11e-11);
+  jetSpectra.at(42)->Scale(1.11e-11);
   TH1* touse[nLegend-1] = {jetSpectra.at(2),jetSpectra.at(16),jetSpectra.at(24),jetSpectra.at(31),jetSpectra.at(41),jetSpectra.at(42)};
   TH1F* prespcr = new TH1F("prespcr","",100,0,100);
   TH1F* specrat = new TH1F("specrat","",100,0,100);
