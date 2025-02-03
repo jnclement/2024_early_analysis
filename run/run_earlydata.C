@@ -105,8 +105,8 @@ string line1, line2, line3, line4;
   else line1 = "./dsts/"+to_string(nproc)+"/calo_cluster_"+to_string(nproc)+".root";
 //line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
 line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
-line4 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
-//line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
+//line4 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
+line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
   //if(!datorsim) in_2->AddFile(line2);
   if(!datorsim) in_3->AddFile(line3);
@@ -228,6 +228,7 @@ if(!datorsim) in_4->AddFile(line4);
   rcemc->Verbosity(verbosity);
   se->registerSubsystem(rcemc);
   cout << "set up retower emcal" << endl;
+  /*
   JetReco *truthjetreco = new JetReco();
   
   if(!datorsim)
@@ -240,7 +241,7 @@ if(!datorsim) in_4->AddFile(line4);
       truthjetreco->set_input_node("TRUTH");
       //se->registerSubsystem(truthjetreco);
     }
-  
+  */
   
   JetReco *towerjetreco = new JetReco();
   //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
@@ -252,6 +253,8 @@ if(!datorsim) in_4->AddFile(line4);
   towerjetreco->set_input_node("TOWER");
   towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
+
+  /*
   if(!datorsim)
     {
       JetReco *truthjetreco = new JetReco("TRUTHJETS");
@@ -265,7 +268,7 @@ if(!datorsim) in_4->AddFile(line4);
       truthjetreco->Verbosity(verbosity);
       se->registerSubsystem(truthjetreco);
     }
-
+  */
   /*
   JetReco *emtowerjet = new JetReco();
   emtowerjet->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB"));

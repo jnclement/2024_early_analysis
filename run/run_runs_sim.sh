@@ -7,7 +7,7 @@ fi
 rn=0
 evt=$2
 c2c=$3
-nfile=1000
+nfile=10
 #for i in {0..25000}; do
 #    mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$i
 #    mkdir -p /sphenix/tg/tg01/jets/jocl/err/$i

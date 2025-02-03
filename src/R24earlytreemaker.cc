@@ -390,7 +390,8 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   //int isjettrig = ((triggervec >> 16) & 1) | ((triggervec >> 17) & 1) | ((triggervec >> 18) & 1) | ((triggervec >> 19) & 1);
   //if(!ismb &! isjettrig) return Fun4AllReturnCodes::EVENT_OK;
   ntj = 0;
-  if(_debug > 0) cout << truthjets->size() << endl;
+  if(_debug > 0 && truthjets) cout << truthjets->size() << endl;
+  else if(_debug > 0) cout << "NO TRUTH JET CONTAINER!" << endl;
   if(truthjets && !_datorsim)
     {
       for(int i=0; i<truthjets->size(); ++i)
@@ -403,9 +404,12 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  ntj++;
 	}
     }
-  else if(!truthjets && _debug > 0)
+  else if(!truthjets)
     {
-      cout << "NO TRUTH JET CONTAINER; ABORT EVENT!" << endl;
+      if(_debug > 0)
+	{
+	  cout << "NO TRUTH JET CONTAINER; ABORT EVENT!" << endl;
+	}
       return Fun4AllReturnCodes::ABORTEVENT;
     }
   float max_tjet_et = 0;
@@ -431,7 +435,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       truthlowcut = 30;
     }
   if(_debug > 0 && ntj) cout << "max_jet_ET: " << max_tjet_et << endl;
-  else if(_debug > 0 && !ntj) cout << "no jets!" << endl;
+  else if(_debug > 0 && !ntj) cout << "no truth jets!" << endl;
   //if(max_tjet_et > truthhighcut || max_tjet_et < truthlowcut) return Fun4AllReturnCodes::ABORTEVENT;
 
   vtx[0] = 0;
@@ -445,6 +449,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	  vtx[2] = mbdvtx->get_z();
 	  break;
 	}
+    }
+  else
+    {
+      if(_debug > 1) cout << "NO MBDVTXMAP! ABORT!" << endl;
+      return Fun4AllReturnCodes::ABORTEVENT;
     }
   /*
   else if(gvtxmap)
@@ -464,6 +473,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(std::isnan(vtx[2]) || abs(vtx[2]) > 150)
     {
       if(ismb) mbevt--;
+      if(_debug > 1) cout << "ZVTX BAD! ABORT!" << endl;
       return Fun4AllReturnCodes::ABORTEVENT;
     }
   int outfailscut = 0;

@@ -165,10 +165,14 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   mbr = static_cast<TH2F*>(mbfile->Get("hresponse"));
   j30r = static_cast<TH2F*>(j30file->Get("hresponse"));
 
-  RooUnfoldResponse* simresp = static_cast<RooUnfoldResponse*>(simfile->Get("roounfold_response"));
+
+
+  RooUnfoldResponse* simresp = static_cast<RooUnfoldResponse*>(mbfile->Get("roounfold_response"));
+  RooUnfoldResponse* j10resp = static_cast<RooUnfoldResponse*>(simfile->Get("roounfold_response"));
   RooUnfoldResponse* j30resp = static_cast<RooUnfoldResponse*>(j30file->Get("roounfold_response"));
   
-  //simresp->Add(*j30resp);
+  simresp->Add(*j10resp);
+  simresp->Add(*j30resp);
 
   TF1* fturn = new TF1("fturn","[0]*(TMath::Erf((x-[1])/[2]) + 1)", 4, 30);
   fturn->SetParameter(0,0.478683);
@@ -247,32 +251,32 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   TH1F* combtp = j10tp;
   TH2F* combr = j10r;
 
-  //comball->Add(j10allcut);
+  comball->Add(j10allcut);
   comball->Add(j30allcut);
-  //combno->Add(j10nocut);
+  combno->Add(j10nocut);
   combno->Add(j30nocut);
-  //combtp->Add(j10tp);
+  combtp->Add(j10tp);
   combtp->Add(j30tp);
-  //combr->Add(j10r);
+  combr->Add(j10r);
   combr->Add(j30r);
 
 
-  const int nbinx = 9;
-  const int nbiny = 8;
-  float binsx[nbinx+1] = {14,17,20,24,28,33,38,44,50,70};
-  float binsy[nbiny+1] = {17,20,24,28,33,38,44,50,70};
-  /*
+  const int nbinx = 10;
+  const int nbiny = 9;
+  float binsx[nbinx+1] = {8,12,16,21,26,32,38,45,52,60,70};
+  float binsy[nbiny+1] = {12,16,21,26,32,38,45,52,60,70};
+  
   TH1F* tempcomball = comball;
   TH1F* tempcombtp = combtp;
   TH1F* tempdatall = datallcut;
   TH2F* tempr = combr;
-  */
   
-  TH1F* tempcomball = new TH1F("tempcomball","",nbiny,binsy);
-  TH1F* tempcombtp = new TH1F("tempcombtp","",nbinx,binsx);
-  TH1F* tempdatall = new TH1F("tempdatall","",nbiny,binsy);
-  TH2F* tempr = new TH2F("tempr","",nbiny,binsy,nbinx,binsx);
   
+  //TH1F* tempcomball = new TH1F("tempcomball","",nbiny,binsy);
+  //TH1F* tempcombtp = new TH1F("tempcombtp","",nbinx,binsx);
+  //TH1F* tempdatall = new TH1F("tempdatall","",nbiny,binsy);
+  //TH2F* tempr = new TH2F("tempr","",nbiny,binsy,nbinx,binsx);
+  /*
   for(int i=3; i<nbinx+3; ++i)
     {
       tempcombtp->SetBinContent(i-2,combtp->GetBinContent(i));
@@ -291,18 +295,18 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
 	  tempr->SetBinError(j-2,i-2,combr->GetBinError(j,i));
 	}
     }
-  
+  */
   //cout <<"hresp: " << hResp << endl;
   //  RooUnfoldResponse response(comball,combtp,combr);
 
   //RooUnfoldBayes unfold(&response, datallcut, 2);
   cout << "here1" << endl;
-  RooUnfoldResponse response(tempcomball,tempcombtp,tempr);
+  //RooUnfoldResponse response(tempcomball,tempcombtp,tempr);
   cout << "here2" << endl;
   cout << tempdatall->GetNbinsX() << endl;
   cout << tempdatall->GetBinLowEdge(1) << endl;
   cout << tempr->GetNbinsX() << endl;
-  RooUnfoldBayes unfold(&response, tempdatall, 4, false, true);
+  RooUnfoldBayes unfold(simresp, tempcomball, 1, false, true);
   TH1D* hUnfold = (TH1D*) unfold.Hunfold(RooUnfold::kErrors);
   cout <<"HUNFOLD PARAMS:" << endl << hUnfold->GetNbinsX() << endl << hUnfold->GetXaxis()->GetBinWidth(1) << endl;
   for(int i=1; i<nbiny+1; ++i)
@@ -345,7 +349,7 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   c1->SetLeftMargin(0.2);
   c1->SetBottomMargin(0.2);
   c1->SetLogy();
-  for(int i=1; i<nbiny+2; ++i)
+  for(int i=1; i<tempcombtp->GetNbinsX()+1; ++i)
     {
       tempcombtp->SetBinContent(i,tempcombtp->GetBinContent(i)/tempcombtp->GetBinWidth(i));
       tempcomball->SetBinContent(i,tempcomball->GetBinContent(i)/tempcomball->GetBinWidth(i));

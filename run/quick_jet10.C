@@ -46,43 +46,7 @@ static const float radius_OH = 225.87;
 static const float minz_OH = -301.683;
 static const float maxz_OH = 301.683;
 
-void jetMatch(int nt, int nr, float truthJet[][2], float recoJet[][2], int *whichMatch)
-{
-  const int nMaxJet = 100;
-  float dRMat[nMaxJet][nMaxJet];
-  for(int i=0; i<nMaxJet; ++i)
-    {
-      whichMatch[i] = -1;
-    }
-  for(int i=0; i<nt; ++i)
-    {
-      for(int j=0; j<nr; ++j)
-	{
-	  dRMat[i][j] = sqrt(pow(truthJet[i][0]-recoJet[j][0],2)+pow(truthJet[i][1]-recoJet[j][1],2));
-	}
-    }
 
-  for(int i=0; i<nt; ++i)
-    {
-      float drMin = 10;
-      int ri = -1;
-      int ti = -1;
-      for(int j=0; j<nt; ++j)
-	{
-	  if(whichMatch[j] != -1) continue;
-	  for(int k=0; k<nr; ++k)
-	    {
-	      if(dRMat[j][k] < drMin && dRMat[j][k] < 0.3)
-		{
-		  ti = j;
-		  ri = k;
-		  drMin = dRMat[j][k];
-		}
-	    }
-	}
-      if(ti != -1) whichMatch[ti] = ri;
-    }
-}
 	  
 float get_emcal_mineta_zcorrected(float zvertex) {
   float z = minz_EM - zvertex;
@@ -138,6 +102,45 @@ bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
   return jet_eta < minlimit || jet_eta > maxlimit;
 }
 
+
+void jetMatch(int nt, int nr, float truthJet[][2], float recoJet[][2], int *whichMatch, float zvtx)
+{
+  const int nMaxJet = 100;
+  float dRMat[nMaxJet][nMaxJet];
+  for(int i=0; i<nMaxJet; ++i)
+    {
+      whichMatch[i] = -1;
+    }
+  for(int i=0; i<nt; ++i)
+    {
+      for(int j=0; j<nr; ++j)
+	{
+	  dRMat[i][j] = sqrt(pow(truthJet[i][0]-recoJet[j][0],2)+pow(truthJet[i][1]-recoJet[j][1],2));
+	}
+    }
+
+  for(int i=0; i<nt; ++i)
+    {
+      float drMin = 10;
+      int ri = -1;
+      int ti = -1;
+      for(int j=0; j<nt; ++j)
+	{
+	  if(whichMatch[j] != -1) continue;
+	  for(int k=0; k<nr; ++k)
+	    {
+	      if(dRMat[j][k] < drMin && dRMat[j][k] < 0.3 && !check_bad_jet_eta(recoJet[k][0],zvtx,0.4))
+		{
+		  ti = j;
+		  ri = k;
+		  drMin = dRMat[j][k];
+		}
+	    }
+	}
+      if(ti != -1) whichMatch[ti] = ri;
+    }
+}
+
 int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int dotow = 0)
 {
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
@@ -153,7 +156,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   if(samplestring == "jet10") scale = 3.646e-6/4.197e-2;
   else if(samplestring == "jet30") scale = 2.505e-9/4.197e-2;
   else if(samplestring == "mb") scale = 0.1;
-  else return 1;
+  else scale = 1;
   TChain* tree;
   ifstream list;
   string line;
@@ -293,10 +296,10 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   TH1F* h1_g20_dijet = new TH1F("anotherdancheck","",60,-0.1,1.1);
   
 
-  const int nbinx = 11;
-  float binsx[nbinx+1] = {10,12,14,17,20,24,28,33,38,44,50,70};
-  const int nbiny = 10;
-  float binsy[nbiny+1] = {12,14,17,20,24,28,33,38,44,50,70};
+  const int nbinx = 10;
+  float binsx[nbinx+1] = {8,12,16,21,26,32,38,45,52,60,70};
+  const int nbiny = 9;
+  float binsy[nbiny+1] = {12,16,21,26,32,38,45,52,60,70};
   /*
     for(int i=-2; i<nbin-2; ++i)
     {
@@ -311,9 +314,10 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   TH1F* h1_miss = new TH1F("h1_miss","miss",nbinx,binsx);
   TH1F* h1_fake = new TH1F("h1_fake","fake",nbiny,binsy);
   RooUnfoldResponse response(h1_cspec,h1_tjetspec,h2_resp);
-  TH1F* xJ[2];
+  TH1F* xJ[3];
   xJ[0]=new TH1F("xJ0_sim","",100,0,1);
   xJ[1]=new TH1F("xJ1_sim","",100,0,1);
+  xJ[2]=new TH1F("xJ2_truth","",100,0,1);
   int whichhist[3];
   float thresh[numTh2f/6] = {8,15,20,25,35,40};
   cout << "start processing: " << endl;
@@ -371,16 +375,29 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	  h1_ucspec->Fill(jet_e[j],scale);
 	  h2_dPhiLayer[0]->Fill(dPhiLayer[j],frcem[j]);
 	}
+      float ltj = 0;
+      float stj = 0;
       //cout << "ntj: " << ntj << endl;
       for(int j=0; j<ntj; ++j)
 	{
 	  if(check_bad_jet_eta(tjet_eta[j],vtx[2],0.4)) continue;
-	  h1_tjetspec->Fill(tjet_et[j],scale);
+	  if(ljetET > 30) h1_tjetspec->Fill(tjet_et[j],scale);
 	  truthJet[j][0] = tjet_eta[j];
 	  truthJet[j][1] = tjet_phi[j];
+	  if(tjet_et[j] > ltj)
+	    {
+	      stj = ltj;
+	      ltj = tjet_et[j];
+	    }
+	  else if(tjet_et[j] > stj)
+	    {
+	      stj = tjet_et[j];
+	    }
 	}
-
-
+     
+      float lxJET = 10;
+      float slxJET = 8;
+      if(ltj > lxJET && stj > slxJET) xJ[2]->Fill(stj/ltj);
 
       
       if(subjetET > 8) isdijet = 1;
@@ -427,7 +444,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	  h1_g20_dijet->Fill(ljetfrcem);
 	}
 
-      if(isdijet && ljetET > 20 && subjetET > 10)
+      if(isdijet && ljetET > lxJET && subjetET > slxJET)
 	{
 	  h1_forrat[3]->Fill((ljetET-subjetET)/(ljetET+subjetET));
 	  xJ[0]->Fill(subjetET/ljetET);
@@ -472,45 +489,46 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	  if(isdijet)
 	    {
 	      h1_forrat[1]->Fill(ljetET);
-	      if(ljetET > 20 && subjetET > 10)
+	      if(ljetET > lxJET && subjetET > slxJET)
 		{
 		  h1_forrat[4]->Fill((ljetET-subjetET)/(ljetET+subjetET));
 		  xJ[1]->Fill(subjetET/ljetET);
 		}
 	    }
-	}
-      int whichMatch[100];
-      jetMatch(ntj,njet,truthJet,recoJet,whichMatch);
-      for(int j=0; j<ntj; ++j)
-	{
-	  if(whichMatch[j] != -1)
+	
+	  int whichMatch[100];
+	  jetMatch(ntj,njet,truthJet,recoJet,whichMatch, vtx[2]);
+	  for(int j=0; j<ntj; ++j)
 	    {
-	      response.Fill(jet_e[whichMatch[j]],tjet_et[j],scale);
+	      if(whichMatch[j] != -1)
+		{
+		  response.Fill(jet_e[whichMatch[j]],tjet_et[j],scale);
+		}
+	      else
+		{
+		  response.Miss(tjet_et[j],scale);
+		  h1_miss->Fill(tjet_et[j],scale);
+		}
 	    }
-	  else
+	  bool isFake[100];
+	  for(int j=0; j<njet; ++j)
 	    {
-	      response.Miss(tjet_et[j],scale);
-	      h1_miss->Fill(tjet_et[j],scale);
+	      isFake[j] = true;
 	    }
-	}
-      bool isFake[100];
-      for(int j=0; j<njet; ++j)
-	{
-	  isFake[j] = true;
-	}
-      for(int j=0; j<ntj; ++j)
-	{
-	  if(whichMatch[j] != -1)
+	  for(int j=0; j<ntj; ++j)
 	    {
-	      isFake[whichMatch[j]] = false;
+	      if(whichMatch[j] != -1)
+		{
+		  isFake[whichMatch[j]] = false;
+		}
 	    }
+	  for(int j=0; j<njet; ++j)
+	    {
+	      if(isFake[j]) response.Fake(jet_e[j],scale);
+	      h1_fake->Fill(jet_e[j],scale);
+	    }
+	  h1_zdist[0]->Fill(vtx[2]); 
 	}
-      for(int j=0; j<njet; ++j)
-	{
-	  if(isFake[j]) response.Fake(jet_e[j],scale);
-	  h1_fake->Fill(jet_e[j],scale);
-	}
-      h1_zdist[0]->Fill(vtx[2]); 
     }
 
   cout << "finished filling" << endl;
@@ -521,6 +539,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   h1_cspec->Write();
   xJ[0]->Write();
   xJ[1]->Write();
+  xJ[2]->Write();
   cout << "wrote spectra" << endl;
   for(int i=0; i<5; ++i) h1_forrat[i]->Write();
   cout << "writing hists2" << endl;

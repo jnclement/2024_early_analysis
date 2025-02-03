@@ -59,7 +59,7 @@ for i in 0; do
     mv $G4HITSF ./dsts/$SUBDIR/g4hits_${SUBDIR}.root
     ls ./dsts/$SUBDIR
     #cp -r $TRTHJET ./dsts/$SUBDIR/truth_jet_${SUBDIR}.root
-    root -b -q 'run_earlydata.C("'${1}'",'${SUBDIR}',2,'${5}','${2}','${4}',0,'${6}','${7}')'
+    root -b -q 'run_earlydata.C("'${1}'",'${SUBDIR}',3,'${5}','${2}','${4}',0,'${6}','${7}')'
     ls
     echo " "
     ls $SUBDIR

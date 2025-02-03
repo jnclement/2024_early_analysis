@@ -545,8 +545,8 @@ int build_chi2hists(string filebase, int runnumber)
     // Loop over entries in the tree
     const int nRatio = 7;
     TH1F* forRatio[nRatio];
-    const int nbin = 10;
-    float bins[nbin+1] = {12,14,17,20,24,28,33,38,44,50,70};
+    const int nbin = 9;
+    float bins[nbin+1] = {12,16,21,26,32,38,45,52,60,70};
     //for(int i=-2; i<nbin-2; ++i) bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
     for(int i=0; i<nRatio; ++i)
       {
@@ -554,9 +554,12 @@ int build_chi2hists(string filebase, int runnumber)
       }
     const int nSpectra = 33;
     TH1F* jetSpectra[nSpectra];
-    TH1F* xJ[2];
+    TH1F* xJ[4];
     xJ[0] = new TH1F("xJ0","",100,0,1);
     xJ[1] = new TH1F("xJ1","",100,0,1);
+    xJ[2] = new TH1F("new_xJ2","",100,0,1);
+    xJ[3] = new TH1F("new_xJ3","",100,0,1);
+    
     for(int i=0; i<nSpectra; ++i)
       {
 	jetSpectra[i] = new TH1F(("h1_jetSpectra_"+to_string(i)).c_str(),"",nbin,bins);
@@ -679,14 +682,16 @@ int build_chi2hists(string filebase, int runnumber)
 	if(!cutArr[1] && isdijet) forRatio[2]->Fill(jet_ET);
 	if(!cutArr[31]) forRatio[3]->Fill(jet_ET);
 	if(!cutArr[31] && isdijet) forRatio[4]->Fill(jet_ET);
-	if(isdijet && jet_ET > 20 && subjet_ET > 10)
+	if(isdijet && jet_ET > 14 && subjet_ET > 10)
 	  {
 	    forRatio[5]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
+	    if(jet_ET > 30 && subjet_ET > 20) xJ[2]->Fill(subjet_ET/jet_ET);
 	    xJ[0]->Fill(subjet_ET/jet_ET);
 	  }
-	if(isdijet && !cutArr[31] && jet_ET > 20 && subjet_ET > 10)
+	if(isdijet && !cutArr[31] && jet_ET > 14 && subjet_ET > 10)
 	  {
 	    forRatio[6]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
+	    if(jet_ET > 30 && subjet_ET > 20) xJ[3]->Fill(subjet_ET/jet_ET);
 	    xJ[1]->Fill(subjet_ET/jet_ET);
 	  }
 	//cout << "filling (got entry). isdijet = " << isdijet << endl;
@@ -874,6 +879,8 @@ int build_chi2hists(string filebase, int runnumber)
       }
     xJ[0]->Write();
     xJ[1]->Write();
+    xJ[2]->Write();
+    xJ[3]->Write();
     for(int i=0; i<nzhist; ++i)
       {
 	zhists[i]->Write();
