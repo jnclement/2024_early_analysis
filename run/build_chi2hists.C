@@ -550,8 +550,10 @@ int build_chi2hists(string filebase, int runnumber)
     //for(int i=-2; i<nbin-2; ++i) bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
     for(int i=0; i<nRatio; ++i)
       {
-	forRatio[i] = new TH1F(("h1_forRatio_"+to_string(i)).c_str(),"",i<5?1000:100,0,i<5?100:1);
+	forRatio[i] = new TH1F(("h1_forRatio_"+to_string(i)).c_str(),"",i<8?1000:100,0,i<5?100:1);
       }
+    TH1F* dijetCheckRat = new TH1F("dijetCheckRat","",1000,0,100);
+    TH1F* dijetCheckRatFull = new TH1F("dijetCheckRatFull","",1000,0,100);
     const int nSpectra = 33;
     TH1F* jetSpectra[nSpectra];
     TH1F* xJ[4];
@@ -581,6 +583,7 @@ int build_chi2hists(string filebase, int runnumber)
 	if(abs(zvtx) > 30) continue;
 	if(check_bad_jet_eta(eta,zvtx,0.4)) continue;
 	bool dPhiCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
+	if(bbfqavec != 0) cout << bbfqavec << endl;
 	bool dhCut = ((bbfqavec >> 5) & 1);
 	bool ihCut = (frcem+frcoh) < 0.65;
 	bool loETCut = ((frcem < 0.1) && (jet_ET > (50*frcem+20))) && (dPhiCut || !isdijet);
@@ -642,6 +645,7 @@ int build_chi2hists(string filebase, int runnumber)
 	      {
 		for(int k=0; k<jet_n; ++k)
 		  {
+		    if(check_bad_jet_eta(jet_eta[k],zvtx,0.4)) continue;
 		    if(jet_et[k] > 8)
 		      {
 			jetSpectra[j]->Fill(jet_et[k]);
@@ -682,6 +686,8 @@ int build_chi2hists(string filebase, int runnumber)
 	if(!cutArr[1] && isdijet) forRatio[2]->Fill(jet_ET);
 	if(!cutArr[31]) forRatio[3]->Fill(jet_ET);
 	if(!cutArr[31] && isdijet) forRatio[4]->Fill(jet_ET);
+	if(!cutArr[30]) dijetCheckRatFull->Fill(jet_ET);
+	if(!cutArr[30] && isdijet) dijetCheckRat->Fill(jet_ET);
 	if(isdijet && jet_ET > 14 && subjet_ET > 10)
 	  {
 	    forRatio[5]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
@@ -899,6 +905,8 @@ int build_chi2hists(string filebase, int runnumber)
 	h2_dPhiLayerMinus[i]->Write();
 	h2_dPhiLayerPlus[i]->Write();
       }
+    dijetCheckRat->Write();
+    dijetCheckRatFull->Write();
     outputFile->Close();
 
     //cout << "wrote" << endl;

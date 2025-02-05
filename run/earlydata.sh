@@ -1,7 +1,7 @@
 #!/bin/bash
 # file name: firstcondor.sh
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.450
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.458
 source /opt/sphenix/core/bin/setup_local.sh "/sphenix/user/jocl/projects/testinstall"
 export HOME=/sphenix/u/jocl
 export TESTINSTALL=/sphenix/user/jocl/projects/testinstall
@@ -40,7 +40,7 @@ mv $DSTFILE ./dsts/$3/${3}_${2}.root
 echo "Running Fun4All now"
 echo $DSTFILE
 echo ./dsts/$3/${3}_${2}.root
-root -b -q 'run_earlydata.C("'${1}'",'${2}',0,'${5}','${3}','${4}',1,'${6}')'
+root -b -q 'run_earlydata.C("'${1}'",'${2}',10,'${5}','${3}','${4}',1,'${6}')'
 #root -b -q 'Fun4All_CaloDataAna.C(2000,"'./dsts/$3/$3_$2.root'")'
 echo " "
 echo " "

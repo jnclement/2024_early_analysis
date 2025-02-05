@@ -254,6 +254,10 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
     {
       h1_forrat[i] = new TH1F(("h1_forrat_tosee"+to_string(i)).c_str(),"",1000,0,i<3?100:1);
     }
+  
+  TH1F* dijetCheckRatFull = new TH1F("dijetCheckRatFullSim","",1000,0,100);
+  TH1F* dijetCheckRat = new TH1F("dijetCheckRatSim","",1000,0,100);
+  
 
   float xlo[nh2] = {-0.2,-0.2,-0.2,-0.2,-0.2,-0.2};
   float xhi[nh2] = {1.2,1.2,1.2,1.2,1.2,1.2};
@@ -306,6 +310,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
     }
   */
+  TH1F* h1_specspec = new TH1F("specspec","specspec",nbiny,binsy);
   TH1F* h1_ucspec = new TH1F("h1_ucspec","ucspec",nbiny,binsy);
   TH1F* h1_cspec = new TH1F("h1_cspec","cspec",nbiny,binsy);
   TH1F* h1_tjetspec = new TH1F("h1_tjetspec","tjetspec",nbinx,binsx);
@@ -381,7 +386,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       for(int j=0; j<ntj; ++j)
 	{
 	  if(check_bad_jet_eta(tjet_eta[j],vtx[2],0.4)) continue;
-	  if(ljetET > 30) h1_tjetspec->Fill(tjet_et[j],scale);
+	  h1_tjetspec->Fill(tjet_et[j],scale);
 	  truthJet[j][0] = tjet_eta[j];
 	  truthJet[j][1] = tjet_phi[j];
 	  if(tjet_et[j] > ltj)
@@ -408,13 +413,17 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       bool hdPhiCut = dphi < 3*M_PI/4 && isdijet;
       bool bbCut = (bbfqavec >> 5) & 1;
       //bool sdPhiCut = (ljetfrcem < 0.4 && dphi < 0.15) && isdijet;
-      bool lETCut = ljetfrcem < 0.1 && (ljetET > (50*ljetfrcem+20)) && (hdPhiCut || !isdijet);
-      bool hETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+75)) && (hdPhiCut || !isdijet);
+      bool baselETCut = ljetfrcem < 0.1 && (ljetET > (50*ljetfrcem+20));
+      bool lETCut = baselETCut && (hdPhiCut || !isdijet);
+      bool basehETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+75));
+      bool hETCut = basehETCut && (hdPhiCut || !isdijet);
       bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
       bool fullcut = bbCut || lETCut || hETCut || ihCut;
+      bool specialCut = bbCut || baselETCut || basehETCut || ihCut;
       h1_forrat[2]->Fill(ljetET);
 
-
+      if(!specialCut) dijetCheckRatFull->Fill(ljetET);
+      if(!specialCut && isdijet) dijetCheckRat->Fill(ljetET);
       
 
       //cout << "before th2f filling" << endl;
@@ -463,6 +472,15 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	  h2_n2pc[0]->Fill(dEta2pc[j],dPhi2pc[j]);
 	}
 
+      if(!specialCut)
+	{
+	  for(int j=0; j<njet; ++j)
+	    {
+	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
+	      if(jet_e[j] < 8) continue;
+	      h1_specspec->Fill(jet_e[j]);
+	    }
+	}
       if(!fullcut)
 	{
 	  for(int j=0; j<n2pc; ++j)
@@ -480,6 +498,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
 	      if(jet_e[j] >8)
 		{
+		  
 		  recoJet[j][0] = jet_et[j];
 		  recoJet[j][1] = jet_ph[j];
 		  h1_cspec->Fill(jet_e[j],scale);
@@ -570,6 +589,9 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       lJetPhiET[i]->Write();
       lJetEtaPhi[i]->Write();
     }
+  h1_specspec->Write();
+  dijetCheckRat->Write();
+  dijetCheckRatFull->Write();
   response.Write("roounfold_response");
   response.Hresponse()->Write("hresponse");
   jetfile->Write();

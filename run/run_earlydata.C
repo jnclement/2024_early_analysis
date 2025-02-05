@@ -22,6 +22,7 @@
 #include <trigzvtxchecker/Trigzvtxchecker.h>
 #include <globalvertex/GlobalVertexReco.h>
 #include <Calo_Calib.C>
+#include <GlobalVertex.h>
 #include <TruthJetInput.h>//#include <G4Setup_sPHENIX.C>
 //#include <MbdDigitization.h>
 #include <MbdReco.h>
@@ -56,7 +57,7 @@ bool file_exists(const char* filename)
 }
 int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0, int sampletype = -1, string dir = ".")
 {
-  int verbosity = 0;
+  int verbosity = 10;
   string filename = dir+"/"+to_string(datorsim?rn:nproc)+"/events_"+tag+(tag==""?"":"_");
   filename += to_string(datorsim?rn:nproc)+"_";
   filename += to_string(nproc)+"_";
@@ -200,6 +201,8 @@ if(!datorsim) in_4->AddFile(line4);
   //int cont = 0;
   BeamBackgroundFilterAndQA::Config bcfg;
   bcfg.debug = false;
+  bcfg.doQA = false;
+  bcfg.doEvtAbort = false;
   BeamBackgroundFilterAndQA* bgelim = new BeamBackgroundFilterAndQA(bcfg);
   se->registerSubsystem(bgelim);
   //  auto mbddigi = new MbdDigitization();
@@ -245,9 +248,16 @@ if(!datorsim) in_4->AddFile(line4);
   
   JetReco *towerjetreco = new JetReco();
   //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
-  towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO,"TOWERINFO_CALIB"));
-  towerjetreco->add_input(new TowerJetInput(Jet::HCALIN_TOWERINFO));
-  towerjetreco->add_input(new TowerJetInput(Jet::HCALOUT_TOWERINFO));
+  TowerJetInput* emtji = new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB");
+  TowerJetInput* ohtji = new TowerJetInput(Jet::HCALIN_TOWERINFO);
+  TowerJetInput* ihtji = new TowerJetInput(Jet::HCALOUT_TOWERINFO);
+  emtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+  ohtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+  ihtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+    
+  towerjetreco->add_input(emtji);
+  towerjetreco->add_input(ohtji);
+  towerjetreco->add_input(ihtji);
   towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
   towerjetreco->set_algo_node("ANTIKT");
   towerjetreco->set_input_node("TOWER");
