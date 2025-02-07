@@ -436,7 +436,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     }
   if(_debug > 0 && ntj) cout << "max_jet_ET: " << max_tjet_et << endl;
   else if(_debug > 0 && !ntj) cout << "no truth jets!" << endl;
-  //if(max_tjet_et > truthhighcut || max_tjet_et < truthlowcut) return Fun4AllReturnCodes::ABORTEVENT;
+  if(max_tjet_et > truthhighcut || max_tjet_et < truthlowcut) return Fun4AllReturnCodes::ABORTEVENT;
 
   vtx[0] = 0;
   vtx[1] = 0;

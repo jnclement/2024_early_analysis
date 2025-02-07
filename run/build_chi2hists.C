@@ -313,6 +313,10 @@ int build_chi2hists(string filebase, int runnumber)
     jet_tree->SetBranchAddress("ohLayerJetET",ohLayerJetET);
     */
 
+    
+    TH2F* asdich_all = new TH2F("asdich_all","",25,0,1,100,0,100);
+    TH2F* asdich_fail = new TH2F("asdich_fail","",25,0,1,100,0,100);
+    TH2F* asdich_dphi = new TH2F("asdich_dphi","",25,0,1,100,0,100);
 
     TH2F* h2_n2pc[2];
     TH2F* h2_dPhiLayer[2];
@@ -629,6 +633,15 @@ int build_chi2hists(string filebase, int runnumber)
 	cutArr[30]=(dhCut || ihCut || specialLoETCut || specialHiETCut);
 	cutArr[31]=(dhCut || ihCut || loETCut || hiETCut);// || chi2cut);
 	cutArr[32]=chi2cut;
+	if(isdijet && (specialHiETCut || specialLoETCut) && !cutArr[31])
+	  {
+	    asdich_fail->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),jet_ET);
+	  }
+	if(!cutArr[31] && isdijet)
+	  {
+	    asdich_all->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),jet_ET);
+	    if(dphi > 3*M_PI/4) asdich_dphi->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),jet_ET);
+	  }
 	if(!cutArr[31]) zhists[5]->Fill(zvtx);
 	float closejetdphi = M_PI;
 	for(int j=0; j<jet_n; ++j)
@@ -907,6 +920,9 @@ int build_chi2hists(string filebase, int runnumber)
       }
     dijetCheckRat->Write();
     dijetCheckRatFull->Write();
+    asdich_all->Write();
+    asdich_fail->Write();
+    asdich_dphi->Write();
     outputFile->Close();
 
     //cout << "wrote" << endl;

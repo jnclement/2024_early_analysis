@@ -257,7 +257,9 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   
   TH1F* dijetCheckRatFull = new TH1F("dijetCheckRatFullSim","",1000,0,100);
   TH1F* dijetCheckRat = new TH1F("dijetCheckRatSim","",1000,0,100);
-  
+  TH2F* asdich_all = new TH2F("asdich_all_sim","",25,0,1,100,0,100);
+  TH2F* asdich_fail = new TH2F("asdich_fail_sim","",25,0,1,100,0,100);
+  TH2F* asdich_dphi = new TH2F("asdich_dphi_sim","",25,0,1,100,0,100);
 
   float xlo[nh2] = {-0.2,-0.2,-0.2,-0.2,-0.2,-0.2};
   float xhi[nh2] = {1.2,1.2,1.2,1.2,1.2,1.2};
@@ -424,7 +426,18 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 
       if(!specialCut) dijetCheckRatFull->Fill(ljetET);
       if(!specialCut && isdijet) dijetCheckRat->Fill(ljetET);
-      
+
+
+      if(isdijet && (basehETCut || baselETCut) && !fullcut)
+	{
+	  asdich_fail->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET);
+	}
+      if(!fullcut && isdijet)
+	{
+	  if(dphi > 3*M_PI/4) asdich_dphi->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET);
+	  asdich_all->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET);
+	}
+
 
       //cout << "before th2f filling" << endl;
       for(int j=0; j<numTh2f/6; ++j)
@@ -525,7 +538,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 		}
 	      else
 		{
-		  response.Miss(tjet_et[j],scale);
+		  //response.Miss(tjet_et[j],scale);
 		  h1_miss->Fill(tjet_et[j],scale);
 		}
 	    }
@@ -543,8 +556,11 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	    }
 	  for(int j=0; j<njet; ++j)
 	    {
-	      if(isFake[j]) response.Fake(jet_e[j],scale);
-	      h1_fake->Fill(jet_e[j],scale);
+	      if(isFake[j])
+		{
+		  response.Fake(jet_e[j],scale);
+		  h1_fake->Fill(jet_e[j],scale);
+		}
 	    }
 	  h1_zdist[0]->Fill(vtx[2]); 
 	}
@@ -592,6 +608,9 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   h1_specspec->Write();
   dijetCheckRat->Write();
   dijetCheckRatFull->Write();
+  asdich_all->Write();
+  asdich_fail->Write();
+  asdich_dphi->Write();
   response.Write("roounfold_response");
   response.Hresponse()->Write("hresponse");
   jetfile->Write();
