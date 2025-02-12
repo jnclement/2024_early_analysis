@@ -710,13 +710,13 @@ int build_chi2hists(string filebase, int runnumber)
 	if(!cutArr[31] && isdijet) forRatio[4]->Fill(jet_ET);
 	if(!cutArr[30]) dijetCheckRatFull->Fill(jet_ET);
 	if(!cutArr[30] && isdijet) dijetCheckRat->Fill(jet_ET);
-	if(isdijet && jet_ET > 14 && subjet_ET > 10)
+	if(dphi > 3*M_PI/4 && isdijet && jet_ET > 14 && subjet_ET > 10)
 	  {
 	    forRatio[5]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
 	    if(jet_ET > 30 && subjet_ET > 20) xJ[2]->Fill(subjet_ET/jet_ET);
 	    xJ[0]->Fill(subjet_ET/jet_ET);
 	  }
-	if(isdijet && !cutArr[31] && jet_ET > 14 && subjet_ET > 10)
+	if(dphi > 3*M_PI/4 && isdijet && !cutArr[31] && jet_ET > 14 && subjet_ET > 10)
 	  {
 	    forRatio[6]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
 	    if(jet_ET > 30 && subjet_ET > 20) xJ[3]->Fill(subjet_ET/jet_ET);

@@ -315,7 +315,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     "#Delta#phi"
   };
 
-  TLegend* spectraLegend = new TLegend(0.54,0.5,0.9,0.65);
+  TLegend* spectraLegend = new TLegend(0.55,0.55,0.9,0.65);
   spectraLegend->SetFillStyle(0);
   spectraLegend->SetFillColor(0);
   spectraLegend->SetTextFont(42);
@@ -517,20 +517,20 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
       //ratios[i]->Scale(1./ratios[i]->GetBinWidth(1));
       ratios[i]->GetYaxis()->SetRangeUser(0,1.1);
       ratios[i]->GetYaxis()->SetTitle("Ratio");
-      if(i!=4 && i!= 5) continue;//if(i!=0 && (i < 4 || i > 6)) continue;
+      if(i!=0 && (i < 4 || i > 6)) continue;//kif(i!=4 && i!= 5) continue;//
       ratLeg->AddEntry(ratios[i],ratLegNames[i].c_str(),"p");
       ratios[i]->GetXaxis()->SetTitle("E_{T,lead} [GeV]");
-      ratios[i]->Draw(i==4?"PE":"SAME PE");
+      ratios[i]->Draw(i==0?"PE":"SAME PE");
     }
   ratios[9]->SetLineColor(kBlue);
   ratios[9]->SetMarkerColor(kBlue);
   ratios[9]->SetMarkerStyle(20);
-  ratios[9]->Draw("SAME PE");
+  //ratios[9]->Draw("SAME PE");
 
   ratios[10]->SetLineColor(kOrange);
   ratios[10]->SetMarkerColor(kOrange);
   ratios[10]->SetMarkerStyle(20);
-  ratios[10]->Draw("SAME PE");
+  //ratios[10]->Draw("SAME PE");
   stdy = 0.8;
     std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
     stdy = 0.85;
@@ -539,8 +539,8 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     ratLeg->SetTextFont(42);
     ratLeg->SetBorderSize(0);
     ratLeg->SetTextSize(0.02);
-    ratLeg->AddEntry(ratios[10],"Reco Sim All Cuts (No Dijet Check)","p");
-    ratLeg->AddEntry(ratios[9],"Data All Cuts (No Dijet Check)","p");
+    //ratLeg->AddEntry(ratios[10],"Reco Sim All Cuts (No Dijet Check)","p");
+    //ratLeg->AddEntry(ratios[9],"Data All Cuts (No Dijet Check)","p");
     TLegend* ajratleg = new TLegend(0.57,0.5,0.9,0.6);
     ajratleg->SetFillStyle(0);
     ajratleg->SetFillColor(0);
@@ -559,7 +559,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     ratios[7]->Draw("PE");
     ratios[8]->Draw("SAME PE");
     ajratleg->Draw();
-    texts[5] = "E_{T,lead} > 20 GeV";
+    texts[5] = "E_{T,lead} > 20 GeV, #Delta#phi > 3#pi/4";
     texts[6] = "E_{T,sub} > 10 GeV";
     std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
     canvas->SaveAs("output/chi2img/ajratio_h1.png");
@@ -742,6 +742,11 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
   TH1F* specrat = new TH1F("specrat","",nbin,bins);
   TH1F* djsprat = new TH1F("djsprat","",nbin,bins);
 
+  TH1F* stripcutrat = new TH1F("stripcutrat","",nbin,bins);
+  TH1F* etcutrat = new TH1F("etcutrat","",nbin,bins);
+  TH1F* allcutrat = new TH1F("allcutrat","",nbin,bins);
+  
+
   //touse[0]->Scale(24381./19910);
   //touse[1]->Scale(24381./19910);
   //touse[2]->Scale(24381./19910);
@@ -749,6 +754,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
   //jetSpectra.at(0)->Scale(24381./19910);
   TLegend* specL2 = new TLegend(*spectraLegend);
   spectraLegend->AddEntry(jetSpectra.at(0),spectraLegendNames[0].c_str(),"p");
+  specL2->AddEntry(jetSpectra.at(0),spectraLegendNames[0].c_str(),"p");
   if(isPythia)
     {
       jetSpectra.at(52)->Scale(4.197e-2/(isJet30?2.505e-9:3.646e-6));
@@ -771,7 +777,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
       //touse[i-1]->Rebin(10);
       touse[i-1]->GetYaxis()->SetTitleOffset(1.85);
       touse[i-1]->SetMarkerColor(spectraColors[i]);
-      touse[i-1]->SetMarkerStyle((i==4||i==5)?21:20);
+      touse[i-1]->SetMarkerStyle((i==5)?21:20);
       touse[i-1]->SetMarkerSize(2);
       touse[i-1]->SetLineColor(spectraColors[i]);
       for(int j=1; j<touse[i-1]->GetNbinsX()+1; ++j)
@@ -785,7 +791,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
       touse[i-1]->Draw("SAME PE");
       cout << "drew " << i << endl;
       if(i<4) spectraLegend->AddEntry(touse[i-1],spectraLegendNames[i].c_str(),"p");
-      if(i==5) continue;
+      //if(i==5) continue;
       else if(i>3) specL2->AddEntry(touse[i-1],spectraLegendNames[i].c_str(),"p");
 
       if(i==4)
@@ -800,19 +806,21 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
 	      cout << "removed " << j << endl;
 	    }
 	  canvas->Clear();
-	  jetSpectra.at(31)->Draw("PE");//normally .at(0)
+	  jetSpectra.at(0)->Draw("PE");
 	}
       if(i==nLegend-1) touse[3]->Draw("SAME PE");
     }
   int bitset = 0;
   if(bitset) return 0;
-  
-  specL2->AddEntry(jetSpectra.at(30),"Data All Cuts (No Dijet Check)","p");
-  specL2->AddEntry(specspec,"Reco Sim All Cuts (No Dijet Check)","p");
-  //specL2->AddEntry(jetSpectra.at(52),(std::string("Truth ")+(isPythia?"PYTHIA":"HERWIG")).c_str(),"p");
-  //jetSpectra.at(52)->Draw("SAME PE");
-  jetSpectra.at(30)->Draw("SAME PE");
-  specspec->Draw("SAME PE");
+  stripcutrat->Divide(jetSpectra.at(2),jetSpectra.at(41));
+  etcutrat->Divide(jetSpectra.at(24),jetSpectra.at(41));
+  allcutrat->Divide(jetSpectra.at(31),jetSpectra.at(41));
+  //specL2->AddEntry(jetSpectra.at(30),"Data All Cuts (No Dijet Check)","p");
+  //specL2->AddEntry(specspec,"Reco Sim All Cuts (No Dijet Check)","p");
+  specL2->AddEntry(jetSpectra.at(52),(std::string("Truth ")+(isPythia?"PYTHIA":"HERWIG")).c_str(),"p");
+  jetSpectra.at(52)->Draw("SAME PE");
+  //jetSpectra.at(30)->Draw("SAME PE");
+  //specspec->Draw("SAME PE");
   std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
   specL2->Draw();
   
@@ -912,7 +920,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
   //jetSpectra.at(42)->SetBinContent(7,(jetSpectra.at(42)->GetBinContent(7)+1)/jetSpectra.at(42)->GetBinWidth(7));
   simcutrat->SetMarkerStyle(20);
   simcutrat->SetMarkerSize(2);
-  simcutrat->GetYaxis()->SetRangeUser(0,1.1);
+  simcutrat->GetYaxis()->SetRangeUser(0.8,1.1);
   simcutrat->GetYaxis()->SetTitle("Reco Sim Cut/No Cut Ratio");
   simcutrat->GetXaxis()->SetTitle("E_{T,jet} [GeV]");
   simcutrat->Draw("PE");
@@ -983,7 +991,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
   specrat->GetXaxis()->SetTitle("E_{T,jet} [GeV]");
   specrat->GetYaxis()->SetTitle("Data/Reco Sim All Cuts Spectrum Ratio");
   specrat->Draw("PE");
-  djsprat->Draw("SAME PE");
+  //djsprat->Draw("SAME PE");
   stdx = 0.3;
   std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
   stdx = 0.6;
@@ -992,23 +1000,44 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
   specratleg->SetFillStyle(0);
   specratleg->AddEntry(specrat,"Dijet Preservation","p");
   specratleg->AddEntry(djsprat,"No Dijet Preservation","p");
-  specratleg->Draw();
+  //specratleg->Draw();
   canvas->SaveAs("output/chi2img/datsimrat_h1.png");
 
 
   prespcr->Divide(jetSpectra.at(0),jetSpectra.at(41));
   prespcr->GetYaxis()->SetTitleOffset(2.0);
-  prespcr->SetMarkerColor(spectraColors[1]);
-  prespcr->SetMarkerStyle(20);
+  prespcr->SetMarkerColor(spectraColors[0]);
+  prespcr->SetMarkerStyle(21);
   prespcr->SetMarkerSize(2);
+  prespcr->SetLineColor(spectraColors[0]);
 
-  prespcr->SetLineColor(spectraColors[1]);
+  stripcutrat->SetMarkerColor(spectraColors[1]);
+  stripcutrat->SetMarkerStyle(20);
+  stripcutrat->SetMarkerSize(2);
+  stripcutrat->SetLineColor(spectraColors[1]);
+
+  etcutrat->SetMarkerColor(spectraColors[3]);
+  etcutrat->SetMarkerStyle(20);
+  etcutrat->SetMarkerSize(2);
+  etcutrat->SetLineColor(spectraColors[3]);
+
+  allcutrat->SetMarkerColor(spectraColors[4]);
+  allcutrat->SetMarkerStyle(20);
+  allcutrat->SetMarkerSize(2);
+  allcutrat->SetLineColor(spectraColors[4]);
+
   prespcr->GetXaxis()->SetTitle("E_{T,jet} [GeV]");
   prespcr->GetYaxis()->SetTitle("Data/Reco Sim No Cuts Spectrum Ratio");
   prespcr->GetYaxis()->SetRangeUser(0,5);
   prespcr->Draw("PE");
-  //spectraLegend->Draw();
-  std_text(canvas, texts, ntext, stdsize, stdx, stdy, stdright);
+  stripcutrat->Draw("SAME PE");
+  etcutrat->Draw("SAME PE");
+  allcutrat->Draw("SAME PE");
+  spectraLegend->SetX1NDC(0.23);
+  spectraLegend->SetX2NDC(0.4);
+  spectraLegend->Draw();
+
+  std_text(canvas, texts, ntext, stdsize, 0.23, stdy, stdright);
 
   canvas->SaveAs("output/chi2img/precutdatsimrat_h1.png");
   gPad->SetBottomMargin(0.1);
@@ -1194,7 +1223,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     }
 
   int histgroup;
-  //return 0;
+  return 0;
   for(int i=0; i<(92*3); ++i)//histograms.size(); ++i)
     {
       if(i>3*nhist-1)
