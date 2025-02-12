@@ -57,7 +57,7 @@ bool file_exists(const char* filename)
 }
 int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0, int sampletype = -1, string dir = ".")
 {
-  int verbosity = 0;
+int verbosity = 0;//debug;
   string filename = dir+"/"+to_string(datorsim?rn:nproc)+"/events_"+tag+(tag==""?"":"_");
   filename += to_string(datorsim?rn:nproc)+"_";
   filename += to_string(nproc)+"_";

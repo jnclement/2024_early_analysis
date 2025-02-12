@@ -42,6 +42,7 @@ void get_lint_events(string filename)
   int nevtrun;
   int mbevt;
   int prn = 0;
+  long unsigned int ntot = 0;
   float effevt = 0;
   TTree* mbtree = (TTree*)mbfile->Get("mbtree");
   mbtree->SetBranchAddress("mbevt",&mbevt);
@@ -51,12 +52,14 @@ void get_lint_events(string filename)
       mbtree->GetEntry(i);
       cout << nevtrun << endl;
       nevtrun += mbevt;
+      ntot += mbevt;
       if(rn == prn) continue;
       prn = rn;
       effevt += get_effevt(rn,nevtrun);
       nevtrun = 0;
     }
   cout << effevt << endl;
+  cout << ntot << endl;
   effevt /= ((21e-3)*(1e12));
   cout << effevt << endl;
 }

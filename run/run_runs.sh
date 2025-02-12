@@ -5,7 +5,7 @@ if [ $# -lt 3 ]; then
     exit 1
 fi
 
-nmax=70 #20000
+nmax=20000
 evt=$2
 c2c=$3
 filecounter=0

@@ -632,7 +632,16 @@ int build_chi2hists(string filebase, int runnumber)
 	cutArr[29]=(dPhiCut || ihCut || loETCut || hiETCut);
 	cutArr[30]=(dhCut || ihCut || specialLoETCut || specialHiETCut);
 	cutArr[31]=(dhCut || ihCut || loETCut || hiETCut);// || chi2cut);
-	cutArr[32]=chi2cut;
+	cutArr[32]=cutArr[30] && !cutArr[31];
+
+	if(cutArr[32])
+	  {
+	    cout << "ET frcem frcoh eta phi" << endl;
+	    for(int j=0; j<jet_n; ++j)
+	      {
+		cout << jet_et[j] << " " << alljetfrcem[j] << " " << alljetfrcoh[j] << " " << jet_eta[j] << " " << jet_phi[j] << endl;
+	      }
+	  }
 	if(isdijet && (specialHiETCut || specialLoETCut) && !cutArr[31])
 	  {
 	    asdich_fail->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),jet_ET);
@@ -723,12 +732,13 @@ int build_chi2hists(string filebase, int runnumber)
 	else det = "Error";
 	//int whichhist = isdijet%2 + 2*maxETowIsZS;
 	int whichhist[3];
-	int threshes[numHistograms/6] = {8,15,20,25,35,40};
-	int slt[numHistograms/6] = {8,8,10,10,15,15};
-	for(int j=0; j<numHistograms/6; ++j)
+	//int threshes[numHistograms/6] = {8,15,20,25,35,40};
+	//int slt[numHistograms/6] = {8,8,10,10,15,15};
+	for(int j=0; j<1; ++j)//numHistograms/6; ++j)
 	  {
-	    if(jet_ET < threshes[j]) continue;
+	    //if(jet_ET < threshes[j]) continue;
 	    if(cutArr[31]) continue;
+	    /*
 	    whichhist[2] = j+ 2*numHistograms/3;
 	    if(isdijet)
 	      {
@@ -741,6 +751,10 @@ int build_chi2hists(string filebase, int runnumber)
 		whichhist[0] = -1;
 		whichhist[1] = -1;
 	      }
+	    */
+	    whichhist[0] = 0;
+	    whichhist[1] = cutArr[30]?2:1;
+	    whichhist[2] = -1;
 	    for(int k=0; k<3; ++k)
 	      {
 		if(whichhist[k] < 0 || whichhist[k] > numHistograms-1) continue;
@@ -829,32 +843,35 @@ int build_chi2hists(string filebase, int runnumber)
 		h2_chi2_dphi[whichhist[k]]->Fill(chi2, dphi);
 		h2_chi2_subjet_ET[whichhist[k]]->Fill(chi2, subjet_ET);
 		//cout << "filled second block" << endl;
-		h2_frcoh_frcem[whichhist[k]]->Fill(frcoh, frcem);
-		h2_frcoh_eta[whichhist[k]]->Fill(frcoh, eta);
-		h2_frcoh_phi[whichhist[k]]->Fill(frcoh, phi);
-		h2_frcoh_jet_ET[whichhist[k]]->Fill(frcoh, jet_ET);
-		h2_frcoh_dphi[whichhist[k]]->Fill(frcoh, dphi);
-		h2_frcoh_subjet_ET[whichhist[k]]->Fill(frcoh, subjet_ET);
-		//cout << "filled third block" << endl;
-		h2_frcem_eta[whichhist[k]]->Fill(frcem, eta);
-		h2_frcem_phi[whichhist[k]]->Fill(frcem, phi);
-		h2_frcem_jet_ET[whichhist[k]]->Fill(frcem, jet_ET);
-		h2_frcem_dphi[whichhist[k]]->Fill(frcem, dphi);
-		h2_frcem_subjet_ET[whichhist[k]]->Fill(frcem, subjet_ET);
-		//cout << "filled fourth block" << endl;
-		h2_eta_phi[whichhist[k]]->Fill(eta, phi);
-		h2_eta_jet_ET[whichhist[k]]->Fill(eta, jet_ET);
-		h2_eta_dphi[whichhist[k]]->Fill(eta, dphi);
-		h2_eta_subjet_ET[whichhist[k]]->Fill(eta, subjet_ET);
-		//cout << "filled fifth block" << endl;
-		h2_phi_jet_ET[whichhist[k]]->Fill(phi, jet_ET);
-		h2_phi_dphi[whichhist[k]]->Fill(phi, dphi);
-		h2_phi_subjet_ET[whichhist[k]]->Fill(phi, subjet_ET);
-		//cout << "filled sixth block" << endl;
-		h2_jet_ET_dphi[whichhist[k]]->Fill(jet_ET, dphi);
-		h2_jet_ET_subjet_ET[whichhist[k]]->Fill(jet_ET, subjet_ET);
-		//cout << "filled seventh block" << endl;
-		h2_subjet_ET_dphi[whichhist[k]]->Fill(subjet_ET, dphi);
+		for(int l=0; l<jet_n; ++l)
+		  {
+		    h2_frcoh_frcem[whichhist[k]]->Fill(alljetfrcoh[l], alljetfrcem[l]);
+		    h2_frcoh_eta[whichhist[k]]->Fill(alljetfrcoh[l], jet_eta[l]);
+		    h2_frcoh_phi[whichhist[k]]->Fill(alljetfrcoh[l], jet_phi[l]);
+		    h2_frcoh_jet_ET[whichhist[k]]->Fill(alljetfrcoh[l], jet_et[l]);
+		    if(isdijet) h2_frcoh_dphi[whichhist[k]]->Fill(alljetfrcoh[l], dphi);
+		    h2_frcoh_subjet_ET[whichhist[k]]->Fill(alljetfrcoh[l], jet_ET);
+		    //cout << "filled third block" << endl;
+		    h2_frcem_eta[whichhist[k]]->Fill(alljetfrcem[l], jet_eta[l]);
+		    h2_frcem_phi[whichhist[k]]->Fill(alljetfrcem[l], jet_phi[l]);
+		    h2_frcem_jet_ET[whichhist[k]]->Fill(alljetfrcem[l], jet_et[l]);
+		    if(isdijet) h2_frcem_dphi[whichhist[k]]->Fill(alljetfrcem[l], dphi);
+		    h2_frcem_subjet_ET[whichhist[k]]->Fill(alljetfrcem[l], jet_ET);
+		    //cout << "filled fourth block" << endl;
+		    h2_eta_phi[whichhist[k]]->Fill(jet_eta[l], jet_phi[l]);
+		    h2_eta_jet_ET[whichhist[k]]->Fill(jet_eta[l], jet_et[l]);
+		    if(isdijet) h2_eta_dphi[whichhist[k]]->Fill(jet_eta[l], dphi);
+		    h2_eta_subjet_ET[whichhist[k]]->Fill(jet_eta[l], jet_ET);
+		    //cout << "filled fifth block" << endl;
+		    h2_phi_jet_ET[whichhist[k]]->Fill(jet_phi[l], jet_et[l]);
+		    if(isdijet) h2_phi_dphi[whichhist[k]]->Fill(jet_phi[l], dphi);
+		    h2_phi_subjet_ET[whichhist[k]]->Fill(jet_phi[l], jet_ET);
+		    //cout << "filled sixth block" << endl;
+		    if(isdijet) h2_jet_ET_dphi[whichhist[k]]->Fill(jet_et[l], dphi);
+		    h2_jet_ET_subjet_ET[whichhist[k]]->Fill(jet_ET, subjet_ET);
+		    //cout << "filled seventh block" << endl;
+		    if(isdijet) h2_subjet_ET_dphi[whichhist[k]]->Fill(jet_ET, dphi);
+		  }
 	      }
 	  }
     }

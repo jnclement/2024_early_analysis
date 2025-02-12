@@ -424,6 +424,20 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       bool specialCut = bbCut || baselETCut || basehETCut || ihCut;
       h1_forrat[2]->Fill(ljetET);
 
+      if(specialCut && !fullcut)
+	{
+	  cout << "tjet ET eta phi" << endl;
+	  for(int j=0; j<ntj; ++j)
+	    {
+	      cout << tjet_et[j] << " " << tjet_eta[j] << " " << tjet_phi[j] << endl;
+	    }
+	  cout << "reco ET eta phi frcem frcoh" << endl;
+	  for(int j=0; j<njet; ++j)
+	    {
+	      cout << jet_e[j] << " " << jet_et[j] << " " << jet_ph[j] << " " << frcem[j] << " " << frcoh[j] << endl;
+	    }
+	}
+
       if(!specialCut) dijetCheckRatFull->Fill(ljetET);
       if(!specialCut && isdijet) dijetCheckRat->Fill(ljetET);
 
@@ -440,24 +454,36 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 
 
       //cout << "before th2f filling" << endl;
-      for(int j=0; j<numTh2f/6; ++j)
+      for(int j=0; j<2; ++j)
 	{
-	  if(ljetET < thresh[j]) continue;
+	  //if(ljetET < thresh[j]) continue;
 	  if(fullcut) continue;
+	  /*
 	  if(isdijet) whichhist[0] = j + (dphi>3*M_PI/4?numTh2f/6:0);
 	  else whichhist[0] = -1;
 	  if(isdijet) whichhist[1] = j + numTh2f/3 + (closejetdphi < M_PI/4? numTh2f/6:0);
 	  else whichhist[1] = -1;
 	  whichhist[2] = j + 2*numTh2f/3;
+	  */
+	  whichhist[0] = 3*j;
+	  whichhist[1] = 3*j+(specialCut?2:1);
+	  whichhist[2] = -1;
 	  for(int k=0; k<3; ++k)
 	    {
-	      if(whichhist[k] < 0 || whichhist[k] > numTh2f - 1) continue;
-	      lJetFrcemET[whichhist[k]]->Fill(ljetfrcem,ljetET);
-	      lJetFrcemEta[whichhist[k]]->Fill(ljetfrcem,ljeteta);
-	      lJetFrcemPhi[whichhist[k]]->Fill(ljetfrcem,ljetph);
-	      lJetEtaET[whichhist[k]]->Fill(ljeteta,ljetET);
-	      lJetPhiET[whichhist[k]]->Fill(ljetph,ljetET);
-	      lJetEtaPhi[whichhist[k]]->Fill(ljeteta,ljetph);
+	      for(int l=0; l<(j==0?njet:ntj); ++l)
+		{
+		  //cout << j << " " << k << " " << l << endl;
+		  if(whichhist[k] < 0 || whichhist[k] > numTh2f - 1) continue;
+		  if(j==0)lJetFrcemET[whichhist[k]]->Fill(frcem[l],jet_e[l]);
+		  if(j==0)lJetFrcemEta[whichhist[k]]->Fill(frcem[l],jet_et[l]);
+		  if(j==0)lJetFrcemPhi[whichhist[k]]->Fill(frcem[l],jet_ph[l]);
+		  //cout << "lower half start" << endl;
+		  lJetEtaET[whichhist[k]]->Fill(j==0?jet_et[l]:tjet_eta[l],j==0?jet_e[l]:tjet_et[l]);
+		  //cout << "second" << endl;
+		  lJetPhiET[whichhist[k]]->Fill(j==0?jet_ph[l]:tjet_phi[l],j==0?jet_e[l]:tjet_et[l]);
+		  //cout << "third" << endl;
+		  lJetEtaPhi[whichhist[k]]->Fill(j==0?jet_et[l]:tjet_eta[l],j==0?jet_ph[l]:tjet_phi[l]);
+		}
 	    }
 	}
       //cout << "after th2f filling" << endl;

@@ -8,7 +8,7 @@ fi
 
 NJOB=`wc -l < $1`
 NJOB=$(( ($NJOB + 9) / 10))
-#NJOB=100
+#NJOB=10
 BASENAME="condor_${TAG}_${NJOB}_imagemaker"
 
 SUBNAME="${BASENAME}.sub"
