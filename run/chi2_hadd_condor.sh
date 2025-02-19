@@ -2,7 +2,7 @@
 
 
 SUBNAME="hadd.sub"
-find /sphenix/user/jocl/projects/run2024_earlydata/run/output/temphists/ -type f -name '*20250213*.root' > chi2_hadd_condor_files.txt
+find /sphenix/user/jocl/projects/run2024_earlydata/run/output/temphists/ -type f -name '*20250217*.root' > chi2_hadd_condor_files.txt
 njob=$(( `cat chi2_hadd_condor_files.txt | wc -l` / 100 ))
 #njob=15
 echo "executable = chi2_hadd_condor.cmd" > $SUBNAME

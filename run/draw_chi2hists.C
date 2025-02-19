@@ -212,8 +212,10 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
 
   TH1F* dijetCheckRatSim = (TH1F*)simfile->Get("dijetCheckRatSim");
   TH1F* dijetCheckRatFullSim = (TH1F*)simfile->Get("dijetCheckRatFullSim");
-  const int nbin = 9;
-  float bins[nbin+1] = {12,16,21,26,32,38,45,52,60,70};
+  //const int nbin = 9;
+  //float bins[nbin+1] =
+  const int nbin = 12;
+  float bins[nbin+1] = {12, 15, 18, 21, 24, 28, 32, 36, 40, 45, 50, 55, 60};//{12,16,21,26,32,38,45,52,60,70};
 
   hResp->Draw("COLZ");
   // Output the names of the retrieved histograms
@@ -433,6 +435,22 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
   jetSpectra.at(39)->Rebin(4);
   jetSpectra.at(47)->Rebin(4);
   */
+
+  TF1* fturn = new TF1("fturn","[0]*(TMath::Erf((x-[1])/[2]) + 1)", 4, 30);
+  fturn->SetParameter(0,0.470647);
+  fturn->SetParameter(1,11.6307);
+  fturn->SetParameter(2,4.36329);
+  for(int i=1; i<5; ++i)
+    {
+      jetSpectra.at(0)->SetBinContent(i,jetSpectra.at(0)->GetBinContent(i)/fturn->Eval(jetSpectra.at(0)->GetBinCenter(i)));
+      jetSpectra.at(31)->SetBinContent(i,jetSpectra.at(31)->GetBinContent(i)/fturn->Eval(jetSpectra.at(31)->GetBinCenter(i)));
+      jetSpectra.at(30)->SetBinContent(i,jetSpectra.at(30)->GetBinContent(i)/fturn->Eval(jetSpectra.at(30)->GetBinCenter(i)));
+
+      jetSpectra.at(0)->SetBinError(i,jetSpectra.at(0)->GetBinError(i)/fturn->Eval(jetSpectra.at(0)->GetBinCenter(i)));
+      jetSpectra.at(31)->SetBinError(i,jetSpectra.at(31)->GetBinError(i)/fturn->Eval(jetSpectra.at(31)->GetBinCenter(i)));
+      jetSpectra.at(30)->SetBinError(i,jetSpectra.at(30)->GetBinError(i)/fturn->Eval(jetSpectra.at(30)->GetBinCenter(i)));
+
+    }
   jetSpectra.at(46)->Rebin(40);
   jetSpectra.at(47)->Rebin(40);
   jetSpectra.at(38)->Rebin(40);
@@ -580,7 +598,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     jetSpectra.at(47)->SetMarkerSize(2);
     jetSpectra.at(47)->SetLineColor(spectraColors[1]);
     jetSpectra.at(47)->Scale(1./jetSpectra.at(47)->GetBinWidth(1));
-    //jetSpectra.at(47)->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    //jetSpectra.at(47)->GetYaxis()->SetRangeUser(1e-13,1e-4);
     jetSpectra.at(47)->GetXaxis()->SetTitle("A_{J}");
     jetSpectra.at(47)->GetYaxis()->SetTitle("Normalized Counts");
     TLegend* ajleg = new TLegend(0.57,0.5,0.9,0.6);
@@ -613,7 +631,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     jetSpectra.at(46)->SetMarkerSize(2);
     jetSpectra.at(46)->SetLineColor(spectraColors[1]);
     jetSpectra.at(46)->Scale(1./jetSpectra.at(46)->GetBinWidth(1));
-    //jetSpectra.at(46)->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    //jetSpectra.at(46)->GetYaxis()->SetRangeUser(1e-13,1e-4);
     jetSpectra.at(46)->GetXaxis()->SetTitle("A_{J}");
     jetSpectra.at(46)->GetYaxis()->SetTitle("Normalized Counts");
     TLegend* ajleg2 = new TLegend(0.57,0.5,0.9,0.6);
@@ -648,7 +666,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
 	jetSpectra.at(0)->SetBinError(i,jetSpectra.at(0)->GetBinError(i)/jetSpectra.at(0)->GetBinWidth(i));
       }
     jetSpectra.at(0)->Scale(1./(Lintpb*1e9)/1.4/(2*M_PI));//0.45*1.79769e11));
-    jetSpectra.at(0)->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    jetSpectra.at(0)->GetYaxis()->SetRangeUser(1e-13,1e-4);
     jetSpectra.at(0)->GetXaxis()->SetTitle(xSpectraTitle.c_str());
     jetSpectra.at(0)->GetYaxis()->SetTitle(ySpectraTitle.c_str());
 
@@ -660,6 +678,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     jetSpectra.at(30)->SetLineColor(kBlue);
     for(int i=1; i<jetSpectra.at(30)->GetNbinsX()+1; ++i)
       {
+	cout << endl << endl << endl << jetSpectra.at(31)->GetBinContent(i) << endl << endl << endl;	
 	jetSpectra.at(30)->SetBinContent(i,jetSpectra.at(30)->GetBinContent(i)/jetSpectra.at(30)->GetBinWidth(i));
 	jetSpectra.at(30)->SetBinError(i,jetSpectra.at(30)->GetBinError(i)/jetSpectra.at(30)->GetBinWidth(i));
       }
@@ -669,7 +688,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     //jetSpectra.at(30)->Scale(24381./19910);
     
     jetSpectra.at(30)->Scale(1./(Lintpb*1e9)/1.4/(2*M_PI));//0.45*1.79769e11));
-    jetSpectra.at(30)->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    jetSpectra.at(30)->GetYaxis()->SetRangeUser(1e-13,1e-4);
   //jetSpectra.at(0)->GetXaxis()->SetTitleSize(0.02);
   //jetSpectra.at(0)->GetYaxis()->SetTitleSize(0.02);
   //jetSpectra.at(0)->GetXaxis()->SetLabelSize();
@@ -687,11 +706,11 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
 	jetSpectra.at(52)->SetBinContent(i,jetSpectra.at(52)->GetBinContent(i)/jetSpectra.at(52)->GetBinWidth(i));
 	jetSpectra.at(52)->SetBinError(i,jetSpectra.at(52)->GetBinError(i)/jetSpectra.at(52)->GetBinWidth(i));
       }
-    float jet10scalefactor = 1/.35*3.646e-3/1e7/1.4/(2*M_PI);
+    float jet10scalefactor = 41.97/.35/1e7/1.4/(2*M_PI);//*3.646e-3
     jetSpectra.at(52)->GetXaxis()->SetTitle(xSpectraTitle.c_str());
     jetSpectra.at(52)->GetYaxis()->SetTitle("dN_{jet}/dE_{T}"); //ySpectraTitle.c_str());
     jetSpectra.at(52)->Scale(jet10scalefactor);//4e-5/(0.45*2.8e6));//1.11e-11);
-    jetSpectra.at(52)->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    jetSpectra.at(52)->GetYaxis()->SetRangeUser(1e-13,1e-4);
     jetSpectra.at(52)->Draw("PE");
     gPad->SaveAs("output/chi2img/tjetspec.png");
 
@@ -708,7 +727,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
       }
 
     specspec->GetXaxis()->SetTitle(xSpectraTitle.c_str());
-    //specspec->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    //specspec->GetYaxis()->SetRangeUser(1e-13,1e-4);
     specspec->Draw("PE");
     gPad->SaveAs("output/chi2img/specspec.png");
     /*
@@ -721,7 +740,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
       {
 	hUnfold->SetBinContent(i,hUnfold->GetBinContent(i)/hUnfold->GetBinWidth(i));
       }
-    //hUnfold->GetYaxis()->SetRangeUser(1e-12,1e-4);
+    //hUnfold->GetYaxis()->SetRangeUser(1e-13,1e-4);
     hUnfold->GetXaxis()->SetTitle(xSpectraTitle.c_str());
     hUnfold->GetYaxis()->SetTitle(ySpectraTitle.c_str());
     hUnfold->Scale(1./(0.45*1.79769e11));
@@ -786,7 +805,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
 	touse[i-1]->SetBinContent(j,touse[i-1]->GetBinContent(j)/touse[i-1]->GetBinWidth(j));
 	touse[i-1]->SetBinError(j,touse[i-1]->GetBinError(j)/touse[i-1]->GetBinWidth(j));
       }
-      touse[i-1]->GetYaxis()->SetRangeUser(1e-12,1e-4);
+      touse[i-1]->GetYaxis()->SetRangeUser(1e-13,1e-4);
       touse[i-1]->GetXaxis()->SetTitle(xSpectraTitle.c_str());
       touse[i-1]->GetYaxis()->SetTitle(ySpectraTitle.c_str());
       touse[i-1]->Draw("SAME PE");
@@ -1129,7 +1148,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
   FormatTH1(loETCut_to_all, "E_{T} [GeV]","Ratio of Passing Spectrum to No Cut Spectrum",spectraColors[2],0,1);
   FormatTH1(hiETCut_to_all, "E_{T} [GeV]","Ratio of Passing Spectrum to No Cut Spectrum",spectraColors[3],0,1);
 
-  FormatTH1(dhCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[0],1e-12,1e-4);
+  FormatTH1(dhCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[0],1e-13,1e-4);
   FormatTH1(ihCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[1],1e-11,1e-4);
   FormatTH1(loETCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[2],1e-11,1e-4);
   FormatTH1(hiETCut_minus_all, "E_{T} [GeV]","Failing Cuts #frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",spectraColors[3],1e-11,1e-4);
@@ -1224,7 +1243,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     }
 
   int histgroup;
-  return 0;
+  //return 0;
   for(int i=0; i<(92*3); ++i)//histograms.size(); ++i)
     {
       if(i>3*nhist-1)
