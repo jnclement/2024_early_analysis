@@ -213,6 +213,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   //_jett->Branch("aceta",aceta,"aceta[njet]/F");
   //_tree->Branch("seedD",&seedD,"seedD[njet]/F");
   _tree->Branch("jet_e",jet_e,"jet_e[njet]/F");
+  _tree->Branch("jet_pt",jet_pt,"jet_pt[njet]/F");
   //_jett->Branch("jet_e",jet_e,"jet_e[njet]/F");
   //_tree->Branch("jet_r",jet_r,"jet_r[njet]/F");
   _tree->Branch("jet_et",jet_et,"jet_et[njet]/F");
@@ -242,6 +243,7 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   if(!_datorsim) _tree->Branch("ntj",&ntj,"ntj/I");
   if(!_datorsim) _tree->Branch("tjet_et",tjet_et,"tjet_et[ntj]/F");
   if(!_datorsim) _tree->Branch("tjet_eta",tjet_eta,"tjet_eta[ntj]/F");
+  if(!_datorsim) _tree->Branch("tjet_pt",tjet_pt,"tjet_pt[ntj]/F");
   _tree->Branch("bbfqavec",&_bbfqavec,"bbfqavec/i");
 
   //_tree->Branch("nLayerEm",&_nLayerEm,"nLayerEm/I");
@@ -398,7 +400,9 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	{
 	  Jet* jet = truthjets->get_jet(i);
 	  tjet_et[ntj] = jet->get_e()/cosh(jet->get_eta());
-	  if(tjet_et[ntj] < 8) continue;
+	  if(_debug > 9) cout << "tjet E, eta, ET, and pT: " << jet->get_e() << " " << jet->get_eta() << " "  << tjet_et[ntj] << " " << jet->get_pt() << endl;
+	  if(tjet_et[ntj] < 4) continue;
+	  tjet_pt[ntj] = jet->get_pt();
 	  tjet_eta[ntj] = jet->get_eta();
 	  tjet_phi[ntj] = jet->get_phi();
 	  ntj++;
@@ -417,12 +421,12 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     {
       if(tjet_et[i] > max_tjet_et) max_tjet_et = tjet_et[i];
     }
-  float truthhighcut = 0;
-  float truthlowcut = 0;
+  float truthhighcut = 9999;
+  float truthlowcut = 6;
   if(_sampleType == 0)
     {
       truthhighcut = 14;
-      truthlowcut = 8;
+      truthlowcut = 4;
     }
   else if(_sampleType == 1)
     {
@@ -434,10 +438,18 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       truthhighcut = 9999;
       truthlowcut = 30;
     }
+  else
+    {
+      truthhighcut = 9999;
+      truthlowcut = 4;
+    }
   if(_debug > 0 && ntj) cout << "max_jet_ET: " << max_tjet_et << endl;
   else if(_debug > 0 && !ntj) cout << "no truth jets!" << endl;
-  if(max_tjet_et > truthhighcut || max_tjet_et < truthlowcut) return Fun4AllReturnCodes::ABORTEVENT;
-
+  if(max_tjet_et > truthhighcut || max_tjet_et < truthlowcut)
+    {
+      if(_debug > 2) cout << "NO GOOD JET IN ET RANGE! ABORT!" << endl;
+      return Fun4AllReturnCodes::ABORTEVENT;
+    }
   vtx[0] = 0;
   vtx[1] = 0;
   vtx[2] = NAN;
@@ -620,9 +632,12 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	    {
 	      jet_r[njet] = 0.4;
 	      jet_et[njet] = jet->get_eta();
+	      if(jet->get_e() < 1) continue;
+	      if(_debug > 9) cout << "jet E, ET, eta: " << jet->get_e() << " " << jet->get_e()/cosh(jet_et[njet]) << " " << jet_et[njet] << endl;
 	      if(check_bad_jet_eta(jet_et[njet],vtx[2],0.4)) continue;
 	      jet_ph[njet] = jet->get_phi();
 	      jet_e[njet] = jet->get_e()/cosh(jet_et[njet]);
+	      jet_pt[njet] = jet->get_pt();
 	    }
 	  else
 	    {
@@ -630,7 +645,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	    }
 	  _frcem[njet] = 0;
 	  _frcoh[njet] = 0;
-	  if(jet_e[njet] < 8) continue;
+	  if(jet_e[njet] < 4) continue;
 	  
 	  if(_debug > 2) cout << "found a good jet!" << endl;
 	  float maxeovertot = 0;
@@ -656,7 +671,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  float radius = 93.5;//tower_geom->get_center_radius();
 		  float ihEta = tower_geom->get_eta();
 		  float emZ = radius/(tan(2*atan(exp(-ihEta))));
-		  float newz = tower_geom->get_center_z() - vtx[2];
+		  float newz = emZ - vtx[2]; //tower_geom->get_center_z() - vtx[2];
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
 		  TLorentzVector tempEM;

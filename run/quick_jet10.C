@@ -204,10 +204,12 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   float vtx[3];
   float jet_e[100];
   float jet_et[100];
+  float jet_pt[100];
   float frcem[100];
   float jet_ph[100];
   int ntj;
   float tjet_et[100];
+  float tjet_pt[100];
   float tjet_phi[100];
   float tjet_eta[100];
   float frcoh[100];
@@ -224,7 +226,8 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   tree->SetBranchAddress("jet_et",jet_et);
   tree->SetBranchAddress("frcoh",frcoh);
   tree->SetBranchAddress("n2pc",&n2pc);
-
+  tree->SetBranchAddress("jet_pt",jet_pt);
+  tree->SetBranchAddress("tjet_pt",tjet_pt);
   tree->SetBranchAddress("ntj",&ntj);
   tree->SetBranchAddress("tjet_et",tjet_et);
   tree->SetBranchAddress("tjet_eta",tjet_eta);
@@ -302,10 +305,12 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   TH1F* h1_g20_dijet = new TH1F("anotherdancheck","",60,-0.1,1.1);
   
 
-  const int nbinx = 10;
-  float binsx[nbinx+1] = {8,12,16,21,26,32,38,45,52,60,70};
-  const int nbiny = 9;
-  float binsy[nbiny+1] = {12,16,21,26,32,38,45,52,60,70};
+  const int nbinx = 16;
+  //float binsx[nbinx+1] = {8,12,16,21,26,32,38,45,52,60,70};
+  double binsx[nbinx+1] = {6, 9, 12, 15, 18, 21, 24, 28, 32, 36, 40, 45, 50, 55, 60, 66, 72};
+  const int nbiny = 12;
+  //float binsy[nbiny+1] = {12,16,21,26,32,38,45,52,60,70};
+  double binsy[nbiny+1] = {12, 15, 18, 21, 24, 28, 32, 36, 40, 45, 50, 55, 60};
   /*
     for(int i=-2; i<nbin-2; ++i)
     {
@@ -333,7 +338,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 
       tree->GetEntry(i);   
       
-
+      h1_zdist[0]->Fill(vtx[2]); 
       if(abs(vtx[2]) > 30)
 	{
 	  continue;
@@ -375,11 +380,11 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       bool subjetHighEta = check_bad_jet_eta(subjeteta, vtx[2], 0.4);
       float truthJet[100][2];
       float recoJet[100][2];
-      if(ljetET < 8 || ljetHighEta) continue;
+      if(ljetET < 4 || ljetHighEta) continue;
       for(int j=0; j<njet; ++j)
 	{
 	  if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
-	  h1_ucspec->Fill(jet_e[j],scale);
+	  h1_ucspec->Fill(jet_pt[j],scale);
 	  h2_dPhiLayer[0]->Fill(dPhiLayer[j],frcem[j]);
 	}
       float ltj = 0;
@@ -388,7 +393,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       for(int j=0; j<ntj; ++j)
 	{
 	  if(check_bad_jet_eta(tjet_eta[j],vtx[2],0.4)) continue;
-	  h1_tjetspec->Fill(tjet_et[j],scale);
+	  h1_tjetspec->Fill(tjet_pt[j],scale);
 	  truthJet[j][0] = tjet_eta[j];
 	  truthJet[j][1] = tjet_phi[j];
 	  if(tjet_et[j] > ltj)
@@ -407,7 +412,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       if(ltj > lxJET && stj > slxJET) xJ[2]->Fill(stj/ltj);
 
       
-      if(subjetET > 8) isdijet = 1;
+      if(subjetET > 4) isdijet = 1;
       if(subjetHighEta) isdijet = 0;
       float dphi = abs(ljetph - subjetph);
       if(dphi > M_PI) dphi = 2*M_PI - dphi;
@@ -516,8 +521,8 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	  for(int j=0; j<njet; ++j)
 	    {
 	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
-	      if(jet_e[j] < 8) continue;
-	      h1_specspec->Fill(jet_e[j]);
+	      if(jet_pt[j] < 4) continue;
+	      h1_specspec->Fill(jet_pt[j],scale);
 	    }
 	}
       if(!fullcut)
@@ -535,12 +540,12 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	  for(int j=0; j<njet; ++j)
 	    {
 	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
-	      if(jet_e[j] >8)
+	      if(jet_pt[j] >4)
 		{
 		  
 		  recoJet[j][0] = jet_et[j];
 		  recoJet[j][1] = jet_ph[j];
-		  h1_cspec->Fill(jet_e[j],scale);
+		  h1_cspec->Fill(jet_pt[j],scale);
 		  h2_dPhiLayer[1]->Fill(dPhiLayer[j],frcem[j]);
 		}
 	    }
@@ -560,12 +565,12 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	    {
 	      if(whichMatch[j] != -1)
 		{
-		  response.Fill(jet_e[whichMatch[j]],tjet_et[j],scale);
+		  response.Fill(jet_pt[whichMatch[j]],tjet_pt[j],scale);
 		}
 	      else
 		{
 		  //response.Miss(tjet_et[j],scale);
-		  h1_miss->Fill(tjet_et[j],scale);
+		  h1_miss->Fill(tjet_pt[j],scale);
 		}
 	    }
 	  bool isFake[100];
@@ -584,11 +589,11 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	    {
 	      if(isFake[j])
 		{
-		  response.Fake(jet_e[j],scale);
-		  h1_fake->Fill(jet_e[j],scale);
+		  //response.Fake(jet_e[j],scale);
+		  h1_fake->Fill(jet_pt[j],scale);
 		}
 	    }
-	  h1_zdist[0]->Fill(vtx[2]); 
+
 	}
     }
 

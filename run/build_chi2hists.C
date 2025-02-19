@@ -144,7 +144,7 @@ void get_scaledowns(int runnumber, int scaledowns[])
   delete db;
 }
 
-int get_scaledown17(int runnumber)
+int get_scaledown18(int runnumber)
 {
 
   TSQLServer *db = TSQLServer::Connect("pgsql://sphnxdaqdbreplica:5432/daq","","");
@@ -162,15 +162,15 @@ int get_scaledown17(int runnumber)
   TSQLResult *res;
   char sql[1000];
 
-  sprintf(sql, "select scaledown17 from gl1_scaledown where runnumber = %d;", runnumber);
+  sprintf(sql, "select scaledown18 from gl1_scaledown where runnumber = %d;", runnumber);
   res = db->Query(sql);
   row = res->Next();
-  int sd17 = stoi(row->GetField(0));
+  int sd18 = stoi(row->GetField(0));
       
   delete row;
   delete res;
   delete db;
-  return sd17;
+  return sd18;
 }
 
 int get_scaledown10(int runnumber)
@@ -263,6 +263,7 @@ int build_chi2hists(string filebase, int runnumber)
     Float_t maxTowChi2[3], l2pcEta;
     float dPhi2pc[1000], dEta2pc[1000];
     float jet_eta[10], jet_phi[10], jet_et[10], alljetfrcem[10], alljetfrcoh[10], emLayerJetPhi[10], emLayerJetEta[10], emLayerJetET[10], ohLayerJetPhi[10], ohLayerJetEta[10], ohLayerJetET[10], dPhiLayer[10];
+    float jet_pt[10];
     int jet_n, n2pc;//, nLayerEm, nLayerOh;
     long long unsigned int triggervec;
     unsigned int bbfqavec, elmbgvec;
@@ -292,6 +293,7 @@ int build_chi2hists(string filebase, int runnumber)
     jet_tree->SetBranchAddress("bbfqavec",&bbfqavec);
     jet_tree->SetBranchAddress("elmbgvec",&elmbgvec);
     jet_tree->SetBranchAddress("jet_et",jet_et);
+    jet_tree->SetBranchAddress("jet_pt",jet_pt);
     jet_tree->SetBranchAddress("jet_eta",jet_eta);
     jet_tree->SetBranchAddress("jet_phi",jet_phi);
     jet_tree->SetBranchAddress("jet_n",&jet_n);
@@ -549,8 +551,9 @@ int build_chi2hists(string filebase, int runnumber)
     // Loop over entries in the tree
     const int nRatio = 7;
     TH1F* forRatio[nRatio];
-    const int nbin = 9;
-    float bins[nbin+1] = {12,16,21,26,32,38,45,52,60,70};
+    const int nbin = 12;
+    //float bins[nbin+1] = {12,16,21,26,32,38,45,52,60,70};
+    double bins[nbin+1] = {12, 15, 18, 21, 24, 28, 32, 36, 40, 45, 50, 55, 60};
     //for(int i=-2; i<nbin-2; ++i) bins[i+2] = 15*pow(6,((float)i)/(nbin-4));
     for(int i=0; i<nRatio; ++i)
       {
@@ -668,9 +671,9 @@ int build_chi2hists(string filebase, int runnumber)
 		for(int k=0; k<jet_n; ++k)
 		  {
 		    if(check_bad_jet_eta(jet_eta[k],zvtx,0.4)) continue;
-		    if(jet_et[k] > 8)
+		    if(jet_pt[k] > 4)
 		      {
-			jetSpectra[j]->Fill(jet_et[k]);
+			jetSpectra[j]->Fill(jet_pt[k]);
 			
 		      }
 		  }
@@ -888,25 +891,28 @@ int build_chi2hists(string filebase, int runnumber)
 	  }
       }
 
-    int sd17 = get_scaledown17(runnumber);
+    int sd18 = get_scaledown18(runnumber);
     int sd10 = get_scaledown10(runnumber);
     int nmb = get_nmb(runnumber);
     //cout << sd17 << " " << sd10 << " " << nmb << endl;
     for(int i=0; i<nSpectra; ++i)
       {
 	//cout << "jetSpectrum: " << jetSpectra[i] << endl;
-	if(sd17 >= 0 && sd10 >= 0 && nmb > 0 && std::isfinite(sd17) && std::isfinite(sd10) && std::isfinite(nmb))
+	if(sd18 >= 0 && sd10 >= 0 && nmb > 0 && std::isfinite(sd18) && std::isfinite(sd10) && std::isfinite(nmb))
 	  {
-	    float effevt = (((1.*(1+sd10))/(1+sd17))*nmb);
+	    float effevt = (((1.*(1+sd10))/(1+sd18))*nmb);
 	    //jetSpectra[i]->Scale(1./effevt);
 	    //cout << "effevt: " << effevt << endl;
-	    jetSpectra[i]->Write();
+	    
 	  }
+	/*
 	else
 	  {
 	    jetSpectra[i]->Clear();
 	    //cout << "PANIC IN " << runnumber << " " << filebase << " " << i << endl;
 	  }
+	*/
+	jetSpectra[i]->Write();
       }
     
     for(int i=0; i<nRatio; ++i)

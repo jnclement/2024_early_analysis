@@ -10,8 +10,8 @@ else
     echo condor scratch NOT set
     exit -1
 fi
-STARTN=$2  #$(( $2 * 10 ))
-for i in 0; do
+STARTN=$(( $2 * 10 ))
+for i in {0..9}; do
     SUBDIR=$(( $STARTN + $i ))
     UPLN=$(( $SUBDIR + 1 ))
     mkdir -p $SUBDIR

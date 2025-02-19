@@ -5,7 +5,7 @@ if [ $# -lt 3 ]; then
     exit 1
 fi
 
-nmax=20000
+nmax=30000
 evt=$2
 c2c=$3
 filecounter=0
@@ -16,7 +16,9 @@ echo $evt
 for rn in `ls  lists/dst_calo_run2pp*.list | awk -F'.' '{print $1}' | awk -F'/' '{print $2}' | awk -F'-' '{print $2}'`; do
     rn=$(expr $rn + 0)
     nfile=`wc -l lists/dst_calo_run2pp-000${rn}.list | awk '{print $1}'`
-    filecounter=$(( $filecounter + $nfile ))
+    njob=$(( $nfile + 9 ))
+    njob=$(( $njob / 10 ))
+    filecounter=$(( $filecounter + $njob ))
     if [ $filecounter -gt $nmax ]; then
 	break
     fi
@@ -24,7 +26,7 @@ for rn in `ls  lists/dst_calo_run2pp*.list | awk -F'.' '{print $1}' | awk -F'/' 
     mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$rn
     mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$rn
     echo $rn $filecounter
-    bash run_everything.sh $1 $nfile $rn 1 $evt $c2c
+    bash run_everything.sh $1 $njob $rn 1 $evt $c2c
 done
 
 

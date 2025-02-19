@@ -171,6 +171,7 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   RooUnfoldResponse* j10resp = static_cast<RooUnfoldResponse*>(simfile->Get("roounfold_response"));
   RooUnfoldResponse* j30resp = static_cast<RooUnfoldResponse*>(j30file->Get("roounfold_response"));
   
+  simresp = simresp;
   simresp->Add(*j10resp);
   simresp->Add(*j30resp);
 
@@ -192,7 +193,7 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
       datspeccut->SetBinError(i,datspeccut->GetBinError(i)/fturn->Eval(datspeccut->GetBinCenter(i)));
 
     }
-  
+  /*
   j10allcut->Scale(1./jet10scale);
   j10nocut->Scale(1./jet10scale);
   j10tp->Scale(1./jet10scale);
@@ -201,6 +202,7 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   j30tp->Scale(1./jet30scale);
   j10r->Scale(1./jet10scale);
   j30r->Scale(1./jet30scale);
+  */
   /*
   float xpoints[24] = {14.8, 17.3, 19.9, 22.2, 24.9, 27.4, 29.8, 32.5, 34.8,37.4,39.9,42.4,44.8,47.5,50,52.3,54.9,57.4,59.9,62.3,67.5,69.9,72.4};
   float ypoints[24] = {0.0000068815953765315700,
@@ -240,17 +242,18 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
     yield = yield * ppScaleFactor*pt / 2.5;
     tjet->SetPoint(index,pt,yield);
   }
-  /*
+  
   TH1F* comball = mballcut;
   TH1F* combno = mbnocut;
   TH1F* combtp = mbtp;
   TH2F* combr = mbr;
-  */
+  
+  /*
   TH1F* comball = j10allcut;
   TH1F* combno = j10nocut;
   TH1F* combtp = j10tp;
   TH2F* combr = j10r;
-
+  */
   comball->Add(j10allcut);
   comball->Add(j30allcut);
   combno->Add(j10nocut);
@@ -266,7 +269,8 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   float binsx[nbinx+1] = {8,12,16,21,26,32,38,45,52,60,70};
   float binsy[nbiny+1] = {12,16,21,26,32,38,45,52,60,70};
   
-  TH1F* tempcomball = comball;
+  TH1D* tempcomball = (TH1D*) simresp->Hmeasured();//response()->ProjectionX("respcombsimx");//comball;
+  cout <<  tempcomball->GetBinContent(10) <<endl;
   TH1F* tempcombtp = combtp;
   TH1F* tempdatall = datallcut;
   TH2F* tempr = combr;
@@ -306,18 +310,22 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
   cout << tempdatall->GetNbinsX() << endl;
   cout << tempdatall->GetBinLowEdge(1) << endl;
   cout << tempr->GetNbinsX() << endl;
-  RooUnfoldBayes unfold(simresp, tempcomball, 1, false, true);
+  RooUnfoldBayes unfold(simresp, comball, 1, false, true);
   TH1D* hUnfold = (TH1D*) unfold.Hunfold(RooUnfold::kErrors);
+
+  unfold.PrintTable(cout, simresp->Htruth());
+
   cout <<"HUNFOLD PARAMS:" << endl << hUnfold->GetNbinsX() << endl << hUnfold->GetXaxis()->GetBinWidth(1) << endl;
   for(int i=1; i<nbiny+1; ++i)
     {
       cout << hUnfold->GetBinContent(i) << endl;
     }
-
+  /*
   tempcomball->Scale(4e-5/2.8e6);
   combno->Scale(4e-5/2.8e6);
   tempcombtp->Scale(4e-5/2.8e6);
   tempdatall->Scale(1./1.79769e11);
+  */
   /*
   FormatTH1(comball, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kViolet+2,1e-12,1e-4);
   FormatTH1(combno, "E_{T,jet} [GeV]","#frac{1}{N_{evt}}#frac{dN_{jet}}{dE_{T,jet}} [GeV^{-1}]",kRed+2,1e-12,1e-4);
@@ -408,7 +416,8 @@ void newdraw_unfold(const TString& fileName, const TString& simFileName, const T
 	  cdattprat->SetBinError(i,cdattprat->GetBinContent(i)*sqrt(cderr*cderr+tperr*tperr));
 	  csimtprat->SetBinContent(i,tempcomball->GetBinContent(i-1)/tempcombtp->GetBinContent(i));
 	  csimtprat->SetBinError(i,csimtprat->GetBinContent(i)*sqrt(tperr*tperr+cserr*cserr));
-	  uftprat->SetBinContent(i,hUnfold->GetBinContent(i)/tempcombtp->GetBinContent(i));
+	  if(simresp->Htruth()->GetBinContent(i) != 0) uftprat->SetBinContent(i,hUnfold->GetBinContent(i)/simresp->Htruth()->GetBinContent(i));
+	  cout << hUnfold->GetBinContent(i) << " " << simresp->Htruth()->GetBinContent(i) << endl;
 	  uftprat->SetBinError(i,uftprat->GetBinContent(i)*sqrt(tperr*tperr+uferr*uferr));
 	}
       else
