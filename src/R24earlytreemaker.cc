@@ -293,7 +293,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   njet = 0;
   sector_rtem = 0;
   //Get towerinfocontainer objects from nodetree
-  TowerInfoContainer *towersEM = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
+  TowerInfoContainer *towersEM = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_CEMC");
   //towersEM = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
   //if(!towersEM) towersEM = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
   
@@ -307,9 +307,9 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   TowerInfoContainer *towersOH = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
   if(!towersOH) towersOH = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_HCALOUT");
   if(!towersOH) towersOH = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_HCALOUT");
-  TowerInfoContainer *towersEMuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_CEMC");
-  TowerInfoContainer *towersIHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALIN");
-  TowerInfoContainer *towersOHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALOUT");
+  //TowerInfoContainer *towersEMuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_CEMC");
+  //TowerInfoContainer *towersIHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALIN");
+  //TowerInfoContainer *towersOHuc = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_HCALOUT");
   //TowerInfoContainer *towersZD = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERS_ZDC");
   //TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
   //if(!rtem) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
@@ -538,7 +538,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
     }
   */
   if(_debug > 1) cout << "get 2pc" << endl;
-  int nchan = 1536;
+  int nchan = 24576;
   vector<vector<float>> emTowAbove1GeV;
   vector<vector<float>> ohTowAbove1GeV;
   float maxTowET = 0;
@@ -550,12 +550,12 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
           if(!tower->get_isGood()) continue;
           int key = towersEM->encode_key(i);
           const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALIN, towersEM->getTowerEtaBin(key), towersEM->getTowerPhiBin(key));
-          RawTowerGeom *tower_geom = geom[1]->get_tower_geometry(geomkey); //encode tower geometry                                                                                              
+          RawTowerGeom *tower_geom = geom[0]->get_tower_geometry(geomkey); //encode tower geometry                                                                                              
 
           float radius = 93.5;//tower_geom->get_center_radius();
-          float ihEta = tower_geom->get_eta();
-          float emZ = radius/(tan(2*atan(exp(-ihEta))));
-          float newz = emZ - zvtx;//tower_geom->get_center_z() - zvtx;
+          //float ihEta = tower_geom->get_eta();
+          //float emZ = radius/(tan(2*atan(exp(-ihEta))));
+          float newz = tower_geom->get_center_z() - zvtx;
           float newTheta = atan2(radius,newz);
           float towerEta = -log(tan(0.5*newTheta));
           float towerPhi = tower_geom->get_phi();
@@ -666,12 +666,12 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  tower = towersEM->get_tower_at_channel(channel);
 		  int key = towersEM->encode_key(channel);
 		  const RawTowerDefs::keytype geomkey = RawTowerDefs::encode_towerid(RawTowerDefs::CalorimeterId::HCALIN, towersEM->getTowerEtaBin(key), towersEM->getTowerPhiBin(key));
-		  RawTowerGeom *tower_geom = geom[1]->get_tower_geometry(geomkey);
+		  RawTowerGeom *tower_geom = geom[0]->get_tower_geometry(geomkey);
 		  if(_debug > 3) cout << " got tower geom" << endl;
-		  float radius = 93.5;//tower_geom->get_center_radius();
-		  float ihEta = tower_geom->get_eta();
-		  float emZ = radius/(tan(2*atan(exp(-ihEta))));
-		  float newz = emZ - vtx[2]; //tower_geom->get_center_z() - vtx[2];
+		  float radius = tower_geom->get_center_radius();//93.5;
+		  //float ihEta = tower_geom->get_eta();
+		  //float emZ = radius/(tan(2*atan(exp(-ihEta))));
+		  float newz = tower_geom->get_center_z() - vtx[2];
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
 		  TLorentzVector tempEM;
