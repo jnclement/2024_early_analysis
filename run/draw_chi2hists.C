@@ -423,7 +423,7 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
     {
       "Calorimeter Anti-k_{T} R=0.4",
       "|z_{vtx}| < 30 cm",
-      "Jet-8 & MBDNS>=1 Triggered Data",
+      "Jet-10 & MBDNS>=1 Triggered Data",
       std::string(isPythia?"PYTHIA":"HERWIG")+" "+(isJet30?"Jet-30":"Jet-10")+" Sample Sim",
       "\\mathscr{L}_{\\text{data}}=16.82 \\text{pb}^{-1}"
     };
@@ -1218,6 +1218,36 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
   canvas->SaveAs("output/chi2img/h1_passing_minus_all.png");
   gPad->SetLogy(0);
 
+  for(int i=0; i<histograms.size(); ++i)
+    {
+      string mystr(histograms.at(i)->GetName());
+	if(mystr=="h2_frcem_jet_ET_0")
+	{
+	  TH1D* h1_frcem_sim = hists2_sim.at(0)->ProjectionX("frcem_et_px_sim");
+	  TH1D* h1_frcem_dat = histograms.at(i)->ProjectionX("frcem_et_px_dat");
+	  h1_frcem_sim->Scale(1./h1_frcem_sim->Integral(""));
+	  h1_frcem_dat->Scale(1./h1_frcem_dat->Integral(""));
+	  float maximum = 3;//h1_frcem_dat->GetMaximum();//h1_frcem_sim->GetMaximum()>h1_frcem_dat->GetMaximum()?h1_frcem_sim->GetMaximum():h1_frcem_dat->GetMaximum();
+	  FormatTH1(h1_frcem_sim, "E_{T}^{EM}/E_{T}^{jet}", "N_{jet}", kBlack, 0.001, maximum*1.5);
+	  FormatTH1(h1_frcem_dat, "E_{T}^{EM}/E_{T}^{jet}", "N_{jet}",kRed,0.001,maximum*1.5);
+	  h1_frcem_sim->Draw("PE");
+	  h1_frcem_dat->Draw("SAME PE");
+	  texts[3] = "";
+	  texts[4]= "";
+	  std_text(canvas, texts, ntext, stdsize, 0.25, stdy, stdright);
+	  TLegend* frcemleg = new TLegend(0.25,0.55,0.5,0.7);
+	  frcemleg->SetFillStyle(0);
+	  frcemleg->SetFillColor(0);
+	  frcemleg->SetBorderSize(0);
+	  frcemleg->AddEntry(h1_frcem_dat,"Jet10 & MBDNS>=1 Trigger Data","p");
+	  frcemleg->AddEntry(h1_frcem_sim,"Reco Sim Jet10 Sample","p");
+	  frcemleg->Draw();
+	  canvas->SaveAs("output/chi2img/frcem_1d.png");
+	  break;
+	}
+    }
+
+
   const int naxistitles2 = 3;
   std::string xtitles_hists2_sim[naxistitles2] = {"Fraction of E_{T,jet} in EMCal","Fraction of E_{T,jet} in OHCal","Fraction of E_{T,jet} in OHCal"};
 
@@ -1241,6 +1271,10 @@ void draw_chi2hists(const std::string fileName, const std::string simFileName) {
 			     texts2
 			     );
     }
+
+
+  
+
 
   int histgroup;
   //return 0;

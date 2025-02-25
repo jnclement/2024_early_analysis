@@ -1,3 +1,32 @@
+#include "dlUtility.h"
+void std_text(TCanvas* thecan, string* texts, int ntext, float textsize, float textx, float texty, int rightalign)
+{
+
+  thecan->cd();
+  sphenixtext(textx,texty,0,textsize);
+  sqrt_s_text(textx,texty-(6*textsize/4),0,textsize);
+  float drawy = texty-3*textsize;
+  for(int i=0; i<ntext; ++i)
+    {
+      drawText(texts[i].c_str(),textx,drawy,rightalign,kBlack,textsize);
+      drawy -= 6*textsize/4;
+    }
+}
+
+void FormatTH1(TH1* thehist, string xTitle, string yTitle, int histColor, float yMin, float yMax)
+{
+  thehist->GetYaxis()->SetTitleOffset(2.0);
+  thehist->SetMarkerColor(histColor);
+  thehist->SetMarkerStyle(20);
+  thehist->SetMarkerSize(2);
+  thehist->SetLineColor(histColor);
+  //thehist->Scale(1./thehist->GetBinWidth(1));
+  thehist->GetYaxis()->SetRangeUser(yMin, yMax);
+  thehist->GetXaxis()->SetTitle(xTitle.c_str());
+  thehist->GetYaxis()->SetTitle(yTitle.c_str());
+  thehist->GetYaxis()->SetTitleOffset(2.0);
+}
+
 int make_ratio_hist(string jet10file, string jet30file, string mbfile)
 {
   TCanvas* c1 = new TCanvas("c1","c1",1000,1000);
@@ -5,8 +34,16 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   gPad->SetBottomMargin(0.2);
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);
+  gStyle->SetPadTickX(1);
+  gStyle->SetPadTickY(1);
   const int nbiny = 12;
   float binsy[nbiny+1] = {12, 15, 18, 21, 24, 28, 32, 36, 40, 45, 50, 55, 60};
+  TFile* datf = TFile::Open("chi2file_allhists.root","READ");
+  TH1D* dat_cspec = (TH1D*)datf->Get("fullRangeSpectra_30");
+  TH1D* dat_ucspec = (TH1D*)datf->Get("fullRangeSpectra_0");
+
+  dat_cspec->Rebin(20);
+  dat_ucspec->Rebin(20);
 
   TFile* jet10tf = TFile::Open(jet10file.c_str(),"READ");
   TFile* jet30tf = TFile::Open(jet30file.c_str(),"READ");
@@ -18,19 +55,29 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   float jet30scale = 2.505e-9/4.197e-2;
   float mbscale = 0.1;
 
-  TH1D* jet10_ucspec = (TH1D*)jet10tf->Get("h1_ucspec");
-  TH1D* jet10_cspec = (TH1D*)jet10tf->Get("h1_cspec");
-  TH1D* jet10_specspec = (TH1D*)jet10tf->Get("specspec");
+  TH1D* jet10_ucspec = (TH1D*)jet10tf->Get("fullrange_ucspec");
+  TH1D* jet10_cspec = (TH1D*)jet10tf->Get("fullrange_cspec");
+  TH1D* jet10_specspec = (TH1D*)jet10tf->Get("fullrange_specspec");
 
-  TH1D* jet30_ucspec = (TH1D*)jet30tf->Get("h1_ucspec");
-  TH1D* jet30_cspec = (TH1D*)jet30tf->Get("h1_cspec");
-  TH1D* jet30_specspec = (TH1D*)jet30tf->Get("specspec");
+  TH1D* jet30_ucspec = (TH1D*)jet30tf->Get("fullrange_ucspec");
+  TH1D* jet30_cspec = (TH1D*)jet30tf->Get("fullrange_cspec");
+  TH1D* jet30_specspec = (TH1D*)jet30tf->Get("fullrange_specspec");
 
-  TH1D* mb_ucspec = (TH1D*)mbtf->Get("h1_ucspec");
-  TH1D* mb_cspec = (TH1D*)mbtf->Get("h1_cspec");
-  TH1D* mb_specspec = (TH1D*)mbtf->Get("specspec");
+  TH1D* mb_ucspec = (TH1D*)mbtf->Get("fullrange_ucspec");
+  TH1D* mb_cspec = (TH1D*)mbtf->Get("fullrange_cspec");
+  TH1D* mb_specspec = (TH1D*)mbtf->Get("fullrange_specspec");
+  
+  jet10_cspec->Rebin(10);
+  jet10_ucspec->Rebin(10);
+  jet10_specspec->Rebin(10);
+  jet30_cspec->Rebin(10);
+  jet30_ucspec->Rebin(10);
+  jet30_specspec->Rebin(10);
+  mb_cspec->Rebin(10);
+  mb_ucspec->Rebin(10);
+  mb_specspec->Rebin(10);
 
-  TH1D* full_ucspec = new TH1D("full_ucspec","full_ucspec",nbiny,binsy);
+  TH1D* full_ucspec = new TH1D("full_ucspec","full_ucspec",100,0,100);//nbiny,binsy);
   full_ucspec->Add(mb_ucspec);
   full_ucspec->Add(jet10_ucspec);
   full_ucspec->Add(jet30_ucspec);
@@ -41,15 +88,15 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   jet30_cspec->Scale(1./jet30scale);
   mb_ucspec->Scale(1./mbscale);
   mb_cspec->Scale(1./mbscale);
+  
+  TH1D* jet10_cspec_m = new TH1D("jet10_cspec_m","jet10_cspec_m",100,0,100);//nbiny,binsy);
+  TH1D* jet10_specspec_m = new TH1D("jet10_specspec_m","jet10_specspec_m",100,0,100);//nbiny,binsy);
+  TH1D* jet30_cspec_m = new TH1D("jet30_cspec_m","jet30_cspec_m",100,0,100);//nbiny,binsy);
+  TH1D* jet30_specspec_m = new TH1D("jet30_specspec_m","jet30_specspec_m",100,0,100);//nbiny,binsy);
+  TH1D* mb_cspec_m = new TH1D("mb_cspec_m","mb_cspec_m",100,0,100);//nbiny,binsy);
+  TH1D* mb_specspec_m = new TH1D("mb_specspec_m","mb_specspec_m",100,0,100);//nbiny,binsy);
 
-  TH1D* jet10_cspec_m = new TH1D("jet10_cspec_m","jet10_cspec_m",nbiny,binsy);
-  TH1D* jet10_specspec_m = new TH1D("jet10_specspec_m","jet10_specspec_m",nbiny,binsy);
-  TH1D* jet30_cspec_m = new TH1D("jet30_cspec_m","jet30_cspec_m",nbiny,binsy);
-  TH1D* jet30_specspec_m = new TH1D("jet30_specspec_m","jet30_specspec_m",nbiny,binsy);
-  TH1D* mb_cspec_m = new TH1D("mb_cspec_m","mb_cspec_m",nbiny,binsy);
-  TH1D* mb_specspec_m = new TH1D("mb_specspec_m","mb_specspec_m",nbiny,binsy);
-
-  for(int i=1; i<nbiny+1; ++i)
+  for(int i=1; i<100; ++i)
     {
       if(std::abs(jet10_cspec->GetBinContent(i) - jet10_ucspec->GetBinContent(i)) < 1 && jet10_cspec->GetBinContent(i) - 1 > 0)
 	{
@@ -129,10 +176,10 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   jet30_specspec->Scale(jet30scale);
   jet30_specspec_m->Scale(jet30scale);
 
-  TH1D* full_cspec = new TH1D("full_cspec","full_cspec",nbiny,binsy);
-  TH1D* full_cspec_m = new TH1D("full_cspec_m","full_cspec_m",nbiny,binsy);
-  TH1D* full_specspec = new TH1D("full_specspec","full_specspec",nbiny,binsy);
-  TH1D* full_specspec_m = new TH1D("full_specspec_m","full_specspec_m",nbiny,binsy);
+  TH1D* full_cspec = new TH1D("full_cspec","full_cspec",100,0,100);//nbiny,binsy);
+  TH1D* full_cspec_m = new TH1D("full_cspec_m","full_cspec_m",100,0,100);//nbiny,binsy);
+  TH1D* full_specspec = new TH1D("full_specspec","full_specspec",100,0,100);//nbiny,binsy);
+  TH1D* full_specspec_m = new TH1D("full_specspec_m","full_specspec_m",100,0,100);//nbiny,binsy);
 			       
   full_cspec->Add(mb_cspec);
   full_cspec->Add(jet10_cspec);
@@ -150,26 +197,26 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   full_specspec_m->Add(jet10_specspec_m);
   full_specspec_m->Add(jet30_specspec_m);
   
-  TH1D* ratio_cspec = new TH1D("ratio_cspec","ratio_cspec",nbiny,binsy);
-  TH1D* ratio_cspec_m = new TH1D("ratio_cspec_m","ratio_cspec_m",nbiny,binsy);
-  TH1D* ratio_specspec = new TH1D("ratio_specspec","ratio_specspec",nbiny,binsy);
-  TH1D* ratio_specspec_m = new TH1D("ratio_specspec_m","ratio_specspec_m",nbiny,binsy);
+  TH1D* ratio_cspec = new TH1D("ratio_cspec","ratio_cspec",100,0,100);//nbiny,binsy);
+  TH1D* ratio_cspec_m = new TH1D("ratio_cspec_m","ratio_cspec_m",100,0,100);//nbiny,binsy);
+  TH1D* ratio_specspec = new TH1D("ratio_specspec","ratio_specspec",100,0,100);//nbiny,binsy);
+  TH1D* ratio_specspec_m = new TH1D("ratio_specspec_m","ratio_specspec_m",100,0,100);//nbiny,binsy);
   
   ratio_cspec->Divide(full_cspec,full_ucspec,1,1,"B");
   ratio_cspec_m->Divide(full_cspec_m,full_ucspec,1,1,"B");
   ratio_specspec->Divide(full_specspec,full_ucspec,1,1,"B");
   ratio_specspec_m->Divide(full_specspec_m,full_ucspec,1,1,"B");
   
-  TH1D* ratio_cspec_final = new TH1D("ratio_cspec_final","ratio_cspec_final",nbiny,binsy);
-  TH1D* ratio_specspec_final = new TH1D("ratio_specspec_final","ratio_specspec_final",nbiny,binsy);
+  TH1D* ratio_cspec_final = new TH1D("ratio_cspec_final","ratio_cspec_final",100,0,100);//nbiny,binsy);
+  TH1D* ratio_specspec_final = new TH1D("ratio_specspec_final","ratio_specspec_final",100,0,100);//nbiny,binsy);
 
-  for(int i=1; i<nbiny+1; ++i)
+  for(int i=1; i<100;++i)//nbiny+1; ++i)
     {
       ratio_cspec_final->SetBinContent(i,ratio_cspec->GetBinContent(i));
-      ratio_cspec_final->SetBinError(i,(i==nbiny?ratio_cspec_m:ratio_cspec)->GetBinError(i));
+      ratio_cspec_final->SetBinError(i,(i==100?ratio_cspec_m:ratio_cspec)->GetBinError(i));
       cout << ratio_cspec_final->GetBinContent(i) << endl;
       ratio_specspec_final->SetBinContent(i,ratio_specspec->GetBinContent(i));
-      ratio_specspec_final->SetBinError(i,(i==nbiny?ratio_specspec_m:ratio_specspec)->GetBinError(i));
+      ratio_specspec_final->SetBinError(i,(i==100?ratio_specspec_m:ratio_specspec)->GetBinError(i));
       //cout << ratio_specspec_final->GetBinContent(i) << endl;
     }
 
@@ -190,12 +237,83 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   ratio_cspec_final_asym->Draw("APE");
   gPad->SaveAs("output/chi2img/ratio_cspec_final_asym.png");
 
+  float Lintpb = 16.82;
+  const int ntext = 5;
+  string texts[ntext] =
+  {
+    "Calorimeter Anti-k_{T} R=0.4",
+    "|z_{vtx}| < 30 cm",
+    "Jet-10 & MBDNS>=1 Triggered Data",
+    "\\mathscr{L}_{\\text{data}}=16.82 \\text{pb}^{-1}",
+    "Jet Detector Level |#eta|<0.7"
+  };
 
+  ratioPanelCanvas(c1, 0.3);
+
+  TF1* myexp = new TF1("myexp","[0]*exp([1]*x)",14,90);
+  //  TF1* ucexp = new TF1("ucexp","[0]*exp([1]*x)",14,90);
+
+  dat_cspec->Fit(myexp,"IL0","",14,90);
+  //dat_ucspec->Fit(ucexp,"IL");
+  myexp->SetLineColor(kBlue);
+  //ucexp->SetLineColor(kGreen);
+  TH1D* cspec_ratio = (TH1D*)dat_cspec->Clone();
+  TH1D* ucspec_ratio = (TH1D*)dat_ucspec->Clone();
+  cspec_ratio->Sumw2();
+  ucspec_ratio->Sumw2();
+  cspec_ratio->Divide(myexp);
+  ucspec_ratio->Divide(myexp);
+  
+  ucspec_ratio->GetXaxis()->SetTitleSize(0.1);
+  ucspec_ratio->GetXaxis()->SetLabelSize(0.1);
+  ucspec_ratio->GetYaxis()->SetTitleSize(0.1);
+  c1->cd(1);
+  gPad->SetLogy();
+  FormatTH1(dat_ucspec, "E_{T}^{jet} [GeV]", "N_{jet}", kBlack, 1e-12, 1e-4);
+  FormatTH1(dat_cspec, "E_{T}^{jet} [GeV]", "N_{jet}",kRed,1e-12,1e-4);
+  //dat_cspec->Scale(1./(Lintpb*1e9)/1.4/(2*M_PI));
+  //dat_ucspec->Scale(1./(Lintpb*1e9)/1.4/(2*M_PI));
+  dat_ucspec->GetYaxis()->SetRangeUser(0.5,1e7);
+  dat_ucspec->Draw("PE");
+  dat_cspec->Draw("SAME PE");
+  myexp->Draw("SAME");
+  //ucexp->Draw("SAME");
+  texts[3] = "";
+  texts[4]= "";
+  std_text(c1, texts, ntext, 0.025, 0.45, 0.85, 0);
+  TLegend* frcemleg = new TLegend(0.6,0.55,0.9,0.65);
+  frcemleg->SetFillStyle(0);
+  frcemleg->SetFillColor(0);
+  frcemleg->SetBorderSize(0);
+  frcemleg->AddEntry(dat_cspec,"With Cuts","p");
+  frcemleg->AddEntry(dat_ucspec,"No Cuts","p");
+  frcemleg->AddEntry(myexp,"Fit to No Cuts","l");
+  frcemleg->Draw();
+
+  c1->cd(2);
+  FormatTH1(ucspec_ratio, "E_{T}^{jet} [GeV]", "Ratio Data/Fit", kBlack,0,2);
+  FormatTH1(cspec_ratio, "E_{T}^{jet} [GeV]", "Ratio Data/Fit",kRed,0,2);
+  ucspec_ratio->GetYaxis()->CenterTitle();
+  ucspec_ratio->Draw("PE");
+  cspec_ratio->Draw("SAME PE");
+
+  TLine* line = new TLine(0,1,100,1);
+  line->SetLineColor(kBlue);
+  line->Draw();
+
+  c1->SaveAs("output/chi2img/counts_cuts.png");  
+
+  TFile* jamiefile = new TFile("output/chi2img/forJamie.root","RECREATE");
+  jamiefile->cd();
+  dat_cspec->Write();
+  jamiefile->Write();
+  
   outfile->Write();
   outfile->Close();
   jet10tf->Close();
   jet30tf->Close();
   mbtf->Close();
+  jamiefile->Close();
 
   return 0;
 }

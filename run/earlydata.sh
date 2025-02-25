@@ -54,7 +54,7 @@ for i in {0..9}; do
     echo " "
     ls -larth $SUBDIR
     ls -larth $SUBDIR\_chi2/*
-    cp -r "./${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root"
+    #cp -r "./${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root"
     cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
-    cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
+    #cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
 done

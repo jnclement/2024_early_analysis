@@ -99,8 +99,9 @@ class R24earlytreemaker : public SubsysReco
   float ihcalt[1536];
   float ohcalt[1536];
   float zdcalt[16];
-  float maxTowerET[3];
-  float maxTowerChi2[3];
+  float maxTowerET;
+  float subTowerET;
+  float maxTowerChi2[3]; 
   float caloEfrac[3];
   int _sampleType;
   float _dPhi2pc[1000];

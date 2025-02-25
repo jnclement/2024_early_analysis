@@ -150,7 +150,16 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
   gStyle->SetOptTitle(0);
-
+  TFile *corrFile = new TFile("/sphenix/user/hanpuj/JES_MC_Calibration/offline/JES_Calib_Default.root", "READ");
+  if (!corrFile) {
+    std::cout << "Error: cannot open JES_Calib_Default.root" << std::endl;
+    return 1;
+  }
+  TF1 *f_corr = (TF1*)corrFile->Get("JES_Calib_Default_Func");
+  if (!f_corr) {
+    std::cout << "Error: cannot open f_corr" << std::endl;
+    return 1;
+  }
   float scale;
   string filename=filebase;
   if(samplestring == "jet10") scale = 3.646e-6/4.197e-2;
@@ -323,6 +332,11 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   TH1F* h1_tjetspec = new TH1F("h1_tjetspec","tjetspec",nbinx,binsx);
   TH2D* h2_resp = new TH2D("response_matrix","respmat",nbiny,binsy,nbinx,binsx);
 
+  TH1F* fullrange_specspec = new TH1F("fullrange_specspec","specspec",1000,0,100);
+  TH1F* fullrange_ucspec = new TH1F("fullrange_ucspec","ucspec",1000,0,100);
+  TH1F* fullrange_cspec = new TH1F("fullrange_cspec","cspec",1000,0,100);
+  TH1F* fullrange_tjetspec = new TH1F("fullrange_tjetspec","tjetspec",1000,0,100);
+
   TH1F* h1_miss = new TH1F("h1_miss","miss",nbinx,binsx);
   TH1F* h1_fake = new TH1F("h1_fake","fake",nbiny,binsy);
   RooUnfoldResponse response(h1_cspec,h1_tjetspec,h2_resp);
@@ -353,14 +367,16 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       float ljeteta = 0;
       float ljetfrcoh = -1;
       float closejetdphi = M_PI;
+      float calib_pt[100];
       for(int j=0; j<njet; ++j)
 	{
-	  if(jet_e[j] > ljetET)
+	  calib_pt[j] = jet_pt[j];//f_corr->Eval(jet_pt[j]);
+	  if(calib_pt[j] > ljetET)
 	    {
 	      subjetET = ljetET;
 	      subjetph = ljetph;
 	      subjeteta = ljeteta;
-	      ljetET = jet_e[j];
+	      ljetET = calib_pt[j];
 	      ljetph = jet_ph[j];
 	      ljetfrcem = frcem[j];
 	      ljeteta = jet_et[j];
@@ -384,7 +400,9 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       for(int j=0; j<njet; ++j)
 	{
 	  if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
-	  h1_ucspec->Fill(jet_pt[j],scale);
+	  if(calib_pt[j] < 4 || jet_e[j] < 0) continue;
+	  h1_ucspec->Fill(calib_pt[j],scale);
+	  fullrange_ucspec->Fill(calib_pt[j],scale);
 	  h2_dPhiLayer[0]->Fill(dPhiLayer[j],frcem[j]);
 	}
       float ltj = 0;
@@ -393,7 +411,9 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       for(int j=0; j<ntj; ++j)
 	{
 	  if(check_bad_jet_eta(tjet_eta[j],vtx[2],0.4)) continue;
+	  if(tjet_pt[j] < 4 || tjet_et[j] < 0) continue;
 	  h1_tjetspec->Fill(tjet_pt[j],scale);
+	  fullrange_tjetspec->Fill(tjet_pt[j],scale);
 	  truthJet[j][0] = tjet_eta[j];
 	  truthJet[j][1] = tjet_phi[j];
 	  if(tjet_et[j] > ltj)
@@ -422,12 +442,12 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       //bool sdPhiCut = (ljetfrcem < 0.4 && dphi < 0.15) && isdijet;
       bool baselETCut = ljetfrcem < 0.1 && (ljetET > (50*ljetfrcem+20));
       bool lETCut = baselETCut && (hdPhiCut || !isdijet);
-      bool basehETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+75));
+      bool basehETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+70));
       bool hETCut = basehETCut && (hdPhiCut || !isdijet);
       bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
-      bool fullcut = bbCut || lETCut || hETCut || ihCut;
-      bool specialCut = bbCut || baselETCut || basehETCut || ihCut;
-      h1_forrat[2]->Fill(ljetET);
+      bool fullcut = ljetfrcem > 0.9 || ljetfrcem < 0.1 || ljetfrcoh > 0.9 || ljetfrcoh < 0.9 || (1-ljetfrcem-ljetfrcoh)>0.9;//bbCut || baselETCut || basehETCut || ihCut;//bbCut || lETCut || hETCut || ihCut;
+      bool specialCut = (!isdijet || hdPhiCut || subjetET < 0.3*ljetET);
+      h1_forrat[2]->Fill(ljetET,scale);
 
       if(specialCut && !fullcut)
 	{
@@ -443,18 +463,18 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	    }
 	}
 
-      if(!specialCut) dijetCheckRatFull->Fill(ljetET);
-      if(!specialCut && isdijet) dijetCheckRat->Fill(ljetET);
+      if(!specialCut) dijetCheckRatFull->Fill(ljetET,scale);
+      if(specialCut && isdijet) dijetCheckRat->Fill(ljetET,scale);
 
 
       if(isdijet && (basehETCut || baselETCut) && !fullcut)
 	{
-	  asdich_fail->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET);
+	  asdich_fail->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET,scale);
 	}
       if(!fullcut && isdijet)
 	{
-	  if(dphi > 3*M_PI/4) asdich_dphi->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET);
-	  asdich_all->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET);
+	  if(dphi > 3*M_PI/4) asdich_dphi->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET,scale);
+	  asdich_all->Fill((ljetET-subjetET)/(ljetET+subjetET),ljetET,scale);
 	}
 
 
@@ -479,37 +499,37 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 		{
 		  //cout << j << " " << k << " " << l << endl;
 		  if(whichhist[k] < 0 || whichhist[k] > numTh2f - 1) continue;
-		  if(j==0)lJetFrcemET[whichhist[k]]->Fill(frcem[l],jet_e[l]);
-		  if(j==0)lJetFrcemEta[whichhist[k]]->Fill(frcem[l],jet_et[l]);
-		  if(j==0)lJetFrcemPhi[whichhist[k]]->Fill(frcem[l],jet_ph[l]);
+		  if(j==0)lJetFrcemET[whichhist[k]]->Fill(frcem[l],jet_e[l],scale);
+		  if(j==0)lJetFrcemEta[whichhist[k]]->Fill(frcem[l],jet_et[l],scale);
+		  if(j==0)lJetFrcemPhi[whichhist[k]]->Fill(frcem[l],jet_ph[l],scale);
 		  //cout << "lower half start" << endl;
-		  lJetEtaET[whichhist[k]]->Fill(j==0?jet_et[l]:tjet_eta[l],j==0?jet_e[l]:tjet_et[l]);
+		  lJetEtaET[whichhist[k]]->Fill(j==0?jet_et[l]:tjet_eta[l],j==0?jet_e[l]:tjet_et[l],scale);
 		  //cout << "second" << endl;
-		  lJetPhiET[whichhist[k]]->Fill(j==0?jet_ph[l]:tjet_phi[l],j==0?jet_e[l]:tjet_et[l]);
+		  lJetPhiET[whichhist[k]]->Fill(j==0?jet_ph[l]:tjet_phi[l],j==0?jet_e[l]:tjet_et[l],scale);
 		  //cout << "third" << endl;
-		  lJetEtaPhi[whichhist[k]]->Fill(j==0?jet_et[l]:tjet_eta[l],j==0?jet_ph[l]:tjet_phi[l]);
+		  lJetEtaPhi[whichhist[k]]->Fill(j==0?jet_et[l]:tjet_eta[l],j==0?jet_ph[l]:tjet_phi[l],scale);
 		}
 	    }
 	}
       //cout << "after th2f filling" << endl;
       if(ljetET > 20 && dphi > 7*M_PI/8)
 	{
-	  h1_g20_dijet->Fill(ljetfrcem);
+	  h1_g20_dijet->Fill(ljetfrcem,scale);
 	}
 
       if(isdijet && ljetET > lxJET && subjetET > slxJET)
 	{
-	  h1_forrat[3]->Fill((ljetET-subjetET)/(ljetET+subjetET));
-	  xJ[0]->Fill(subjetET/ljetET);
+	  h1_forrat[3]->Fill((ljetET-subjetET)/(ljetET+subjetET),scale);
+	  xJ[0]->Fill(subjetET/ljetET,scale);
 	}
       if(bbCut) h1_zdist[1]->Fill(vtx[2]);
       if(ihCut) h1_zdist[2]->Fill(vtx[2]);
       if(lETCut) h1_zdist[3]->Fill(vtx[2]);
       if(hETCut) h1_zdist[4]->Fill(vtx[2]);
       
-      hists2[0]->Fill(ljetfrcem,ljetET);
-      hists2[2]->Fill(ljetfrcoh,ljetET);
-      hists2[4]->Fill(ljetfrcoh,ljetfrcem);
+      hists2[0]->Fill(ljetfrcem,ljetET,scale);
+      hists2[2]->Fill(ljetfrcoh,ljetET,scale);
+      hists2[4]->Fill(ljetfrcoh,ljetfrcem,scale);
       //cout << "filled hists2" << endl;
       for(int j=0; j<n2pc; ++j)
 	{
@@ -521,8 +541,9 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	  for(int j=0; j<njet; ++j)
 	    {
 	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
-	      if(jet_pt[j] < 4) continue;
-	      h1_specspec->Fill(jet_pt[j],scale);
+	      if(calib_pt[j] < 4 || jet_e[j] < 0) continue;
+	      h1_specspec->Fill(calib_pt[j],scale);
+	      fullrange_specspec->Fill(calib_pt[j],scale);
 	    }
 	}
       if(!fullcut)
@@ -531,31 +552,32 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	    {
 	      h2_n2pc[1]->Fill(dEta2pc[j],dPhi2pc[j]);
 	    }
-	  hists2[1]->Fill(ljetfrcem,ljetET);
-	  hists2[3]->Fill(ljetfrcoh,ljetET);
-	  hists2[5]->Fill(ljetfrcoh,ljetfrcem);
+	  hists2[1]->Fill(ljetfrcem,ljetET,scale);
+	  hists2[3]->Fill(ljetfrcoh,ljetET,scale);
+	  hists2[5]->Fill(ljetfrcoh,ljetfrcem,scale);
 	  h1_zdist[5]->Fill(vtx[2]);
-	  h1_forrat[0]->Fill(ljetET);
+	  h1_forrat[0]->Fill(ljetET,scale);
 	  //h1_cspec->Fill(ljetET);
 	  for(int j=0; j<njet; ++j)
 	    {
 	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
-	      if(jet_pt[j] >4)
+	      if(calib_pt[j] < 4 || jet_e[j] < 0) continue;
 		{
 		  
 		  recoJet[j][0] = jet_et[j];
 		  recoJet[j][1] = jet_ph[j];
-		  h1_cspec->Fill(jet_pt[j],scale);
+		  h1_cspec->Fill(calib_pt[j],scale);
+		  fullrange_cspec->Fill(calib_pt[j],scale);
 		  h2_dPhiLayer[1]->Fill(dPhiLayer[j],frcem[j]);
 		}
 	    }
 	  if(isdijet)
 	    {
-	      h1_forrat[1]->Fill(ljetET);
+	      h1_forrat[1]->Fill(ljetET,scale);
 	      if(ljetET > lxJET && subjetET > slxJET)
 		{
-		  h1_forrat[4]->Fill((ljetET-subjetET)/(ljetET+subjetET));
-		  xJ[1]->Fill(subjetET/ljetET);
+		  h1_forrat[4]->Fill((ljetET-subjetET)/(ljetET+subjetET),scale);
+		  xJ[1]->Fill(subjetET/ljetET,scale);
 		}
 	    }
 	
@@ -565,7 +587,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	    {
 	      if(whichMatch[j] != -1)
 		{
-		  response.Fill(jet_pt[whichMatch[j]],tjet_pt[j],scale);
+		  response.Fill(calib_pt[whichMatch[j]],tjet_pt[j],scale);
 		}
 	      else
 		{
@@ -590,7 +612,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	      if(isFake[j])
 		{
 		  //response.Fake(jet_e[j],scale);
-		  h1_fake->Fill(jet_pt[j],scale);
+		  h1_fake->Fill(calib_pt[j],scale);
 		}
 	    }
 
@@ -601,8 +623,10 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   h1_zdist[0]->Write();
   //h1_ucspec->Scale(4e-5/2.8e6);
   h1_ucspec->Write();
+  fullrange_ucspec->Write();
   //h1_cspec->Scale(4e-5/2.8e6);
   h1_cspec->Write();
+  fullrange_cspec->Write();
   xJ[0]->Write();
   xJ[1]->Write();
   xJ[2]->Write();
@@ -620,6 +644,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   cout << "writing truth spectra" << endl;
   //h1_tjetspec->Scale(4e-5/2.8e6);
   h1_tjetspec->Write();
+  fullrange_tjetspec->Write();
   cout << "writing n2pc" << endl;
   for(int i=0; i<2; ++i)
     {
@@ -637,6 +662,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       lJetEtaPhi[i]->Write();
     }
   h1_specspec->Write();
+  fullrange_specspec->Write();
   dijetCheckRat->Write();
   dijetCheckRatFull->Write();
   asdich_all->Write();

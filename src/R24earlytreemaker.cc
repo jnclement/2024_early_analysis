@@ -171,7 +171,8 @@ int R24earlytreemaker::Init(PHCompositeNode *topNode)
   //_jett->Branch("ismb",&ismb,"ismb/I");
   //_tree->Branch("caloEfrac",caloEfrac,"caloEfrac[3]/F");
   //_tree->Branch("maxTowerChi2",maxTowerChi2,"maxTowerChi2[3]/F");
-  //_tree->Branch("maxTowerET",maxTowerET,"maxTowerET[3]/F");
+  _tree->Branch("maxTowerET",&maxTowerET,"maxTowerET/F");
+  _tree->Branch("subTowerET",&subTowerET,"subTowerET/F");
   if(_dotow)_jett->Branch("allcomp",&allcomp,"allcomp/I");
   if(_dotow)_jett->Branch("alcet",alcet,"alcet[allcomp]/F");
   if(_dotow)_tree->Branch("emetot",&emetot,"emetot/F");
@@ -613,9 +614,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   if(_debug > 1) cout << "got 2pc final" << endl;
 
   allcomp = 0;
+  maxTowerET = 0;
+  subTowerET = 0;
   for(int i=0; i<3; ++i)
     {
-      maxTowerET[i] = 0;
+
       maxTowerChi2[i] = 0;
       caloEfrac[i] = 0;
     }
@@ -675,6 +678,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
 		  TLorentzVector tempEM;
+		  if(tower->get_energy()/cosh(towerEta) > maxTowerET)
+		    {
+		      subTowerET = maxTowerET;
+		      maxTowerET = tower->get_energy()/cosh(towerEta);
+		    }
 		  tempEM.SetPtEtaPhiE(tower->get_energy()/cosh(towerEta),towerEta,tower_geom->get_phi(),tower->get_energy());
 		  emAxis += tempEM;
 		  _frcem[njet] += tower->get_energy()/cosh(towerEta);
@@ -694,6 +702,11 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
 		  TLorentzVector tempOH;
+		  if(tower->get_energy()/cosh(towerEta) > maxTowerET)
+		    {
+		      subTowerET = maxTowerET;
+		      maxTowerET = tower->get_energy()/cosh(towerEta);
+		    }
 		  tempOH.SetPtEtaPhiE(tower->get_energy()/cosh(towerEta),towerEta,tower_geom->get_phi(),tower->get_energy());
 		  ohAxis += tempOH;
 		  _frcoh[njet] += tower->get_energy()/cosh(towerEta);

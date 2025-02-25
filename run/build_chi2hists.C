@@ -97,6 +97,13 @@ bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
   return jet_eta < minlimit || jet_eta > maxlimit;
 }
 
+bool check_leadingjet_fraction(float jet_et, float jet_emfraction, float jet_ihfraction, bool match_dijet) {
+  bool low_emfrac_cut = jet_emfraction < 0.1 && jet_et > (50*jet_emfraction+20);
+  bool high_emfrac_cut = jet_emfraction > 0.9 && jet_et > (-50*jet_emfraction+70);
+  bool ihcal_emfrac_cut = jet_ihfraction > 0.35;
+  return (low_emfrac_cut && !match_dijet) || (high_emfrac_cut && !match_dijet) || ihcal_emfrac_cut;
+}
+
 void get_scaledowns(int runnumber, int scaledowns[])
 {
 
@@ -241,6 +248,17 @@ int build_chi2hists(string filebase, int runnumber)
   gStyle->SetPadTickY(1);
   gStyle->SetOptTitle(0);
   
+  TFile *corrFile = new TFile("/sphenix/user/hanpuj/JES_MC_Calibration/offline/JES_Calib_Default.root", "READ");
+  if (!corrFile) {
+    std::cout << "Error: cannot open JES_Calib_Default.root" << std::endl;
+    return 1;
+  }
+  TF1 *f_corr = (TF1*)corrFile->Get("JES_Calib_Default_Func");
+  if (!f_corr) {
+    std::cout << "Error: cannot open f_corr" << std::endl;
+    return 1;
+  }
+
   
   string inputfilename = filebase+".root";
   TFile *file = TFile::Open(inputfilename.c_str()); // Replace with your ROOT file name
@@ -569,10 +587,13 @@ int build_chi2hists(string filebase, int runnumber)
     xJ[2] = new TH1F("new_xJ2","",100,0,1);
     xJ[3] = new TH1F("new_xJ3","",100,0,1);
     
+    TH1F* fullRangeSpectra[nSpectra];
+
     for(int i=0; i<nSpectra; ++i)
       {
 	jetSpectra[i] = new TH1F(("h1_jetSpectra_"+to_string(i)).c_str(),"",nbin,bins);
 	//cout << jetSpectra[i] << endl;
+	fullRangeSpectra[i] = new TH1F(("fullRangeSpectra_"+to_string(i)).c_str(),"",1000,0,100);
       }
     bool cutArr[nSpectra];
     
@@ -583,21 +604,54 @@ int build_chi2hists(string filebase, int runnumber)
 	zhists[i] = new TH1F(("data_zhist"+to_string(i)).c_str(),"",300,-150,150);
       }
 
+    TH1D *h_recojet_pt = new TH1D("h_recojet_pt", "Reco Jet p_{T}; p_{T} [GeV]",nbin, bins);
+    TH2D* h_pjfh = new TH2D("pjfh","",140,-0.2,1.2,100,0,100);
+    TH2D* h_fjph = new TH2D("fjph","",140,-0.2,1.2,100,0,100);
+    TH2D* h_fjfh = new TH2D("fjfh","",140,-0.2,1.2,100,0,100);
+    TH2D* h_pjph = new TH2D("pjph","",140,-0.2,1.2,100,0,100);
+
+    bool jet_isbad_hanpu[10];
+    bool jet_isbad_jocl[10];
+
 
     Long64_t nEntries = jet_tree->GetEntries();
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
 	if(abs(zvtx) > 30) continue;
-	if(check_bad_jet_eta(eta,zvtx,0.4)) continue;
+	if(subjet_ET < 8) isdijet = 0;
+
+	bool bad_leading_jocl = false;
+	bool bad_leading_hanpu = false;
+
+	bool match_dijet = false;
+	if(subjet_ET > 8 && isdijet)
+	  {
+	    match_dijet = dphi > 3*M_PI/4;
+	  }
+
+
+	bool isbeambackground = false;
+	if (check_leadingjet_fraction(jet_ET, frcem, 1.-frcem-frcoh, match_dijet) || ((bbfqavec >> 5) & 1) ) isbeambackground = true;
+
+	for(int j = 0; j<jet_n; ++j)
+	  {
+	    if(isbeambackground || check_bad_jet_eta(jet_eta[j], zvtx, 0.4) || jet_et[j] < 0 || jet_pt[j] < 1) jet_isbad_hanpu[j] = true;
+	    else jet_isbad_hanpu[j] = false;
+	    if(!jet_isbad_hanpu[j]) h_recojet_pt->Fill(jet_pt[j]);
+	  }
+
+
+	//if(check_bad_jet_eta(eta,zvtx,0.4)) continue;
 	bool dPhiCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
 	if(bbfqavec != 0) cout << bbfqavec << endl;
 	bool dhCut = ((bbfqavec >> 5) & 1);
 	bool ihCut = (frcem+frcoh) < 0.65;
 	bool loETCut = ((frcem < 0.1) && (jet_ET > (50*frcem+20))) && (dPhiCut || !isdijet);
-	bool hiETCut = ((frcem > 0.9) && (jet_ET > (-50*frcem+75))) && (dPhiCut || !isdijet);
+	bool hiETCut = ((frcem > 0.9) && (jet_ET > (-50*frcem+70))) && (dPhiCut || !isdijet);
 	bool chi2cut = jet_ET > 25 && maxETowChi2 < 10;
 	bool specialLoETCut = (frcem < 0.1) && (jet_ET > (50*frcem+20));
 	bool specialHiETCut = (frcem > 0.9) && (jet_ET > (-50*frcem+75));
+	bool hCalHack = frcoh < 0.1 && jet_ET > 40;
 	zhists[0]->Fill(zvtx);
 	if(dhCut) zhists[1]->Fill(zvtx);
 	if(ihCut) zhists[2]->Fill(zvtx);
@@ -631,10 +685,10 @@ int build_chi2hists(string filebase, int runnumber)
 	cutArr[25]=(ihCut || loETCut || hiETCut);
 	cutArr[26]=(dPhiCut || dhCut || ihCut || loETCut);
 	cutArr[27]=(dPhiCut || dhCut || ihCut || hiETCut);
-	cutArr[28]=(dPhiCut || dhCut || loETCut || hiETCut);
-	cutArr[29]=(dPhiCut || ihCut || loETCut || hiETCut);
-	cutArr[30]=(dhCut || ihCut || specialLoETCut || specialHiETCut);
-	cutArr[31]=(dhCut || ihCut || loETCut || hiETCut);// || chi2cut);
+	cutArr[28]=isdijet && (dphi < 3*M_PI/4 || subjet_ET < 0.3*jet_ET);//(dPhiCut || dhCut || loETCut || hiETCut);
+	cutArr[29]=(dhCut || ihCut || specialLoETCut || specialHiETCut || hCalHack);
+	cutArr[31]=frcoh > 0.9 || frcoh < 0.1 || frcem > 0.9 || frcem < 0.1 || (1.-frcem-frcoh) > 0.9;//
+	cutArr[30]=!isdijet || dphi < 3*M_PI/4 || subjet_ET < 0.3*jet_ET;//(dhCut || ihCut || loETCut || hiETCut || hCalHack);// || chi2cut);
 	cutArr[32]=cutArr[30] && !cutArr[31];
 
 	if(cutArr[32])
@@ -670,15 +724,44 @@ int build_chi2hists(string filebase, int runnumber)
 	      {
 		for(int k=0; k<jet_n; ++k)
 		  {
+		    if(j==31) jet_isbad_jocl[k] = true;
 		    if(check_bad_jet_eta(jet_eta[k],zvtx,0.4)) continue;
-		    if(jet_pt[k] > 4)
+		    if(jet_pt[k] > 4 && jet_et[k] > 0)
 		      {
 			jetSpectra[j]->Fill(jet_pt[k]);
-			
+			fullRangeSpectra[j]->Fill(jet_et[k]);
+			if(j==31) jet_isbad_jocl[k] = false;
 		      }
 		  }
 	      }
 	  }
+
+	//for(int j=0; j<jet_n; ++j)
+	//{
+	    if(cutArr[31])//jet_isbad_jocl[j])
+	      {
+		if(isbeambackground)//jet_isbad_hanpu[j])
+		  {
+		    h_fjfh->Fill(frcem,jet_ET);//alljetfrcem[j],jet_pt[j]);
+		  }
+		else
+		  {
+		    h_fjph->Fill(frcem,jet_ET);//alljetfrcem[j],jet_pt[j]);
+		  }
+	      }
+	    else
+	      {
+		if(isbeambackground)//jet_isbad_hanpu[j])
+		  {
+		    h_pjfh->Fill(frcem,jet_ET);//alljetfrcem[j],jet_pt[j]);
+		  }
+		else
+		  {
+		    h_pjph->Fill(frcem,jet_ET);//alljetfrcem[j],jet_pt[j]);
+		  }
+	      }
+	    //}
+
 	//cout << "test" << endl;
 	for(int j=0; j<n2pc; ++j)
 	  {
@@ -913,6 +996,7 @@ int build_chi2hists(string filebase, int runnumber)
 	  }
 	*/
 	jetSpectra[i]->Write();
+	fullRangeSpectra[i]->Write();
       }
     
     for(int i=0; i<nRatio; ++i)
@@ -946,6 +1030,14 @@ int build_chi2hists(string filebase, int runnumber)
     asdich_all->Write();
     asdich_fail->Write();
     asdich_dphi->Write();
+
+    h_recojet_pt->Write();
+
+    h_pjph->Write();
+    h_pjfh->Write();
+    h_fjph->Write();
+    h_fjfh->Write();
+
     outputFile->Close();
 
     //cout << "wrote" << endl;
