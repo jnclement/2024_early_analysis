@@ -56,7 +56,7 @@
 #include <TLorentzVector.h>
 #include <g4main/PHG4HitContainer.h>
 #include <g4main/PHG4Hit.h>
-
+#include <pdbcalbase/PdbParameterMap.h>
 #include <iostream>
 #include <phool/recoConsts.h>
 #include <centrality/CentralityInfo.h>
@@ -135,9 +135,8 @@ bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
 
 //____________________________________________________________________________..
 R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim, int dotow, int sampleType):
-  SubsysReco("test")//).c_str())
+  SubsysReco(name), _cutParams(name)//).c_str())
 {
-  _rc = recoConsts::instance();
   _dotow = dotow;
   _evtnum = 0;
   _evtct = 0;
@@ -297,9 +296,25 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
   TowerInfoContainer *towersEM = findNode::getClass<TowerInfoContainerSimv1>(topNode, "TOWERINFO_CALIB_CEMC");
   //towersEM = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC");
   //if(!towersEM) towersEM = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
+
+  PHNodeIterator itNode(topNode);
+  PHCompositeNode* parNode = dynamic_cast<PHCompositeNode*>(itNode.findFirst("PHCompositeNode","PAR"));
+  PdbParameterMap* flagNode;
+  if(parNode) flagNode = findNode::getClass<PdbParameterMap>(parNode, "HasBeamBackground");
+  else
+    {
+      cout << "No parNode! Abort run." << endl;
+      return Fun4AllReturnCodes::ABORTRUN;
+    }
+  if(flagNode) _cutParams.FillFrom(flagNode);
+  else
+    {
+      cout << "No flagNode - abort run" << endl;
+      return Fun4AllReturnCodes::ABORTRUN;
+    }
   
 
-  _bbfqavec = _rc->get_IntFlag("HasBeamBackground_StreakSidebandFilter") << 5;
+  _bbfqavec = _cutParams.get_int_param("HasBeamBackground_StreakSidebandFilter") << 5;
   TowerInfoContainer *rtem = findNode::getClass<TowerInfoContainerv2>(topNode, "TOWERINFO_CALIB_CEMC_RETOWER");
   if(!rtem) rtem = findNode::getClass<TowerInfoContainerv1>(topNode, "TOWERINFO_CALIB_CEMC");
 
