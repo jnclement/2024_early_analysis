@@ -445,7 +445,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       bool basehETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+70));
       bool hETCut = basehETCut && (hdPhiCut || !isdijet);
       bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
-      bool fullcut = ljetfrcem > 0.9 || ljetfrcem < 0.1 || ljetfrcoh > 0.9 || ljetfrcoh < 0.9 || (1-ljetfrcem-ljetfrcoh)>0.9;//bbCut || baselETCut || basehETCut || ihCut;//bbCut || lETCut || hETCut || ihCut;
+      bool fullcut = ljetfrcem > 0.9 || ljetfrcem < 0.1 || ljetfrcoh > 0.9 || ljetfrcoh < 0.1 || (1-ljetfrcem-ljetfrcoh)>0.9;//bbCut || baselETCut || basehETCut || ihCut;//bbCut || lETCut || hETCut || ihCut;
       bool specialCut = (!isdijet || hdPhiCut || subjetET < 0.3*ljetET);
       h1_forrat[2]->Fill(ljetET,scale);
 

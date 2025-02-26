@@ -66,12 +66,7 @@ int verbosity = 0;//debug;
 
   string trigzvtxfilename = dir+"/"+to_string(rn)+"_chi2/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_mbtree.root";
   filename += ".root";
-  //FROG *fr = new FROG();
-  //cout << "test0.5" << endl;
-  //gSystem->Load("libg4dst.so");
-  //gSystem->Load("libjetbackground.so");
-  //gSystem->Load("/sphenix/user/jocl/projects/testinstall/lib/libbeambackgroundfilterandqa.so.0.0.0");
-
+  
   if(debug > 1) cout << "test1" << endl;
   Fun4AllServer *se = Fun4AllServer::instance();
   recoConsts *rc =  recoConsts::instance();
@@ -79,11 +74,7 @@ int verbosity = 0;//debug;
   else rc->set_StringFlag("CDB_GLOBALTAG","MDC2");
   if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
   else rc->set_uint64Flag("TIMESTAMP",21);
-  //Fun4AllInputManager *ingeo0 = new Fun4AllRunNodeInputManager("DST_GEO");
-  //std::string geoLocation0 = CDBInterface::instance()->getUrl("calo_geo");
-  //ingeo0->AddFile(geoLocation0);
-  //se->registerInputManager(ingeo0);
-
+  
   se->Verbosity(verbosity);
   // just if we set some flags somewhere in this macro
 
@@ -96,118 +87,62 @@ int verbosity = 0;//debug;
   //Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
   Fun4AllInputManager *in_3 = new Fun4AllDstInputManager("DSTin3");
   Fun4AllInputManager *in_4 = new Fun4AllDstInputManager("DSTin4");
-
+  cout << "get filenames" << endl;
   ifstream list3, list2, list1;
-//if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
-//if(!datorsim) list3.open("lists/g4hits.list");
-//if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
-string line1, line2, line3, line4;
+  //if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
+  //if(!datorsim) list3.open("lists/g4hits.list");
+  //if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
+  string line1, line2, line3, line4;
   if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
   else line1 = "./dsts/"+to_string(nproc)+"/calo_cluster_"+to_string(nproc)+".root";
-//line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
-line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
-//line4 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
-line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
+  //line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
+  if(!datorsim) line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
+  else line3 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+"_jetcalo.root";
+  //line4 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
+  line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
   //if(!datorsim) in_2->AddFile(line2);
-  if(!datorsim) in_3->AddFile(line3);
-if(!datorsim) in_4->AddFile(line4);
+  in_3->AddFile(line3);
+  if(!datorsim) in_4->AddFile(line4);
+  cout << "register managers" << endl;
   se->registerInputManager( in_1 );
   
   //if(!datorsim) se->registerInputManager( in_2 );
-  if(!datorsim) se->registerInputManager( in_3 );
+  se->registerInputManager( in_3 );
   if(!datorsim) se->registerInputManager(in_4);
 
   std::cout << "status setters" << std::endl;
- 
-  Fun4AllInputManager *ingeo = new Fun4AllRunNodeInputManager("DST_GEO2");
-  std::string geoLocation = CDBInterface::instance()->getUrl("calo_geo");
-  ingeo->AddFile(geoLocation);
-  se->registerInputManager(ingeo);
-  /*
-  //////////////////////////////
-  // set statuses on raw towers
-  std::cout << "status setters" << std::endl;
-  CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
-  statusEMC->set_detector_type(CaloTowerDefs::CEMC);
-  statusEMC->set_time_cut(1);
-  se->registerSubsystem(statusEMC);
 
-  CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
-  statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
-  statusHCalIn->set_time_cut(2);
-  se->registerSubsystem(statusHCalIn);
-
-  CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
-  statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
-  statusHCALOUT->set_time_cut(2);
-  se->registerSubsystem(statusHCALOUT);
-
-  ////////////////////
-  // Calibrate towers
-  std::cout << "Calibrating EMCal" << std::endl;
-  CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
-  calibEMC->set_detector_type(CaloTowerDefs::CEMC);
-  se->registerSubsystem(calibEMC);
-
-  std::cout << "Calibrating OHcal" << std::endl;
-  CaloTowerCalib *calibOHCal = new CaloTowerCalib("HCALOUT");
-  calibOHCal->set_detector_type(CaloTowerDefs::HCALOUT);
-  se->registerSubsystem(calibOHCal);
-
-  std::cout << "Calibrating IHcal" << std::endl;
-  CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
-  calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
-  se->registerSubsystem(calibIHCal);
-  
-  */
-  if(!datorsim)
-    {
-      CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
-      statusEMC->set_detector_type(CaloTowerDefs::CEMC);
-      statusEMC->set_time_cut(1);
-      se->registerSubsystem(statusEMC);
-      
-      CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
-      statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
-      statusHCalIn->set_time_cut(2);
-      se->registerSubsystem(statusHCalIn);
-      
-      CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
-      statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
-      statusHCALOUT->set_time_cut(2);
-      se->registerSubsystem(statusHCALOUT);
-      
-      ////////////////////
-      // Calibrate towers
-      
-      std::cout << "Calibrating EMCal" << std::endl;
-      CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
-      calibEMC->set_detector_type(CaloTowerDefs::CEMC);
-      se->registerSubsystem(calibEMC);
-      
-      std::cout << "Calibrating OHcal" << std::endl;
-      CaloTowerCalib *calibOHCal = new CaloTowerCalib("HCALOUT");
-      calibOHCal->set_detector_type(CaloTowerDefs::HCALOUT);
-      se->registerSubsystem(calibOHCal);
-      
-      std::cout << "Calibrating IHcal" << std::endl;
-      CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
-      calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
-      se->registerSubsystem(calibIHCal);
-      
-    }
   CDBInterface::instance()->Verbosity(0);
-  //int cont = 0;
-  BeamBackgroundFilterAndQA::Config bcfg;
-  bcfg.debug = false;
-  bcfg.doQA = false;
-  bcfg.doEvtAbort = false;
-  BeamBackgroundFilterAndQA* bgelim = new BeamBackgroundFilterAndQA(bcfg);
+
+  Process_Calo_Calib();
+
+  NullFilter::Config cfg_null {
+    .verbosity = verbosity,
+    .debug = false
+  };
+
+  StreakSidebandFilter::Config cfg_sideband {
+    .verbosity = verbosity,
+    .debug = false,
+    .minStreakTwrEne = 0.6,
+    .maxAdjacentTwrEne = 0.06,
+    .minNumTwrsInStreak = 5
+  };
+
+  BeamBackgroundFilterAndQA::Config cfg_filter {
+    .debug = false,
+    .doQA = false,
+    .doEvtAbort = false,
+    .sideband = cfg_sideband
+  };
+  
+  BeamBackgroundFilterAndQA* bgelim = new BeamBackgroundFilterAndQA(cfg_filter);
   se->registerSubsystem(bgelim);
-  //  auto mbddigi = new MbdDigitization();
+  //auto mbddigi = new MbdDigitization();
   auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
+  
   if (!datorsim)
     {
       //      mbddigi->Verbosity(verbosity);
@@ -218,19 +153,21 @@ if(!datorsim) in_4->AddFile(line4);
       gblvertex->Verbosity(verbosity);
       se->registerSubsystem(gblvertex);
     }
-
+  
   se->Print("NODETREE");
 
 
 
   //TriggerRunInfoReco* tana = new TriggerRunInfoReco("tana");
   //se->registerSubsystem(tana);
-  
   RetowerCEMC *rcemc = new RetowerCEMC();
-  rcemc->set_towerinfo(true);
-  rcemc->Verbosity(verbosity);
-  se->registerSubsystem(rcemc);
-  cout << "set up retower emcal" << endl;
+  if(!datorsim)
+    {
+      rcemc->set_towerinfo(true);
+      rcemc->Verbosity(verbosity);
+      se->registerSubsystem(rcemc);
+      cout << "set up retower emcal" << endl;
+    }
   /*
   JetReco *truthjetreco = new JetReco();
   
@@ -247,56 +184,29 @@ if(!datorsim) in_4->AddFile(line4);
   */
   
   JetReco *towerjetreco = new JetReco();
-  //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
-  TowerJetInput* emtji = new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB");
-  TowerJetInput* ohtji = new TowerJetInput(Jet::HCALIN_TOWERINFO);
-  TowerJetInput* ihtji = new TowerJetInput(Jet::HCALOUT_TOWERINFO);
-  emtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
-  ohtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
-  ihtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
-    
-  towerjetreco->add_input(emtji);
-  towerjetreco->add_input(ohtji);
-  towerjetreco->add_input(ihtji);
-  towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
-  towerjetreco->set_algo_node("ANTIKT");
-  towerjetreco->set_input_node("TOWER");
-  towerjetreco->Verbosity(verbosity);
-  se->registerSubsystem(towerjetreco);
-
-  /*
   if(!datorsim)
     {
-      JetReco *truthjetreco = new JetReco("TRUTHJETS");
-      TruthJetInput *tji = new TruthJetInput(Jet::PARTICLE);
-      truthjetreco->add_input(tji);
-      //truthjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.2), "AntiKt_Truth_r02");
-      truthjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.4), "AntiKt_Truth_r04");
-      //truthjetreco->add_algo(new FastJetAlgo(Jet::ANTIKT, 0.6), "AntiKt_Truth_r06");
-      truthjetreco->set_algo_node("ANTIKT");
-      truthjetreco->set_input_node("TRUTH");
-      truthjetreco->Verbosity(verbosity);
-      se->registerSubsystem(truthjetreco);
+      //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
+      TowerJetInput* emtji = new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB");
+      TowerJetInput* ohtji = new TowerJetInput(Jet::HCALIN_TOWERINFO);
+      TowerJetInput* ihtji = new TowerJetInput(Jet::HCALOUT_TOWERINFO);
+      emtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+      ohtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+      ihtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+      
+      towerjetreco->add_input(emtji);
+      towerjetreco->add_input(ohtji);
+      towerjetreco->add_input(ihtji);
+      towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
+      towerjetreco->set_algo_node("ANTIKT");
+      towerjetreco->set_input_node("TOWER");
+      towerjetreco->Verbosity(verbosity);
+      //se->registerSubsystem(towerjetreco);
+      
+      cout << "set up jetreco" << endl;
     }
-  */
-  /*
-  JetReco *emtowerjet = new JetReco();
-  emtowerjet->add_input(new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB"));
-  emtowerjet->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "emtowjet");
-  emtowerjet->set_algo_node("ANTIKT");
-  emtowerjet->set_input_node("TOWER");
-  //emtowerjet->Verbosity(verbosity);
-  se->registerSubsystem(emtowerjet);
+  
 
-  JetReco *ohtowerjet = new JetReco();
-  ohtowerjet->add_input(new TowerJetInput(Jet::HCALOUT_TOWERINFO));
-  ohtowerjet->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "ohtowjet");
-  ohtowerjet->set_algo_node("ANTIKT");
-  ohtowerjet->set_input_node("TOWER");
-  //ohtowerjet->Verbosity(verbosity);
-  se->registerSubsystem(ohtowerjet);
-  */
-  cout << "set up jetreco" << endl;
   
   Chi2checker* chi2c;
   if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug);
@@ -307,6 +217,7 @@ if(!datorsim) in_4->AddFile(line4);
   R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 0, sampletype);
   //cout << "test3" << endl;
   if(!datorsim) se->registerSubsystem( tt );
+  
   cout << "test4" << endl;
   se->Print("NODETREE");
   cout << "run " << nevt << endl;
