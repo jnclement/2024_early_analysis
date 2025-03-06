@@ -651,7 +651,7 @@ int build_chi2hists(string filebase, int runnumber)
 	bool chi2cut = jet_ET > 25 && maxETowChi2 < 10;
 	bool specialLoETCut = (frcem < 0.1) && (jet_ET > (50*frcem+20));
 	bool specialHiETCut = (frcem > 0.9) && (jet_ET > (-50*frcem+75));
-	bool hCalHack = frcoh < 0.1 && jet_ET > 40;
+	//bool hCalHack = frcoh < 0.1 && jet_ET > 40;
 	zhists[0]->Fill(zvtx);
 	if(dhCut) zhists[1]->Fill(zvtx);
 	if(ihCut) zhists[2]->Fill(zvtx);
@@ -686,8 +686,8 @@ int build_chi2hists(string filebase, int runnumber)
 	cutArr[26]=(dPhiCut || dhCut || ihCut || loETCut);
 	cutArr[27]=(dPhiCut || dhCut || ihCut || hiETCut);
 	cutArr[28]=isdijet && (dphi < 3*M_PI/4 || subjet_ET < 0.3*jet_ET);//(dPhiCut || dhCut || loETCut || hiETCut);
-	cutArr[29]=(dhCut || ihCut || specialLoETCut || specialHiETCut || hCalHack);
-	cutArr[31]=frcoh > 0.9 || frcoh < 0.1 || frcem > 0.9 || frcem < 0.1 || (1.-frcem-frcoh) > 0.9;//
+	cutArr[29]=frcoh > 0.9 || frcoh < 0.1 || frcem > 0.9 || frcem < 0.1 || (1.-frcem-frcoh) > 0.9;//
+	cutArr[31]=(dhCut || ihCut || loETCut || hiETCut);// || hCalHack);
 	cutArr[30]=!isdijet || dphi < 3*M_PI/4 || subjet_ET < 0.3*jet_ET;//(dhCut || ihCut || loETCut || hiETCut || hCalHack);// || chi2cut);
 	cutArr[32]=cutArr[30] && !cutArr[31];
 
@@ -729,7 +729,7 @@ int build_chi2hists(string filebase, int runnumber)
 		    if(jet_pt[k] > 4 && jet_et[k] > 0)
 		      {
 			jetSpectra[j]->Fill(jet_pt[k]);
-			fullRangeSpectra[j]->Fill(jet_et[k]);
+			fullRangeSpectra[j]->Fill(jet_pt[k]);;//(jet_et[k]);
 			if(j==31) jet_isbad_jocl[k] = false;
 		      }
 		  }

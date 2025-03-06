@@ -9,7 +9,7 @@ SUBNAME="${BASENAME}.sub"
 
 #echo "executable = containerscripts/build_chi2hists.sh" > $SUBNAME
 echo "executable = build_chi2hists.sh" > $SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:200" >> $SUBNAME
+echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:250" >> $SUBNAME
 echo "arguments = \$(Process)" >> $SUBNAME
 echo "output = output/out/output_${BASENAME}_\$(Process).out" >> $SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $SUBNAME

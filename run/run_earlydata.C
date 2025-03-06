@@ -213,15 +213,14 @@ int verbosity = 0;//debug;
   if(chi2check) se->registerSubsystem(chi2c);
   cout << "set up chi2check" << endl;
   
-  //cout << "test2" << endl;
+  cout << "test2" << endl;
   R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 0, sampletype);
-  //cout << "test3" << endl;
+  cout << "test3" << endl;
   if(!datorsim) se->registerSubsystem( tt );
   
   cout << "test4" << endl;
   se->Print("NODETREE");
   cout << "run " << nevt << endl;
-  //se->skip(1000);
   se->run(nevt);
   cout << "ran " << nevt << endl;
   cout << "Ran all events" << endl;

@@ -16,23 +16,28 @@ fi
 SUBDIR=${3}
 STARTN=$(( $2 * 10 ))
 echo $SUBDIR
+
+mkdir -p $SUBDIR
+mkdir -p lists
+mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/
+mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/${SUBDIR}/
+mkdir -p ./dsts/$SUBDIR
+mkdir -p ./output/smg
+mkdir -p output/err
+mkdir -p output/out
+mkdir -p $SUBDIR\_chi2
+echo "Made dirs"
+cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/run_earlydata.C .
+#cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/Fun4All_CaloDataAna.C .
+echo "copied root script here"
+cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_jetcalo_run2pp-000$3.list ./lists/$3\_jetcalo.list
+echo "copied dstlist here"
+
+cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_jet_run2pp-000$3.list ./lists/$3.list
+echo "copied dstlist here"
+
 for i in {0..9}; do
     UPLN=$(( $STARTN + $i + 1 ))
-    mkdir -p $SUBDIR
-    mkdir -p lists
-    mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/
-    mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/${SUBDIR}/
-    mkdir -p ./dsts/$SUBDIR
-    mkdir -p ./output/smg
-    mkdir -p output/err
-    mkdir -p output/out
-    mkdir -p $SUBDIR\_chi2
-    echo "Made dirs"
-    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/run_earlydata.C .
-    #cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/Fun4All_CaloDataAna.C .
-    echo "copied root script here"
-    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_jetcalo_run2pp-000$3.list ./lists/$3\_jetcalo.list
-    echo "copied dstlist here"
     DSTFILE=`sed -n "${UPLN}"p "./lists/${3}_jetcalo.list"`
     if [ -z "${DSTFILE}" ]; then
 	exit 0
@@ -43,8 +48,6 @@ for i in {0..9}; do
     echo "got input files"
     mv $DSTFILE ./dsts/$3/${3}_$UPLN\_jetcalo.root
 
-    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_jet_run2pp-000$3.list ./lists/$3.list
-    echo "copied dstlist here"
     DSTFILE=`sed -n "${UPLN}"p "./lists/${3}.list"`
     if [ -z "${DSTFILE}" ]; then
 	exit 0
@@ -67,6 +70,7 @@ for i in {0..9}; do
     ls -larth $SUBDIR
     ls -larth $SUBDIR\_chi2/*
     #cp -r "./${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root"
-    cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
-    cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
+
 done
+cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
+cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/

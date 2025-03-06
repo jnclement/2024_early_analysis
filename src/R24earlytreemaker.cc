@@ -135,7 +135,7 @@ bool check_bad_jet_eta(float jet_eta, float zertex, float jet_radius) {
 
 //____________________________________________________________________________..
 R24earlytreemaker::R24earlytreemaker(const std::string &name, const int debug, int datorsim, int dotow, int sampleType):
-  SubsysReco(name), _cutParams(name)//).c_str())
+  SubsysReco("r24earlytreemaker"), _cutParams(name)//).c_str())
 {
   _dotow = dotow;
   _evtnum = 0;
@@ -415,7 +415,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
       for(int i=0; i<truthjets->size(); ++i)
 	{
 	  Jet* jet = truthjets->get_jet(i);
-	  tjet_et[ntj] = jet->get_e()/cosh(jet->get_eta());
+	  tjet_et[ntj] = jet->get_e();
 	  if(_debug > 9) cout << "tjet E, eta, ET, and pT: " << jet->get_e() << " " << jet->get_eta() << " "  << tjet_et[ntj] << " " << jet->get_pt() << endl;
 	  if(tjet_et[ntj] < 4) continue;
 	  tjet_pt[ntj] = jet->get_pt();
@@ -575,7 +575,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
           float newTheta = atan2(radius,newz);
           float towerEta = -log(tan(0.5*newTheta));
           float towerPhi = tower_geom->get_phi();
-	  float towerET = tower->get_energy()/cosh(towerEta);
+	  float towerET = tower->get_energy();
 	  if(towerET < 1) continue;
           if(towerET > maxTowET)
             {
@@ -602,7 +602,7 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
           float newTheta = atan2(radius,newz);
           float towerEta = -log(tan(0.5*newTheta));
           float towerPhi = tower_geom->get_phi();
-	  float towerET = tower->get_energy()/cosh(towerEta);
+	  float towerET = tower->get_energy();
 	  if(towerET < 1) continue;
           if(towerET > maxTowET)
             {
@@ -651,10 +651,10 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 	      jet_r[njet] = 0.4;
 	      jet_et[njet] = jet->get_eta();
 	      if(jet->get_e() < 1) continue;
-	      if(_debug > 9) cout << "jet E, ET, eta: " << jet->get_e() << " " << jet->get_e()/cosh(jet_et[njet]) << " " << jet_et[njet] << endl;
+	      if(_debug > 9) cout << "jet E, ET, eta: " << jet->get_e() << " " << jet_et[njet] << endl;
 	      if(check_bad_jet_eta(jet_et[njet],vtx[2],0.4)) continue;
 	      jet_ph[njet] = jet->get_phi();
-	      jet_e[njet] = jet->get_e()/cosh(jet_et[njet]);
+	      jet_e[njet] = jet->get_e();
 	      jet_pt[njet] = jet->get_pt();
 	    }
 	  else
@@ -693,14 +693,14 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
 		  TLorentzVector tempEM;
-		  if(tower->get_energy()/cosh(towerEta) > maxTowerET)
+		  if(tower->get_energy() > maxTowerET)
 		    {
 		      subTowerET = maxTowerET;
-		      maxTowerET = tower->get_energy()/cosh(towerEta);
+		      maxTowerET = tower->get_energy();
 		    }
-		  tempEM.SetPtEtaPhiE(tower->get_energy()/cosh(towerEta),towerEta,tower_geom->get_phi(),tower->get_energy());
+		  tempEM.SetPtEtaPhiE(tower->get_energy(),towerEta,tower_geom->get_phi(),tower->get_energy());
 		  emAxis += tempEM;
-		  _frcem[njet] += tower->get_energy()/cosh(towerEta);
+		  _frcem[njet] += tower->get_energy();
 		  if(_debug > 3) cout << "end em component" << endl;
 		}
 	      if(comp.first == 7 || comp.first == 27)
@@ -717,14 +717,14 @@ int R24earlytreemaker::process_event(PHCompositeNode *topNode)
 		  float newTheta = atan2(radius,newz);
 		  float towerEta = -log(tan(0.5*newTheta));
 		  TLorentzVector tempOH;
-		  if(tower->get_energy()/cosh(towerEta) > maxTowerET)
+		  if(tower->get_energy() > maxTowerET)
 		    {
 		      subTowerET = maxTowerET;
-		      maxTowerET = tower->get_energy()/cosh(towerEta);
+		      maxTowerET = tower->get_energy();
 		    }
-		  tempOH.SetPtEtaPhiE(tower->get_energy()/cosh(towerEta),towerEta,tower_geom->get_phi(),tower->get_energy());
+		  tempOH.SetPtEtaPhiE(tower->get_energy(),towerEta,tower_geom->get_phi(),tower->get_energy());
 		  ohAxis += tempOH;
-		  _frcoh[njet] += tower->get_energy()/cosh(towerEta);
+		  _frcoh[njet] += tower->get_energy();
 		  if(_debug > 3) cout << "end oh component" << endl;
 		}
 	    }
