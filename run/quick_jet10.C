@@ -141,7 +141,7 @@ void jetMatch(int nt, int nr, float truthJet[][2], float recoJet[][2], int *whic
     }
 }
 
-int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int dotow = 0)
+int quick_jet10(string filebase="", string samplestring="jet10")//, int njob=0, int dotow = 0)
 {
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
   //gROOT->SetStyle("Plain");
@@ -161,19 +161,36 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
     return 1;
   }
   float scale;
-  string filename=filebase;
+  //string filename=filebase;
   if(samplestring == "jet10") scale = 3.646e-6/4.197e-2;
   else if(samplestring == "jet30") scale = 2.505e-9/4.197e-2;
   else if(samplestring == "mb") scale = 0.1;
   else scale = 1;
+
+  float upperthresh = 9999;
+  float lowerthresh = 0;
+  if(samplestring == "jet10")
+    {
+      upperthresh = 30;
+      lowerthresh = 14;
+    }
+  else if(samplestring == "jet30")
+    {
+      lowerthresh = 30;
+    }
+  else if(samplestring == "mb")
+    {
+      upperthresh = 14;
+    }
   TChain* tree;
   ifstream list;
   string line;
-  list.open(filename,ifstream::in);
-  string runnum = filename.substr(6,5);
-  string simliststr = "lists/sim.imagelist";
-  string simstr = "sim";
-  string datstr = "dat";
+  //list.open(filename,ifstream::in);
+  //string runnum = filename.substr(6,5);
+  //string simliststr = "lists/sim.imagelist";
+  //string simstr = "sim";
+  //string datstr = "dat";
+  /*
   string idstr;
   if(filename == simliststr)
     {
@@ -185,7 +202,9 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       idstr = datstr;
     }
   int counter = 0;
+  */
   tree = new TChain("ttree");
+  /*
   if(!list)
     {
       cout << "nosimlist" << endl;
@@ -207,6 +226,8 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	}
       if(breakit) break;
     }
+  */
+  tree->Add((samplestring+"_single_tree.root").c_str());
   //cout << "test-1" << endl;
   long unsigned int bbfqavec;
   int njet;
@@ -247,7 +268,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   tree->SetBranchAddress("dEta2pcd",dEta2pc);
   cout << "end getting branches" << endl;
 
-  TFile* jetfile = TFile::Open(("output/simhists/run_"+samplestring+"_"+idstr+"_"+to_string(njob)+"_simhists.root").c_str(),"RECREATE");
+  TFile* jetfile = TFile::Open(("run_"+samplestring+"_simhists.root").c_str(),"RECREATE");
   
 
   int eventbase = {0};
@@ -336,6 +357,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   TH1F* fullrange_ucspec = new TH1F("fullrange_ucspec","ucspec",1000,0,100);
   TH1F* fullrange_cspec = new TH1F("fullrange_cspec","cspec",1000,0,100);
   TH1F* fullrange_tjetspec = new TH1F("fullrange_tjetspec","tjetspec",1000,0,100);
+  TH1F* fullrange_oldspec = new TH1F("fullrange_oldspec","oldspec",1000,0,100);
 
   TH1F* h1_miss = new TH1F("h1_miss","miss",nbinx,binsx);
   TH1F* h1_fake = new TH1F("h1_fake","fake",nbiny,binsy);
@@ -351,7 +373,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
     {
 
       tree->GetEntry(i);   
-      
+      if(i % 100000 == 0) cout << i << "/" << tree->GetEntries() << endl;
       h1_zdist[0]->Fill(vtx[2]); 
       if(abs(vtx[2]) > 30)
 	{
@@ -396,6 +418,12 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       bool subjetHighEta = check_bad_jet_eta(subjeteta, vtx[2], 0.4);
       float truthJet[100][2];
       float recoJet[100][2];
+      float ljetPT = 0;
+      for(int j=0; j<ntj; ++j)
+	{
+	  if(tjet_pt[j] > ljetPT) ljetPT = tjet_pt[j];
+	}
+      if(ljetPT > upperthresh || ljetPT < lowerthresh) continue;
       if(ljetET < 4 || ljetHighEta) continue;
       for(int j=0; j<njet; ++j)
 	{
@@ -440,15 +468,16 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
       bool hdPhiCut = dphi < 3*M_PI/4 && isdijet;
       bool bbCut = (bbfqavec >> 5) & 1;
       //bool sdPhiCut = (ljetfrcem < 0.4 && dphi < 0.15) && isdijet;
-      bool baselETCut = ljetfrcem < 0.1 && (ljetET > (50*ljetfrcem+20));
+      bool baselETCut = ljetfrcem < 0.1 && (ljetET/cosh(ljeteta) > (50*ljetfrcem+20));
       bool lETCut = baselETCut && (hdPhiCut || !isdijet);
-      bool basehETCut = ljetfrcem > 0.9 && (ljetET > (-50*ljetfrcem+70));
+      bool basehETCut = ljetfrcem > 0.9 && (ljetET/cosh(ljeteta) > (-50*ljetfrcem+70));
       bool hETCut = basehETCut && (hdPhiCut || !isdijet);
       bool ihCut = ljetfrcoh + ljetfrcem < 0.65;
+      bool oldCut = hETCut || ihCut || lETCut || bbCut;
       bool fullcut = ljetfrcem > 0.9 || ljetfrcem < 0.1 || ljetfrcoh > 0.9 || ljetfrcoh < 0.1 || (1-ljetfrcem-ljetfrcoh)>0.9;//bbCut || baselETCut || basehETCut || ihCut;//bbCut || lETCut || hETCut || ihCut;
       bool specialCut = (!isdijet || hdPhiCut || subjetET < 0.3*ljetET);
       h1_forrat[2]->Fill(ljetET,scale);
-
+      /*
       if(specialCut && !fullcut)
 	{
 	  cout << "tjet ET eta phi" << endl;
@@ -462,7 +491,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	      cout << jet_e[j] << " " << jet_et[j] << " " << jet_ph[j] << " " << frcem[j] << " " << frcoh[j] << endl;
 	    }
 	}
-
+      */
       if(!specialCut) dijetCheckRatFull->Fill(ljetET,scale);
       if(specialCut && isdijet) dijetCheckRat->Fill(ljetET,scale);
 
@@ -546,6 +575,17 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
 	      fullrange_specspec->Fill(calib_pt[j],scale);
 	    }
 	}
+
+      if(!oldCut)
+	{
+	  for(int j=0; j<njet; ++j)
+	    {
+	      if(check_bad_jet_eta(jet_et[j],vtx[2],0.4)) continue;
+	      if(calib_pt[j] < 4 || jet_e[j] < 0) continue;
+	      fullrange_oldspec->Fill(calib_pt[j],scale);
+	    }
+	}
+      
       if(!fullcut)
 	{
 	  for(int j=0; j<n2pc; ++j)
@@ -670,6 +710,7 @@ int quick_jet10(string filebase="", string samplestring="jet10", int njob=0, int
   asdich_dphi->Write();
   response.Write("roounfold_response");
   response.Hresponse()->Write("hresponse");
+  fullrange_oldspec->Write();
   jetfile->Write();
   return 0;
 }

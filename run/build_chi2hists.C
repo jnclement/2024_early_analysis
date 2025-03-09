@@ -238,7 +238,7 @@ long unsigned int get_nmb(int runnumber)
   return nmb;
 }
 
-int build_chi2hists(string filebase, int runnumber)
+int build_chi2hists(string filebase)
 {
   TCanvas* c = new TCanvas("","",1000,1000);
   gROOT->ProcessLine( "gErrorIgnoreLevel = 1001;");
@@ -588,7 +588,7 @@ int build_chi2hists(string filebase, int runnumber)
     xJ[3] = new TH1F("new_xJ3","",100,0,1);
     
     TH1F* fullRangeSpectra[nSpectra];
-
+    TH1F* whichCuts = new TH1F("whichCuts","",4,-0.5,3.5);
     for(int i=0; i<nSpectra; ++i)
       {
 	jetSpectra[i] = new TH1F(("h1_jetSpectra_"+to_string(i)).c_str(),"",nbin,bins);
@@ -617,14 +617,15 @@ int build_chi2hists(string filebase, int runnumber)
     Long64_t nEntries = jet_tree->GetEntries();
     for (Long64_t i = 0; i < nEntries; i++) {
         jet_tree->GetEntry(i);
+	if(i%100000 == 0) cout << i << "/" << nEntries << endl;
 	if(abs(zvtx) > 30) continue;
-	if(subjet_ET < 8) isdijet = 0;
+	if(subjet_ET/cosh(eta) < 8) isdijet = 0;
 
 	bool bad_leading_jocl = false;
 	bool bad_leading_hanpu = false;
 
 	bool match_dijet = false;
-	if(subjet_ET > 8 && isdijet)
+	if(subjet_ET/cosh(eta) > 8 && isdijet)
 	  {
 	    match_dijet = dphi > 3*M_PI/4;
 	  }
@@ -643,14 +644,14 @@ int build_chi2hists(string filebase, int runnumber)
 
 	//if(check_bad_jet_eta(eta,zvtx,0.4)) continue;
 	bool dPhiCut = (dphi < 3*M_PI/4 && isdijet); //(1-frcem-frcoh) > ((2.0/3.0)*frcoh);//((elmbgvec >> 4) & 1);
-	if(bbfqavec != 0) cout << bbfqavec << endl;
+	//if(bbfqavec != 0) cout << bbfqavec << endl;
 	bool dhCut = ((bbfqavec >> 5) & 1);
 	bool ihCut = (frcem+frcoh) < 0.65;
-	bool loETCut = ((frcem < 0.1) && (jet_ET > (50*frcem+20))) && (dPhiCut || !isdijet);
-	bool hiETCut = ((frcem > 0.9) && (jet_ET > (-50*frcem+70))) && (dPhiCut || !isdijet);
-	bool chi2cut = jet_ET > 25 && maxETowChi2 < 10;
-	bool specialLoETCut = (frcem < 0.1) && (jet_ET > (50*frcem+20));
-	bool specialHiETCut = (frcem > 0.9) && (jet_ET > (-50*frcem+75));
+	bool loETCut = ((frcem < 0.1) && (jet_ET/cosh(eta) > (50*frcem+20))) && (dPhiCut || !isdijet);
+	bool hiETCut = ((frcem > 0.9) && (jet_ET/cosh(eta) > (-50*frcem+70))) && (dPhiCut || !isdijet);
+	bool chi2cut = jet_ET/cosh(eta) > 25 && maxETowChi2 < 10;
+	bool specialLoETCut = (frcem < 0.1) && (jet_ET/cosh(eta) > (50*frcem+20));
+	bool specialHiETCut = (frcem > 0.9) && (jet_ET/cosh(eta) > (-50*frcem+75));
 	//bool hCalHack = frcoh < 0.1 && jet_ET > 40;
 	zhists[0]->Fill(zvtx);
 	if(dhCut) zhists[1]->Fill(zvtx);
@@ -689,24 +690,24 @@ int build_chi2hists(string filebase, int runnumber)
 	cutArr[29]=frcoh > 0.9 || frcoh < 0.1 || frcem > 0.9 || frcem < 0.1 || (1.-frcem-frcoh) > 0.9;//
 	cutArr[31]=(dhCut || ihCut || loETCut || hiETCut);// || hCalHack);
 	cutArr[30]=!isdijet || dphi < 3*M_PI/4 || subjet_ET < 0.3*jet_ET;//(dhCut || ihCut || loETCut || hiETCut || hCalHack);// || chi2cut);
-	cutArr[32]=cutArr[30] && !cutArr[31];
-
+	cutArr[32]=cutArr[30] && !cutArr[29];
+	whichCuts->Fill(((int)cutArr[29])+2*((int)cutArr[30]));
 	if(cutArr[32])
 	  {
-	    cout << "ET frcem frcoh eta phi" << endl;
+	    //cout << "ET frcem frcoh eta phi" << endl;
 	    for(int j=0; j<jet_n; ++j)
 	      {
-		cout << jet_et[j] << " " << alljetfrcem[j] << " " << alljetfrcoh[j] << " " << jet_eta[j] << " " << jet_phi[j] << endl;
+		//cout << jet_pt[j] << " " << alljetfrcem[j] << " " << alljetfrcoh[j] << " " << jet_eta[j] << " " << jet_phi[j] << endl;
 	      }
 	  }
 	if(isdijet && (specialHiETCut || specialLoETCut) && !cutArr[31])
 	  {
-	    asdich_fail->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),jet_ET);
+	    asdich_fail->Fill((jet_ET/cosh(eta)-subjet_ET/cosh(eta))/(jet_ET/cosh(eta)+subjet_ET/cosh(eta)),jet_ET/cosh(eta));
 	  }
 	if(!cutArr[31] && isdijet)
 	  {
-	    asdich_all->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),jet_ET);
-	    if(dphi > 3*M_PI/4) asdich_dphi->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),jet_ET);
+	    asdich_all->Fill((jet_ET/cosh(eta)-subjet_ET/cosh(eta))/(jet_ET/cosh(eta)+subjet_ET/cosh(eta)),jet_ET/cosh(eta));
+	    if(dphi > 3*M_PI/4) asdich_dphi->Fill((jet_ET/cosh(eta)-subjet_ET/cosh(eta))/(jet_ET/cosh(eta)+subjet_ET/cosh(eta)),jet_ET/cosh(eta));
 	  }
 	if(!cutArr[31]) zhists[5]->Fill(zvtx);
 	float closejetdphi = M_PI;
@@ -742,22 +743,22 @@ int build_chi2hists(string filebase, int runnumber)
 	      {
 		if(isbeambackground)//jet_isbad_hanpu[j])
 		  {
-		    h_fjfh->Fill(frcem,jet_ET);//alljetfrcem[j],jet_pt[j]);
+		    h_fjfh->Fill(frcem,jet_ET/cosh(eta));//alljetfrcem[j],jet_pt[j]);
 		  }
 		else
 		  {
-		    h_fjph->Fill(frcem,jet_ET);//alljetfrcem[j],jet_pt[j]);
+		    h_fjph->Fill(frcem,jet_ET/cosh(eta));//alljetfrcem[j],jet_pt[j]);
 		  }
 	      }
 	    else
 	      {
 		if(isbeambackground)//jet_isbad_hanpu[j])
 		  {
-		    h_pjfh->Fill(frcem,jet_ET);//alljetfrcem[j],jet_pt[j]);
+		    h_pjfh->Fill(frcem,jet_ET/cosh(eta));//alljetfrcem[j],jet_pt[j]);
 		  }
 		else
 		  {
-		    h_pjph->Fill(frcem,jet_ET);//alljetfrcem[j],jet_pt[j]);
+		    h_pjph->Fill(frcem,jet_ET/cosh(eta));//alljetfrcem[j],jet_pt[j]);
 		  }
 	      }
 	    //}
@@ -789,24 +790,24 @@ int build_chi2hists(string filebase, int runnumber)
 	      }
 	  }
 	//cout << "test2" << endl;
-	forRatio[0]->Fill(jet_ET);
-	if(isdijet && dphi > 3*M_PI/4) forRatio[1]->Fill(jet_ET);
-	if(!cutArr[1] && isdijet) forRatio[2]->Fill(jet_ET);
-	if(!cutArr[31]) forRatio[3]->Fill(jet_ET);
-	if(!cutArr[31] && isdijet) forRatio[4]->Fill(jet_ET);
-	if(!cutArr[30]) dijetCheckRatFull->Fill(jet_ET);
-	if(!cutArr[30] && isdijet) dijetCheckRat->Fill(jet_ET);
-	if(dphi > 3*M_PI/4 && isdijet && jet_ET > 14 && subjet_ET > 10)
+	forRatio[0]->Fill(jet_ET/cosh(eta));
+	if(isdijet && dphi > 3*M_PI/4) forRatio[1]->Fill(jet_ET/cosh(eta));
+	if(!cutArr[1] && isdijet) forRatio[2]->Fill(jet_ET/cosh(eta));
+	if(!cutArr[31]) forRatio[3]->Fill(jet_ET/cosh(eta));
+	if(!cutArr[31] && isdijet) forRatio[4]->Fill(jet_ET/cosh(eta));
+	if(!cutArr[30]) dijetCheckRatFull->Fill(jet_ET/cosh(eta));
+	if(!cutArr[30] && isdijet) dijetCheckRat->Fill(jet_ET/cosh(eta));
+	if(dphi > 3*M_PI/4 && isdijet && jet_ET/cosh(eta) > 14 && subjet_ET/cosh(eta) > 10)
 	  {
-	    forRatio[5]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
-	    if(jet_ET > 30 && subjet_ET > 20) xJ[2]->Fill(subjet_ET/jet_ET);
-	    xJ[0]->Fill(subjet_ET/jet_ET);
+	    forRatio[5]->Fill((jet_ET/cosh(eta)-subjet_ET/cosh(eta))/(jet_ET/cosh(eta)+subjet_ET/cosh(eta)));
+	    if(jet_ET/cosh(eta) > 30 && subjet_ET/cosh(eta) > 20) xJ[2]->Fill(subjet_ET/cosh(eta)/jet_ET/cosh(eta));
+	    xJ[0]->Fill(subjet_ET/cosh(eta)/jet_ET/cosh(eta));
 	  }
-	if(dphi > 3*M_PI/4 && isdijet && !cutArr[31] && jet_ET > 14 && subjet_ET > 10)
+	if(dphi > 3*M_PI/4 && isdijet && !cutArr[31] && jet_ET/cosh(eta) > 14 && subjet_ET/cosh(eta) > 10)
 	  {
-	    forRatio[6]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET));
-	    if(jet_ET > 30 && subjet_ET > 20) xJ[3]->Fill(subjet_ET/jet_ET);
-	    xJ[1]->Fill(subjet_ET/jet_ET);
+	    forRatio[6]->Fill((jet_ET/cosh(eta)-subjet_ET/cosh(eta))/(jet_ET/cosh(eta)+subjet_ET/cosh(eta)));
+	    if(jet_ET/cosh(eta) > 30 && subjet_ET/cosh(eta) > 20) xJ[3]->Fill(subjet_ET/cosh(eta)/jet_ET/cosh(eta));
+	    xJ[1]->Fill(subjet_ET/cosh(eta)/jet_ET/cosh(eta));
 	  }
 	//cout << "filling (got entry). isdijet = " << isdijet << endl;
 	float chi2 = maxTowChi2[0];
@@ -848,7 +849,7 @@ int build_chi2hists(string filebase, int runnumber)
 
 		if(isdijet)
 		  {
-		    h2_AJ_dphi[whichhist[k]]->Fill((jet_ET-subjet_ET)/(jet_ET+subjet_ET),dphi);
+		    h2_AJ_dphi[whichhist[k]]->Fill((jet_ET/cosh(eta)-subjet_ET/cosh(eta))/(jet_ET/cosh(eta)+subjet_ET/cosh(eta)),dphi);
 		  }
 	//if(maxTowE > 15 && maxETowChi2 < 100) //cout << "Detector: " << det << " tower ET: " << maxTowE << " chi2: " << maxETowChi2 << " is ZS: " << maxETowIsZS <<endl;
 	//if(cutArr[31]) continue;
@@ -862,9 +863,9 @@ int build_chi2hists(string filebase, int runnumber)
 		h2_maxETowChi2_frcem[whichhist[k]]->Fill(maxETowChi2, frcem);
 		h2_maxETowChi2_eta[whichhist[k]]->Fill(maxETowChi2, eta);
 		h2_maxETowChi2_phi[whichhist[k]]->Fill(maxETowChi2, phi);
-		h2_maxETowChi2_jet_ET[whichhist[k]]->Fill(maxETowChi2, jet_ET);
+		h2_maxETowChi2_jet_ET[whichhist[k]]->Fill(maxETowChi2, jet_ET/cosh(eta));
 		h2_maxETowChi2_dphi[whichhist[k]]->Fill(maxETowChi2, dphi);
-		h2_maxETowChi2_subjet_ET[whichhist[k]]->Fill(maxETowChi2, subjet_ET);
+		h2_maxETowChi2_subjet_ET[whichhist[k]]->Fill(maxETowChi2, subjet_ET/cosh(eta));
 		
 		h2_nBadChi2_maxTowDiff[whichhist[k]]->Fill(nBadChi2, maxTowDiff);
 		h2_nBadChi2_subTowE[whichhist[k]]->Fill(nBadChi2, subTowE);
@@ -875,9 +876,9 @@ int build_chi2hists(string filebase, int runnumber)
 		h2_nBadChi2_frcem[whichhist[k]]->Fill(nBadChi2, frcem);
 		h2_nBadChi2_eta[whichhist[k]]->Fill(nBadChi2, eta);
 		h2_nBadChi2_phi[whichhist[k]]->Fill(nBadChi2, phi);
-		h2_nBadChi2_jet_ET[whichhist[k]]->Fill(nBadChi2, jet_ET);
+		h2_nBadChi2_jet_ET[whichhist[k]]->Fill(nBadChi2, jet_ET/cosh(eta));
 		h2_nBadChi2_dphi[whichhist[k]]->Fill(nBadChi2, dphi);
-		h2_nBadChi2_subjet_ET[whichhist[k]]->Fill(nBadChi2, subjet_ET);
+		h2_nBadChi2_subjet_ET[whichhist[k]]->Fill(nBadChi2, subjet_ET/cosh(eta));
 		
 		h2_maxTowDiff_subTowE[whichhist[k]]->Fill(maxTowDiff, subTowE);
 		h2_maxTowDiff_maxTowE[whichhist[k]]->Fill(maxTowDiff, maxTowE);
@@ -887,9 +888,9 @@ int build_chi2hists(string filebase, int runnumber)
 		h2_maxTowDiff_frcem[whichhist[k]]->Fill(maxTowDiff, frcem);
 		h2_maxTowDiff_eta[whichhist[k]]->Fill(maxTowDiff, eta);
 		h2_maxTowDiff_phi[whichhist[k]]->Fill(maxTowDiff, phi);
-		h2_maxTowDiff_jet_ET[whichhist[k]]->Fill(maxTowDiff, jet_ET);
+		h2_maxTowDiff_jet_ET[whichhist[k]]->Fill(maxTowDiff, jet_ET/cosh(eta));
 		h2_maxTowDiff_dphi[whichhist[k]]->Fill(maxTowDiff, dphi);
-		h2_maxTowDiff_subjet_ET[whichhist[k]]->Fill(maxTowDiff, subjet_ET);
+		h2_maxTowDiff_subjet_ET[whichhist[k]]->Fill(maxTowDiff, subjet_ET/cosh(eta));
 		
 		h2_subTowE_maxTowE[whichhist[k]]->Fill(subTowE, maxTowE);
 		h2_subTowE_ecc[whichhist[k]]->Fill(subTowE, ecc);
@@ -898,9 +899,9 @@ int build_chi2hists(string filebase, int runnumber)
 		h2_subTowE_frcem[whichhist[k]]->Fill(subTowE, frcem);
 		h2_subTowE_eta[whichhist[k]]->Fill(subTowE, eta);
 		h2_subTowE_phi[whichhist[k]]->Fill(subTowE, phi);
-		h2_subTowE_jet_ET[whichhist[k]]->Fill(subTowE, jet_ET);
+		h2_subTowE_jet_ET[whichhist[k]]->Fill(subTowE, jet_ET/cosh(eta));
 		h2_subTowE_dphi[whichhist[k]]->Fill(subTowE, dphi);
-		h2_subTowE_subjet_ET[whichhist[k]]->Fill(subTowE, subjet_ET);
+		h2_subTowE_subjet_ET[whichhist[k]]->Fill(subTowE, subjet_ET/cosh(eta));
 		
 		h2_maxTowE_ecc[whichhist[k]]->Fill(maxTowE, ecc);
 		h2_maxTowE_chi2[whichhist[k]]->Fill(maxTowE, chi2);
@@ -908,55 +909,55 @@ int build_chi2hists(string filebase, int runnumber)
 		h2_maxTowE_frcem[whichhist[k]]->Fill(maxTowE, frcem);
 		h2_maxTowE_eta[whichhist[k]]->Fill(maxTowE, eta);
 		h2_maxTowE_phi[whichhist[k]]->Fill(maxTowE, phi);
-		h2_maxTowE_jet_ET[whichhist[k]]->Fill(maxTowE, jet_ET);
+		h2_maxTowE_jet_ET[whichhist[k]]->Fill(maxTowE, jet_ET/cosh(eta));
 		h2_maxTowE_dphi[whichhist[k]]->Fill(maxTowE, dphi);
-		h2_maxTowE_subjet_ET[whichhist[k]]->Fill(maxTowE, subjet_ET);
+		h2_maxTowE_subjet_ET[whichhist[k]]->Fill(maxTowE, subjet_ET/cosh(eta));
 		
 		h2_ecc_chi2[whichhist[k]]->Fill(ecc, chi2);
 		h2_ecc_frcoh[whichhist[k]]->Fill(ecc, frcoh);
 		h2_ecc_frcem[whichhist[k]]->Fill(ecc, frcem);
 		h2_ecc_eta[whichhist[k]]->Fill(ecc, eta);
 		h2_ecc_phi[whichhist[k]]->Fill(ecc, phi);
-		h2_ecc_jet_ET[whichhist[k]]->Fill(ecc, jet_ET);
+		h2_ecc_jet_ET[whichhist[k]]->Fill(ecc, jet_ET/cosh(eta));
 		h2_ecc_dphi[whichhist[k]]->Fill(ecc, dphi);
-		h2_ecc_subjet_ET[whichhist[k]]->Fill(ecc, subjet_ET);
+		h2_ecc_subjet_ET[whichhist[k]]->Fill(ecc, subjet_ET/cosh(eta));
 		//cout << "filled first block" << endl;
 		h2_chi2_frcoh[whichhist[k]]->Fill(chi2, frcoh);
 		h2_chi2_frcem[whichhist[k]]->Fill(chi2, frcem);
 		h2_chi2_eta[whichhist[k]]->Fill(chi2, eta);
 		h2_chi2_phi[whichhist[k]]->Fill(chi2, phi);
-		h2_chi2_jet_ET[whichhist[k]]->Fill(chi2, jet_ET);
+		h2_chi2_jet_ET[whichhist[k]]->Fill(chi2, jet_ET/cosh(eta));
 		h2_chi2_dphi[whichhist[k]]->Fill(chi2, dphi);
-		h2_chi2_subjet_ET[whichhist[k]]->Fill(chi2, subjet_ET);
+		h2_chi2_subjet_ET[whichhist[k]]->Fill(chi2, subjet_ET/cosh(eta));
 		//cout << "filled second block" << endl;
 		for(int l=0; l<jet_n; ++l)
 		  {
 		    h2_frcoh_frcem[whichhist[k]]->Fill(alljetfrcoh[l], alljetfrcem[l]);
 		    h2_frcoh_eta[whichhist[k]]->Fill(alljetfrcoh[l], jet_eta[l]);
 		    h2_frcoh_phi[whichhist[k]]->Fill(alljetfrcoh[l], jet_phi[l]);
-		    h2_frcoh_jet_ET[whichhist[k]]->Fill(alljetfrcoh[l], jet_et[l]);
+		    h2_frcoh_jet_ET[whichhist[k]]->Fill(alljetfrcoh[l], jet_pt[l]);
 		    if(isdijet) h2_frcoh_dphi[whichhist[k]]->Fill(alljetfrcoh[l], dphi);
-		    h2_frcoh_subjet_ET[whichhist[k]]->Fill(alljetfrcoh[l], jet_ET);
+		    h2_frcoh_subjet_ET[whichhist[k]]->Fill(alljetfrcoh[l], jet_ET/cosh(eta));
 		    //cout << "filled third block" << endl;
 		    h2_frcem_eta[whichhist[k]]->Fill(alljetfrcem[l], jet_eta[l]);
 		    h2_frcem_phi[whichhist[k]]->Fill(alljetfrcem[l], jet_phi[l]);
-		    h2_frcem_jet_ET[whichhist[k]]->Fill(alljetfrcem[l], jet_et[l]);
+		    h2_frcem_jet_ET[whichhist[k]]->Fill(alljetfrcem[l], jet_pt[l]);
 		    if(isdijet) h2_frcem_dphi[whichhist[k]]->Fill(alljetfrcem[l], dphi);
-		    h2_frcem_subjet_ET[whichhist[k]]->Fill(alljetfrcem[l], jet_ET);
+		    h2_frcem_subjet_ET[whichhist[k]]->Fill(alljetfrcem[l], jet_ET/cosh(eta));
 		    //cout << "filled fourth block" << endl;
 		    h2_eta_phi[whichhist[k]]->Fill(jet_eta[l], jet_phi[l]);
-		    h2_eta_jet_ET[whichhist[k]]->Fill(jet_eta[l], jet_et[l]);
+		    h2_eta_jet_ET[whichhist[k]]->Fill(jet_eta[l], jet_pt[l]);
 		    if(isdijet) h2_eta_dphi[whichhist[k]]->Fill(jet_eta[l], dphi);
-		    h2_eta_subjet_ET[whichhist[k]]->Fill(jet_eta[l], jet_ET);
+		    h2_eta_subjet_ET[whichhist[k]]->Fill(jet_eta[l], jet_ET/cosh(eta));
 		    //cout << "filled fifth block" << endl;
-		    h2_phi_jet_ET[whichhist[k]]->Fill(jet_phi[l], jet_et[l]);
+		    h2_phi_jet_ET[whichhist[k]]->Fill(jet_phi[l], jet_pt[l]);
 		    if(isdijet) h2_phi_dphi[whichhist[k]]->Fill(jet_phi[l], dphi);
-		    h2_phi_subjet_ET[whichhist[k]]->Fill(jet_phi[l], jet_ET);
+		    h2_phi_subjet_ET[whichhist[k]]->Fill(jet_phi[l], jet_ET/cosh(eta));
 		    //cout << "filled sixth block" << endl;
-		    if(isdijet) h2_jet_ET_dphi[whichhist[k]]->Fill(jet_et[l], dphi);
-		    h2_jet_ET_subjet_ET[whichhist[k]]->Fill(jet_ET, subjet_ET);
+		    if(isdijet) h2_jet_ET_dphi[whichhist[k]]->Fill(jet_pt[l], dphi);
+		    h2_jet_ET_subjet_ET[whichhist[k]]->Fill(jet_ET/cosh(eta), subjet_ET/cosh(eta));
 		    //cout << "filled seventh block" << endl;
-		    if(isdijet) h2_subjet_ET_dphi[whichhist[k]]->Fill(jet_ET, dphi);
+		    if(isdijet) h2_subjet_ET_dphi[whichhist[k]]->Fill(jet_ET/cosh(eta), dphi);
 		  }
 	      }
 	  }
@@ -974,13 +975,17 @@ int build_chi2hists(string filebase, int runnumber)
 	  }
       }
 
+
+    /*
     int sd18 = get_scaledown18(runnumber);
     int sd10 = get_scaledown10(runnumber);
     int nmb = get_nmb(runnumber);
+    */
     //cout << sd17 << " " << sd10 << " " << nmb << endl;
     for(int i=0; i<nSpectra; ++i)
       {
 	//cout << "jetSpectrum: " << jetSpectra[i] << endl;
+	/*
 	if(sd18 >= 0 && sd10 >= 0 && nmb > 0 && std::isfinite(sd18) && std::isfinite(sd10) && std::isfinite(nmb))
 	  {
 	    float effevt = (((1.*(1+sd10))/(1+sd18))*nmb);
@@ -988,6 +993,7 @@ int build_chi2hists(string filebase, int runnumber)
 	    //cout << "effevt: " << effevt << endl;
 	    
 	  }
+	*/
 	/*
 	else
 	  {
@@ -1037,7 +1043,7 @@ int build_chi2hists(string filebase, int runnumber)
     h_pjfh->Write();
     h_fjph->Write();
     h_fjfh->Write();
-
+    whichCuts->Write();
     outputFile->Close();
 
     //cout << "wrote" << endl;

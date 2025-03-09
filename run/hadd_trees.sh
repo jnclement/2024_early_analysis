@@ -5,12 +5,12 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 #rm -f output/${1}_hadd_trees/*
-for i in {101..1000}; do
+for i in {0..1000}; do
     echo $i
     rm lists/sim_haddlist.list
     LOWER=$(( $i * 100 ))
     UPPER=$(( $LOWER + 99 ))
-    ls /sphenix/tg/tg01/jets/jocl/evt/${LOWER}/events_20250303_useE_${LOWER}_${LOWER}_${LOWER}_0.root
+    ls /sphenix/tg/tg01/jets/jocl/evt/${LOWER}/events_20250303_useE_${1}_${LOWER}_${LOWER}_0.root
     if [ $? -ne 0 ]; then
 	break
     fi

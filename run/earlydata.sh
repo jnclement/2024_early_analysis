@@ -60,7 +60,7 @@ for i in {0..9}; do
     echo "Running Fun4All now"
     echo $DSTFILE
     echo ./dsts/$3/${3}_$UPLN.root
-    root -b -q 'run_earlydata.C("'${1}'",'$UPLN',0,'${5}','${3}','${4}',1,'${6}')'
+    root -b -q 'run_earlydata.C("'${1}'",'$UPLN',5,'${5}','${3}','${4}',1,'${6}')'
     echo " "
     echo " "
     echo " "

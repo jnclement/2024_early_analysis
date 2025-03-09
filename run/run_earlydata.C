@@ -184,12 +184,12 @@ int verbosity = 0;//debug;
   */
   
   JetReco *towerjetreco = new JetReco();
+  TowerJetInput* emtji = new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB");
+  TowerJetInput* ohtji = new TowerJetInput(Jet::HCALIN_TOWERINFO);
+  TowerJetInput* ihtji = new TowerJetInput(Jet::HCALOUT_TOWERINFO);
   if(!datorsim)
     {
       //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
-      TowerJetInput* emtji = new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB");
-      TowerJetInput* ohtji = new TowerJetInput(Jet::HCALIN_TOWERINFO);
-      TowerJetInput* ihtji = new TowerJetInput(Jet::HCALOUT_TOWERINFO);
       emtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
       ohtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
       ihtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
@@ -201,7 +201,7 @@ int verbosity = 0;//debug;
       towerjetreco->set_algo_node("ANTIKT");
       towerjetreco->set_input_node("TOWER");
       towerjetreco->Verbosity(verbosity);
-      //se->registerSubsystem(towerjetreco);
+      se->registerSubsystem(towerjetreco);
       
       cout << "set up jetreco" << endl;
     }
