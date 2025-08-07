@@ -17,13 +17,13 @@ SUBNAME="${BASENAME}.sub"
 
 #echo "executable = containerscripts/earlydata.sh" > $PREFIX/$SUBNAME
 echo "executable = earlydata.sh" > $PREFIX/$SUBNAME
-echo "concurrency_limits=CONCURRENCY_LIMIT_DEFAULT:250" >> $PREFIX/$SUBNAME
 echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C}" >> $PREFIX/$SUBNAME
 echo "priority = 100000000" >> $SUBNAME
 echo "output = output/out/output_${BASENAME}_\$(Process).out" >> $PREFIX/$SUBNAME
+echo "request_memory                = 4GB" >> $PREFIX/$SUBNAME
 echo "should_transfer_files   = IF_NEEDED" >> $PREFIX/$SUBNAME
 echo "when_to_transfer_output = ON_EXIT" >> $PREFIX/$SUBNAME
-echo "error = output/err/error_${BASENAME}_\$(Process).err" >> $PREFIX/$SUBNAME
+echo "error = output/out/output_${BASENAME}_\$(Process).out" >> $PREFIX/$SUBNAME
 echo "log = /tmp/jocl_${BASENAME}.log" >> $PREFIX/$SUBNAME
 echo "queue ${NFILE}" >> $PREFIX/$SUBNAME
 

@@ -27,7 +27,7 @@ void FormatTH1(TH1* thehist, string xTitle, string yTitle, int histColor, float 
   thehist->GetYaxis()->SetTitleOffset(2.0);
 }
 
-int make_ratio_hist(string jet10file, string jet30file, string mbfile)
+int make_ratio_hist(int zsel, int calibsel = 0)//string jet10file, string jet30file, string mbfile)
 {
   TCanvas* c1 = new TCanvas("c1","c1",1000,1000);
   gPad->SetLeftMargin(0.2);
@@ -38,27 +38,70 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   gStyle->SetPadTickY(1);
   const int nbiny = 12;
   float binsy[nbiny+1] = {12, 15, 18, 21, 24, 28, 32, 36, 40, 45, 50, 55, 60};
-  TFile* datf = TFile::Open("chi2_single_tree_hist.root","READ");
+  //TFile* datf = TFile::Open("chi2_single_tree_hist.root","READ");
+  TFile* datf = TFile::Open("../../CaloDataAna24_ppg09/offline/analysis_unfold/output_data_r04.root");
+  /*
   TH1D* dat_cspec = (TH1D*)datf->Get("fullRangeSpectra_30");
   TH1D* dat_ucspec = (TH1D*)datf->Get("fullRangeSpectra_0");
   TH1D* dat_spspec = (TH1D*)datf->Get("fullRangeSpectra_29");
   TH1D* dat_ospec = (TH1D*)datf->Get("fullRangeSpectra_31");
+  */
+  string calibstr = "record";
+  string zstr = "all";
+  if(zsel == 1)
+    {
+      zstr = "zvertex30";
+    }
+  if(zsel == 2)
+    {
+      zstr = "zvertex60";
+    }
+  if(calibsel == 1)
+    {
+      calibstr = "record_r01_99";
+    }
+  if(calibsel == 2) calibstr = "record_r01_90";
+  if(calibsel == 3) calibstr = "record_r02_99";
+  if(calibsel == 4) calibstr = "record_r02_90";
+  cout << "h_recojet_pt_"+calibstr+"_dijet_"+zstr << endl;
+  TH1D* dat_cspec = (TH1D*)datf->Get(("h_recojet_pt_"+calibstr+"_dijet_"+zstr).c_str());
+  TH1D* dat_ucspec = (TH1D*)datf->Get(("h_recojet_pt_record_"+zstr).c_str());
+  TH1D* dat_spspec = (TH1D*)datf->Get(("h_recojet_pt_"+calibstr+"_frac_"+zstr).c_str());
+  TH1D* dat_ospec = (TH1D*)datf->Get(("h_recojet_pt_"+calibstr+"_both_"+zstr).c_str());
+  //TH1D* dat_ospec = (
+
   
   dat_cspec->Rebin(20);
   dat_ucspec->Rebin(20);
   dat_spspec->Rebin(20);
   dat_ospec->Rebin(20);
-
+  
+  /*
   TFile* jet10tf = TFile::Open(jet10file.c_str(),"READ");
   TFile* jet30tf = TFile::Open(jet30file.c_str(),"READ");
   TFile* mbtf = TFile::Open(mbfile.c_str(),"READ");
-
-  TFile* outfile = TFile::Open("ratiofile.root","RECREATE");
   
+  TFile* outfile = TFile::Open("ratiofile.root","RECREATE");
+
+  TH1D* whichFail = (TH1D*)mbtf->Get("whichFailed");
+  cout << whichFail->Integral() << endl;
+  whichFail->Add((TH1D*)jet10tf->Get("whichFailed"));
+  whichFail->Add((TH1D*)jet30tf->Get("whichFailed"));
+
+  cout << whichFail->Integral() << endl;
+
+  //TH1D* whichHist = (TH1D*)datf->Get("whichCuts");
+  cout << whichHist->Integral() << endl;
+  cout << "                          sim       data" << endl;
+  cout << "Failing no cuts:        " << whichFail->GetBinContent(1) << " " << whichHist->GetBinContent(1) << endl;
+  cout << "Failing only dijet cut: " << whichFail->GetBinContent(3) << " " << whichHist->GetBinContent(3) << endl;
+  cout << "Failing only frac cut:  " << whichFail->GetBinContent(2) << " " << whichHist->GetBinContent(2) << endl;
+  cout << "Failing both cuts:      " << whichFail->GetBinContent(4) << " " << whichHist->GetBinContent(4) << endl;
+  */
   float jet10scale = 3.646e-6/4.197e-2;
   float jet30scale = 2.505e-9/4.197e-2;
   float mbscale = 0.1;
-
+  /*
   TH1D* jet10_ucspec = (TH1D*)jet10tf->Get("fullrange_ucspec");
   TH1D* jet10_cspec = (TH1D*)jet10tf->Get("fullrange_cspec");
   TH1D* jet10_specspec = (TH1D*)jet10tf->Get("fullrange_specspec");
@@ -87,8 +130,9 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   jet10_ospec->Rebin(20);
   jet30_ospec->Rebin(20);
   mb_ospec->Rebin(20);
+  */
 
-
+  /*
   TH1D* full_ospec = new TH1D("full_ospec","full_ospec",50,0,100);
   full_ospec->Add(mb_ospec);
   full_ospec->Add(jet10_ospec);
@@ -265,38 +309,51 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   gPad->SaveAs("output/chi2img/ratio_cspec_final_asym.png");
 
   
-  
+  */
   float Lintpb = 16.82;
-  const int ntext = 5;
+  const int ntext = 4;//5;
+  int zcut = 0;
+  if(zsel == 1)
+    {
+      zcut = 30;
+    }
+  if(zsel == 2)
+    {
+      zcut = 60;
+    }
   string texts[ntext] =
   {
     "Calorimeter Anti-k_{T} R=0.4",
-    "|z_{vtx}| < 30 cm",
-    "Jet-10 & MBDNS>=1 Triggered Data",
-    "\\mathscr{L}_{\\text{data}}=15.36 \\text{pb}^{-1}",
+    zcut==0?"No z_{vtx} selection":"|z_{vtx}| < "+to_string(zcut)+" cm",
+    zcut==0?"Jet-10 & No Coincidence Triggered Data":"Jet-10 & MBDNS>=1 Triggered Data",
+    //"\\mathscr{L}_{\\text{data}}=15.36 \\text{pb}^{-1}",
     "Jet Detector Level |#eta|<0.7"
   };
 
   ratioPanelCanvas(c1, 0.3);
 
+  /*
   full_cspec->Scale(1./jet30scale);
   full_ucspec->Scale(1./jet30scale);
   full_specspec->Scale(1./jet30scale);
   full_ospec->Scale(1./jet30scale);
-  
+  */
   TF1* myexp = new TF1("myexp","[0]*exp([1]*x)",0,100);
-  TF1* smexp = new TF1("simexp","[0]*exp([1]*x)",0,100);
-  smexp->SetParameter(1,-0.3);
+  //TF1* smexp = new TF1("simexp","[0]*exp([1]*x)",0,100);
+  myexp->SetParameter(1,-0.3);
+  myexp->SetParameter(0,3e7);
   dat_cspec->Fit(myexp,"IL0","",20,50);
   
-  full_specspec->Fit(smexp,"I WL 0","",20,50);
+  //full_specspec->Fit(smexp,"I WL 0","",20,50);
   myexp->SetLineColor(kBlue);
-  smexp->SetLineColor(kBlue);
-  TH1D* cspec_ratio = (TH1D*)dat_spspec->Clone();
-  TH1D* scspec_ratio = (TH1D*)full_cspec->Clone();
-  TH1D* sim_cspec_ratio_to_uc = (TH1D*)full_cspec->Clone();
-  TH1D* sim_specspec_ratio_to_uc = (TH1D*)full_specspec->Clone();
-  TH1D* sim_ospec_ratio_to_uc = (TH1D*)full_ospec->Clone();
+  //smexp->SetLineColor(kBlue);
+  TH1D* cspec_ratio = (TH1D*)dat_cspec->Clone();
+  TH1D* spspec_ratio = (TH1D*)dat_spspec->Clone();
+  TH1D* ospec_ratio = (TH1D*)dat_ospec->Clone();
+  //TH1D* scspec_ratio = (TH1D*)full_cspec->Clone();
+  //TH1D* sim_cspec_ratio_to_uc = (TH1D*)full_cspec->Clone();
+  //TH1D* sim_specspec_ratio_to_uc = (TH1D*)full_specspec->Clone();
+  //TH1D* sim_ospec_ratio_to_uc = (TH1D*)full_ospec->Clone();
 
   TH1D* dat_cspec_ratio_to_uc = (TH1D*)dat_cspec->Clone();
   TH1D* dat_specspec_ratio_to_uc = (TH1D*)dat_spspec->Clone();
@@ -304,17 +361,18 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
 
   dat_cspec_ratio_to_uc->Divide(dat_cspec,dat_ucspec,1,1,"B");
   dat_specspec_ratio_to_uc->Divide(dat_spspec,dat_ucspec,1,1,"B");
-  dat_ospec_ratio_to_uc->Divide(dat_ospec,dat_ucspec,1,1,"B");
+  //dat_ospec_ratio_to_uc->Divide(dat_ospec,dat_ucspec,1,1,"B");
 
-  sim_cspec_ratio_to_uc->Divide(full_cspec,full_ucspec,1,1,"B");
-  sim_specspec_ratio_to_uc->Divide(full_specspec,full_ucspec,1,1,"B");
-  sim_ospec_ratio_to_uc->Divide(full_ospec,full_ucspec,1,1,"B");
+  //sim_cspec_ratio_to_uc->Divide(full_cspec,full_ucspec,1,1,"B");
+  //sim_specspec_ratio_to_uc->Divide(full_specspec,full_ucspec,1,1,"B");
+  //sim_ospec_ratio_to_uc->Divide(full_ospec,full_ucspec,1,1,"B");
   
   cspec_ratio->Sumw2();
-  //scspec_ratio->Sumw2();
+  spspec_ratio->Sumw2();
+  ospec_ratio->Sumw2();
   cspec_ratio->Divide(myexp);
-  scspec_ratio->Divide(smexp);
- 
+  spspec_ratio->Divide(myexp);
+  ospec_ratio->Divide(myexp);
   //ratio_cspec_specspec->GetXaxis()->SetTitleSize(0.1);
   //ratio_cspec_specspec->GetXaxis()->SetLabelSize(0.1);
   //ratio_cspec_specspec->GetYaxis()->SetLabelSize(0.05);
@@ -322,63 +380,74 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   c1->cd(1);
   gPad->SetLogy();
 
-  FormatTH1(dat_ospec, "E_{T}^{jet} [GeV]", "N_{jet}", kOrange+1, 0.5,1e7);
-  FormatTH1(full_ospec, "E_{T}^{jet} [GeV]", "N_{jet}", kOrange+1, 0.5,1e10);
-  FormatTH1(dat_cspec_ratio_to_uc, "E_{T}^{jet} [GeV]", "N_{jet}", kAzure+1, 0,2);
-  FormatTH1(dat_specspec_ratio_to_uc, "E_{T}^{jet} [GeV]", "N_{jet}", kRed+1, 0,2);
-  FormatTH1(dat_ospec_ratio_to_uc, "E_{T}^{jet} [GeV]", "N_{jet}", kOrange+1, 0,2);
-  FormatTH1(sim_cspec_ratio_to_uc, "E_{T}^{jet} [GeV]", "N_{jet}", kGreen+1, 0,2);
-  FormatTH1(sim_specspec_ratio_to_uc, "E_{T}^{jet} [GeV]", "N_{jet}", kAzure+2, 0,2);
-  FormatTH1(sim_ospec_ratio_to_uc, "E_{T}^{jet} [GeV]", "N_{jet}", kOrange+1, 0,2);
-  
+  FormatTH1(dat_ospec, "E_{T}^{jet} [GeV]", "N_{jet}", kGreen+1, 0.5,1e7);
+  //FormatTH1(full_ospec, "E_{T}^{jet} [GeV]", "N_{jet}", kOrange+1, 0.5,1e10);
+  FormatTH1(dat_cspec_ratio_to_uc, "E_{T}^{jet} [GeV]", "Ratio", kAzure+1, 0,2);
+  FormatTH1(dat_specspec_ratio_to_uc, "E_{T}^{jet} [GeV]", "Ratio", kRed+1, 0,2);
+  //FormatTH1(dat_ospec_ratio_to_uc, "E_{T}^{jet} [GeV]", "Ratio", kOrange+1, 0,2);
+  /*
+  FormatTH1(sim_cspec_ratio_to_uc, "E_{T}^{jet} [GeV]", "Ratio", kGreen+2, 0,2);
+  FormatTH1(sim_specspec_ratio_to_uc, "E_{T}^{jet} [GeV]", "Ratio", kAzure+1, 0,2);
+  FormatTH1(sim_ospec_ratio_to_uc, "E_{T}^{jet} [GeV]", "Ratio", kOrange+1, 0,2);
+  */
   FormatTH1(dat_ucspec, "E_{T}^{jet} [GeV]", "N_{jet}", kBlack, 1e-12, 1e-4);
   FormatTH1(dat_cspec, "E_{T}^{jet} [GeV]", "N_{jet}",kAzure+1,1e-12,1e-4);
   FormatTH1(dat_spspec, "E_{T}^{jet} [GeV]", "N_{jet}",kRed+1,1e-12,1e-4);
-  FormatTH1(scspec_ratio,"E_{T}^{jet} [GeV]", "Ratio",kGreen+2,0,2);
+  //FormatTH1(scspec_ratio,"E_{T}^{jet} [GeV]", "Ratio",kGreen+2,0,2);
   //dat_cspec->Scale(1./(Lintpb*1e9)/1.4/(2*M_PI));
   //dat_ucspec->Scale(1./(Lintpb*1e9)/1.4/(2*M_PI));
-  dat_ucspec->GetYaxis()->SetRangeUser(0.5,1e7);
+  dat_ucspec->GetYaxis()->SetRangeUser(0.5,1e8);
+  dat_ucspec->GetXaxis()->SetRangeUser(12,90);
   dat_ucspec->Draw("PE");
   dat_spspec->Draw("SAME PE");
   dat_cspec->Draw("SAME PE");
   dat_ospec->Draw("SAME PE");
   myexp->Draw("SAME");
   //ucexp->Draw("SAME");
-  texts[3] = "";
-  texts[4]= "";
+  //texts[3] = "";
+  //texts[4]= "";
   std_text(c1, texts, ntext, 0.025, 0.45, 0.85, 0);
-  TLegend* frcemleg = new TLegend(0.5,0.53,0.9,0.7);
+  TLegend* frcemleg = new TLegend(0.2,0.35,0.4,0.5);
   frcemleg->SetFillStyle(0);
   frcemleg->SetFillColor(0);
   frcemleg->SetBorderSize(0);
   frcemleg->AddEntry(dat_cspec,"Dijet Cut","p");
   frcemleg->AddEntry(dat_ucspec,"No Cuts","p");
   frcemleg->AddEntry(dat_spspec,"Frac. Cut","p");
-  frcemleg->AddEntry(dat_ospec,"Old (Nominal) Cuts","p");
-  frcemleg->AddEntry(myexp,"Fit Dijet Cut","l");
+  frcemleg->AddEntry(dat_ospec,"Both Cuts","p");
+  //frcemleg->AddEntry(dat_ospec,"Old (Nominal) Cuts","p");
+  //frcemleg->AddEntry(myexp,"Fit Dijet Cut","l");
 
   frcemleg->Draw();
 
   c1->cd(2);
-  FormatTH1(scspec_ratio, "E_{T}^{jet} [GeV]", "Ratio", kGreen+2,0,2);
-  FormatTH1(cspec_ratio, "E_{T}^{jet} [GeV]", "Ratio",kRed+1,0,2);
+  //FormatTH1(scspec_ratio, "E_{T}^{jet} [GeV]", "Ratio", kGreen+2,0,2);
+  FormatTH1(cspec_ratio, "E_{T}^{jet} [GeV]", "Ratio",kAzure+1,0,2);
+  FormatTH1(spspec_ratio, "E_{T}^{jet} [GeV]", "Ratio",kRed+1,0,2);
+  FormatTH1(ospec_ratio, "E_{T}^{jet} [GeV]", "Ratio",kGreen+1,0,2);
   //ucspec_ratio->GetYaxis()->CenterTitle();
   cspec_ratio->GetXaxis()->SetLabelSize(0.1);
   cspec_ratio->GetYaxis()->SetLabelSize(0.05);
   cspec_ratio->GetXaxis()->SetTitleSize(0.1);
+  cspec_ratio->GetYaxis()->SetTitleSize(0.1);
+  cspec_ratio->GetXaxis()->SetRangeUser(12,90);
   cspec_ratio->Draw("PE");
-
-  TLine* line = new TLine(0,1,100,1);
+  spspec_ratio->Draw("SAME PE");
+  ospec_ratio->Draw("SAME PE");
+  TLine* line = new TLine(12,1,90,1);
   line->SetLineColor(kBlue);
   line->Draw();
 
-  c1->SaveAs("output/chi2img/counts_cuts.png");  
+  c1->SaveAs(("output/chi2img/counts_cuts"+calibstr+zstr+".png").c_str());
+  /*
   scspec_ratio->Draw("PE");
   scspec_ratio->GetXaxis()->SetLabelSize(0.1);
   scspec_ratio->GetYaxis()->SetLabelSize(0.05);
   scspec_ratio->GetXaxis()->SetTitleSize(0.1);
   c1->cd(2);
+  */
 
+  /*
   TLegend* newleg = new TLegend(0.5,0.53,0.9,0.7);
   texts[2] = "Reco PYTHIA Combined Jet10&Jet30&MB";
   FormatTH1(scspec_ratio, "E_{T}^{jet} [GeV]", "Ratio", kGreen+2,0,2);
@@ -388,7 +457,7 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   newleg->AddEntry(full_cspec,"Frac. Cut","p");
   newleg->AddEntry(full_ucspec,"No Cuts","p");
   newleg->AddEntry(full_specspec,"Dijet Cut","p");
-  newleg->AddEntry(full_ospec,"Old (Nominal) Cuts","p");
+  //newleg->AddEntry(full_ospec,"Old (Nominal) Cuts","p");
   newleg->AddEntry(smexp,"Fit Dijet Cut","l");
   smexp->SetLineColor(kBlue);
 
@@ -424,6 +493,8 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
 
   TCanvas* c2 = new TCanvas("","",1000,1000);
   c2->cd(1);
+  c2->SetLeftMargin(0.15);
+  c2->SetBottomMargin(0.15);
   dat_cspec_ratio_to_uc->Draw("PE");
   dat_specspec_ratio_to_uc->Draw("SAME PE");
   dat_ospec_ratio_to_uc->Draw("SAME PE");
@@ -446,7 +517,7 @@ int make_ratio_hist(string jet10file, string jet30file, string mbfile)
   jet30tf->Close();
   mbtf->Close();
   jamiefile->Close();
-
+  */
   return 0;
 }
   

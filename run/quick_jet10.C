@@ -358,7 +358,7 @@ int quick_jet10(string filebase="", string samplestring="jet10")//, int njob=0, 
   TH1F* fullrange_cspec = new TH1F("fullrange_cspec","cspec",1000,0,100);
   TH1F* fullrange_tjetspec = new TH1F("fullrange_tjetspec","tjetspec",1000,0,100);
   TH1F* fullrange_oldspec = new TH1F("fullrange_oldspec","oldspec",1000,0,100);
-
+  TH1F* whichFailed = new TH1F("whichFailed","",4,-0.5,3.5);
   TH1F* h1_miss = new TH1F("h1_miss","miss",nbinx,binsx);
   TH1F* h1_fake = new TH1F("h1_fake","fake",nbiny,binsy);
   RooUnfoldResponse response(h1_cspec,h1_tjetspec,h2_resp);
@@ -477,6 +477,8 @@ int quick_jet10(string filebase="", string samplestring="jet10")//, int njob=0, 
       bool fullcut = ljetfrcem > 0.9 || ljetfrcem < 0.1 || ljetfrcoh > 0.9 || ljetfrcoh < 0.1 || (1-ljetfrcem-ljetfrcoh)>0.9;//bbCut || baselETCut || basehETCut || ihCut;//bbCut || lETCut || hETCut || ihCut;
       bool specialCut = (!isdijet || hdPhiCut || subjetET < 0.3*ljetET);
       h1_forrat[2]->Fill(ljetET,scale);
+
+      if(ljetET/cosh(ljeteta) > 10) whichFailed->Fill(((int)fullcut)+2*((int)specialCut));
       /*
       if(specialCut && !fullcut)
 	{

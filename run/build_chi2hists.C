@@ -691,7 +691,7 @@ int build_chi2hists(string filebase)
 	cutArr[31]=(dhCut || ihCut || loETCut || hiETCut);// || hCalHack);
 	cutArr[30]=!isdijet || dphi < 3*M_PI/4 || subjet_ET < 0.3*jet_ET;//(dhCut || ihCut || loETCut || hiETCut || hCalHack);// || chi2cut);
 	cutArr[32]=cutArr[30] && !cutArr[29];
-	whichCuts->Fill(((int)cutArr[29])+2*((int)cutArr[30]));
+	if(jet_ET/cosh(eta) > 10) whichCuts->Fill(((int)cutArr[29])+2*((int)cutArr[30]));
 	if(cutArr[32])
 	  {
 	    //cout << "ET frcem frcoh eta phi" << endl;
