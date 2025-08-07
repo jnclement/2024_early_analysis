@@ -1,13 +1,14 @@
 #!/bin/bash
 
-if [ $# -lt 3 ]; then
-    echo "Need tag argument (string), evtnum (int), chi2check (int)"
+if [ $# -lt 4 ]; then
+    echo "Need tag argument (string), evtnum (int), chi2check (int), dowf (int)"
     exit 1
 fi
 
 nmax=350000
 evt=$2
 c2c=$3
+dowf=$4
 filecounter=0
 if [ $evt -gt 100000 ]; then
     evt=0
@@ -26,7 +27,7 @@ for rn in `cat fullgoodrunlist.list`; do #`ls  lists/dst_calofitting_run2pp*.lis
     mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$rn
     mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$rn
     echo $rn $filecounter
-    bash run_everything.sh $1 $njob $rn 1 $evt $c2c
+    bash run_everything.sh $1 $njob $rn 1 $evt $c2c $dowf
 done
 
 

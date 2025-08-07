@@ -6,6 +6,7 @@ RN=$3
 ZS=$4
 EVT=$5
 C2C=$6
+DOWF=$7
 if [ $# -lt 6 ]; then
     echo "Need arguments (in order): tag (string), nfile (int), run number (int), ZS (int) EVT (int), C2C (int)"
     exit 1
@@ -17,7 +18,7 @@ SUBNAME="${BASENAME}.sub"
 
 #echo "executable = containerscripts/earlydata.sh" > $PREFIX/$SUBNAME
 echo "executable = earlydata.sh" > $PREFIX/$SUBNAME
-echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C}" >> $PREFIX/$SUBNAME
+echo "arguments = ${TAG} \$(Process) ${RN} ${ZS} ${EVT} ${C2C} ${DOWF}" >> $PREFIX/$SUBNAME
 echo "priority = 100000000" >> $SUBNAME
 echo "output = output/out/output_${BASENAME}_\$(Process).out" >> $PREFIX/$SUBNAME
 echo "request_memory                = 4GB" >> $PREFIX/$SUBNAME

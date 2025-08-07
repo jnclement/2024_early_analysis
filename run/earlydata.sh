@@ -34,6 +34,8 @@ echo "copied root script here"
 echo "copied dstlist here"
 
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calofitting_run2pp-000$3.list ./lists/$3.list
+
+cp /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_triggered_event_seb*-000$3.list ./lists/
 echo "copied dstlist here"
 
 for i in {0..4}; do
@@ -52,6 +54,13 @@ for i in {0..4}; do
     if [ -z "${DSTFILE}" ]; then
 	exit 0
     fi
+
+    if [ $7 -ne 0 ]; then
+	for seb in {0..18}; do
+	    /sphenix/user/jocl/projects/run2024_earlydata/run/cp_trigseb_here.sh $seb $UPLN
+	done
+    fi
+    
     #getinputfiles.pl $DSTFILE
     FULLPATH=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${DSTFILE}';"`
     cp $FULLPATH ./$DSTFILE
@@ -60,7 +69,7 @@ for i in {0..4}; do
     echo "Running Fun4All now"
     echo $DSTFILE
     echo ./dsts/$3/${3}_$UPLN.root
-    root -b -q 'run_earlydata.C("'${1}'",'$UPLN',0,'${5}','${3}','${4}',1,'${6}')'
+    root -b -q 'run_earlydata.C("'${1}'",'$UPLN',0,'${5}','${3}','${4}',1,'${6}',-1,".",'${7}')'
     echo " "
     echo " "
     echo " "
@@ -70,7 +79,7 @@ for i in {0..4}; do
     ls -larth $SUBDIR
     ls -larth $SUBDIR\_chi2/*
     #cp -r "./${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root"
-    rm ./dsts/$3/${3}_$UPLN.root
+    rm ./dsts/*
     cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
     cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
     rm ./output/smg/*

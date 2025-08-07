@@ -7,7 +7,7 @@ fi
 rn=0
 evt=$2
 c2c=$3
-nfile=10000
+nfile=1000
 #for i in {0..25000}; do
 #    mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$i
 #    mkdir -p /sphenix/tg/tg01/jets/jocl/err/$i
@@ -19,4 +19,4 @@ nfile=10000
 if [ $evt -gt 1000 ]; then
     evt=0
 fi
-bash run_everysim.sh $1 $nfile $rn 1 $evt $c2c $4
+bash run_everysim.sh $1 $nfile $rn 1 $evt $c2c $4 0
