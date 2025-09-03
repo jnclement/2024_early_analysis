@@ -16,7 +16,7 @@ fi
 echo $evt
 for rn in `cat fullgoodrunlist.list`; do #`ls  lists/dst_calofitting_run2pp*.list | awk -F'.' '{print $1}' | awk -F'/' '{print $2}' | awk -F'-' '{print $2}'`; do
     rn=$(expr $rn + 0)
-    nfile=`wc -l lists/dst_calofitting_run2pp-000${rn}.list | awk '{print $1}'`
+    nfile=`wc -l lists/dst_calofitting-000${rn}.list | awk '{print $1}'`
     njob=$(( $nfile + 4 ))
     njob=$(( $njob / 5 ))
     filecounter=$(( $filecounter + $njob ))
@@ -27,6 +27,7 @@ for rn in `cat fullgoodrunlist.list`; do #`ls  lists/dst_calofitting_run2pp*.lis
     mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$rn
     mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$rn
     echo $rn $filecounter
+    echo $evt
     bash run_everything.sh $1 $njob $rn 1 $evt $c2c $dowf
 done
 

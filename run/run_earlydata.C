@@ -123,7 +123,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
       for(int i=0; i<18; ++i)
 	{
 	  inseb[i] = new Fun4AllDstInputManager("dstinseb"+to_string(i));
-	  inseb[i]->AddFile("./dsts/seb"+to_string(i)+".root");
+	  inseb[i]->AddFile((i<10?"./dsts/seb0":"./dsts/seb")+to_string(i)+".root");
 	  se->registerInputManager(inseb[i]);
 	}
     }
@@ -175,7 +175,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
     std::string calibdir = CDBInterface::instance()->getUrl(calibName_hotMap);
     statusEMC->set_directURL_hotMap(calibdir);
-    statusEMC->set_isSim(true);
+    //statusEMC->set_isSim(true);
   }
   se->registerSubsystem(statusEMC);
 
@@ -322,7 +322,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
   
   Chi2checker* chi2c;
-  if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug);
+  int doall60 = 0;
+  if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug,wffname,dowf,doall60);
   if(chi2check) se->registerSubsystem(chi2c);
   cout << "set up chi2check" << endl;
   

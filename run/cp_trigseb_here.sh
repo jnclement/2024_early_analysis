@@ -13,13 +13,13 @@ else
 fi
 
 SEB=$1
-
+RN=$3
 if [ $SEB -lt 10 ]; then
     SEB="0${1}"
 fi
 
-DSTFILE=`sed -n "${2}"p "./lists/dst_triggered_event_seb${$SEB}-*.list"`
-
+DSTFILE=`sed -n "${2}"p "./lists/dst_triggered_event_seb${SEB}-000${RN}.list"`
+echo $DSTFILE
 FULLPATH=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${DSTFILE}';"`
 
-cp $FULLPATH ./dsts/seb${1}.root
+cp $FULLPATH ./dsts/seb${SEB}.root

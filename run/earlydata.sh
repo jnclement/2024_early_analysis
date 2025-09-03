@@ -33,7 +33,7 @@ echo "copied root script here"
 #cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_jetcalo_run2pp-000$3.list ./lists/$3\_jetcalo.list
 echo "copied dstlist here"
 
-cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calofitting_run2pp-000$3.list ./lists/$3.list
+cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calofitting-000$3.list ./lists/$3.list
 
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_triggered_event_seb*-000$3.list ./lists/
 echo "copied dstlist here"
@@ -56,11 +56,11 @@ for i in {0..4}; do
     fi
 
     if [ $7 -ne 0 ]; then
-	for seb in {0..18}; do
-	    /sphenix/user/jocl/projects/run2024_earlydata/run/cp_trigseb_here.sh $seb $UPLN
+	for seb in {0..17}; do
+	    /sphenix/user/jocl/projects/run2024_earlydata/run/cp_trigseb_here.sh $seb $UPLN $SUBDIR
 	done
     fi
-    
+    ls dsts
     #getinputfiles.pl $DSTFILE
     FULLPATH=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${DSTFILE}';"`
     cp $FULLPATH ./$DSTFILE
