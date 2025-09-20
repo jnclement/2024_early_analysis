@@ -38,7 +38,7 @@ cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calofitting-00
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_triggered_event_seb*-000$3.list ./lists/
 echo "copied dstlist here"
 
-for i in {0..4}; do
+for i in {0..6}; do
     UPLN=$(( $STARTN + $i + 1 ))
     #DSTFILE=`sed -n "${UPLN}"p "./lists/${3}_jetcalo.list"`
     #if [ -z "${DSTFILE}" ]; then

@@ -1,0 +1,6 @@
+executable = earlydata.sh
+arguments = $(tag) $(segn) $(rn) $(szs) $(evtn) $(chi) $(dowf)
+output = output/out/faileddat_$(tag)_$(segn)_$(rn)_$(szs)_$(evtn)_$(chi)_$(dowf).out
+log = /tmp/jocl_condor_failed_$(tag)_$(rn).log
+request_memory = 4GB
+queue tag, segn, rn, szs, evtn, chi, dowf from failed_data.txt

@@ -59,11 +59,12 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 {
   int verbosity = 0;//debug;
   string filename = dir+"/"+to_string(datorsim?rn:nproc)+"/events_"+tag+(tag==""?"":"_");
+  cout << "test" << endl;
   filename += to_string(datorsim?rn:nproc)+"_";
   filename += to_string(nproc)+"_";
   filename += to_string(nevt);
   string chi2filename = dir+"/"+to_string(rn)+"_chi2/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_chi2file.root";
-
+  cout << "another test" << endl;
   string wffname = dir+"/"+to_string(rn)+"_chi2/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_waveforms.root";
 
   string trigzvtxfilename = dir+"/"+to_string(rn)+"_chi2/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_mbtree.root";
@@ -75,7 +76,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   if(datorsim) rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2024");
   else rc->set_StringFlag("CDB_GLOBALTAG","MDC2");
   if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
-  else rc->set_uint64Flag("TIMESTAMP",21);
+  else rc->set_uint64Flag("TIMESTAMP",28);
   
   se->Verbosity(verbosity);
   // just if we set some flags somewhere in this macro
@@ -83,7 +84,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
   Trigzvtxchecker* tz;
   tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug, "tzvtx");
-  se->registerSubsystem(tz);
+  if(datorsim) se->registerSubsystem(tz);
 
   Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
   //Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
@@ -131,7 +132,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   
   CDBInterface::instance()->Verbosity(0);
 
-  //Process_Calo_Calib();
+  Process_Calo_Calib();
 
 
 
@@ -139,7 +140,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
 
   
-
+  /*
   bool isSim = true;
   int data_sim_runnumber_thres = 1000;
   if (rc->get_uint64Flag("TIMESTAMP") > data_sim_runnumber_thres)
@@ -173,6 +174,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
     /* Uses threshold of 60% for towers be considered frequently bad. */
     // std::string calibName_hotMap = "CEMC_hotTowers_status_60";
 
+  /*
     std::string calibdir = CDBInterface::instance()->getUrl(calibName_hotMap);
     statusEMC->set_directURL_hotMap(calibdir);
     //statusEMC->set_isSim(true);
@@ -225,7 +227,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
     se->registerSubsystem(calibEMC_MC);
   }
 
-
+  */
 
 
 
@@ -251,7 +253,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   };
   
   BeamBackgroundFilterAndQA* bgelim = new BeamBackgroundFilterAndQA(cfg_filter);
-  //se->registerSubsystem(bgelim);
+  se->registerSubsystem(bgelim);
   //auto mbddigi = new MbdDigitization();
   auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
@@ -323,7 +325,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   
   Chi2checker* chi2c;
   int doall60 = 0;
-  if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug,wffname,dowf,doall60);
+  if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug,wffname,dowf,(rn>10000)?true:false,doall60);
   if(chi2check) se->registerSubsystem(chi2c);
   cout << "set up chi2check" << endl;
   

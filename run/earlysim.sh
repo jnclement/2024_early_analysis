@@ -15,7 +15,7 @@ for i in {0..9}; do
     SUBDIR=$(( $STARTN + $i ))
     UPLN=$(( $SUBDIR + 1 ))
     mkdir -p $SUBDIR
-    mkdir -p $SUBIDR\_chi2
+    mkdir -p $2\_chi2
     mkdir -p lists
     mkdir -p ./output/smg
     mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/
@@ -65,5 +65,8 @@ for i in {0..9}; do
     ls $SUBDIR
     echo " "
     ls output/smg
-    cp -r "./${SUBDIR}/events_${1}_${SUBDIR}_${SUBDIR}_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${SUBDIR}_${SUBDIR}_${5}.root"
+    mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
+    cp -r ./$2\_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
+    rm -r ./$2\_chi2/*
+    #cp -r "./${SUBDIR}/events_${1}_${SUBDIR}_${SUBDIR}_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${SUBDIR}_${SUBDIR}_${5}.root"
 done
