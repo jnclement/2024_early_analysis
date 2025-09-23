@@ -98,14 +98,14 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   string line1, line2, line3, line4;
   if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
   else line1 = "./dsts/"+to_string(nproc)+"/calo_cluster_"+to_string(nproc)+".root";
-  //line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
+  line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
   if(!datorsim) line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
   else line3 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+"_jetcalo.root";
   //line4 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
   line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
-  //if(!datorsim) in_2->AddFile(line2);
-  //in_3->AddFile(line3);
+  if(!datorsim) in_2->AddFile(line2);
+  if(!datorsim) in_3->AddFile(line3);
   if(!datorsim) in_4->AddFile(line4);
   cout << "register managers" << endl;
   se->registerInputManager( in_1 );
