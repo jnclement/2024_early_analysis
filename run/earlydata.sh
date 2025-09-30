@@ -14,17 +14,13 @@ else
     exit -1
 fi
 SUBDIR=${3}
-STARTN=$(( $2 * 5 ))
+STARTN=$(( $2 * 8 ))
 echo $SUBDIR
 
 mkdir -p $SUBDIR
 mkdir -p lists
-mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/
 mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/${SUBDIR}/
 mkdir -p ./dsts/$SUBDIR
-mkdir -p ./output/smg
-mkdir -p output/err
-mkdir -p output/out
 mkdir -p $SUBDIR\_chi2
 echo "Made dirs"
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/run_earlydata.C .
@@ -38,7 +34,7 @@ cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calofitting-00
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_triggered_event_seb*-000$3.list ./lists/
 echo "copied dstlist here"
 
-for i in {0..6}; do
+for i in {0..7}; do
     UPLN=$(( $STARTN + $i + 1 ))
     #DSTFILE=`sed -n "${UPLN}"p "./lists/${3}_jetcalo.list"`
     #if [ -z "${DSTFILE}" ]; then
@@ -62,8 +58,8 @@ for i in {0..6}; do
     fi
     ls dsts
     #getinputfiles.pl $DSTFILE
-    FULLPATH=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${DSTFILE}';"`
-    cp $FULLPATH ./$DSTFILE
+    FULLPATH=`psql FileCatalog -tA -c "select full_file_path from files where lfn = '${DSTFILE}';"`
+    dd if="${FULLPATH}" of="./${DSTFILE}" bs=12M
     echo "got input files"
     mv $DSTFILE ./dsts/$3/${3}_$UPLN.root
     echo "Running Fun4All now"
@@ -78,11 +74,10 @@ for i in {0..6}; do
     echo " "
     ls -larth $SUBDIR
     ls -larth $SUBDIR\_chi2/*
-    #cp -r "./${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${3}_$UPLN_${5}.root"
     rm ./dsts/*
-    cp -r ./output/smg/* /sphenix/user/jocl/projects/run2024_earlydata/run/output/smg/
-    cp -r ./${SUBDIR}_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
-    rm ./output/smg/*
+    for file in `ls ./${SUBDIR}_chi2/`; do
+	dd if=./${SUBDIR}_chi2/$file of=/sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/$file
+    done
     rm ./${SUBDIR}_chi2/*
 done
 

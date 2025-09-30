@@ -55,12 +55,12 @@ bool file_exists(const char* filename)
   std::ifstream infile(filename);
   return infile.good();
 }
-int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int datorsim = 1, int chi2check = 0, int sampletype = -1, string dir = ".", int dowf = 0)
+int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int isdat = 1, int chi2check = 0, int sampletype = -1, string dir = ".", int dowf = 0)
 {
   int verbosity = 0;//debug;
-  string filename = dir+"/"+to_string(datorsim?rn:nproc)+"/events_"+tag+(tag==""?"":"_");
+  string filename = dir+"/"+to_string(isdat?rn:nproc)+"/events_"+tag+(tag==""?"":"_");
   cout << "test" << endl;
-  filename += to_string(datorsim?rn:nproc)+"_";
+  filename += to_string(isdat?rn:nproc)+"_";
   filename += to_string(nproc)+"_";
   filename += to_string(nevt);
   string chi2filename = dir+"/"+to_string(rn)+"_chi2/events_"+tag+"_"+to_string(rn)+"_"+to_string(nproc)+"_"+to_string(nevt)+"_chi2file.root";
@@ -73,9 +73,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   cout << "test1" << endl;
   Fun4AllServer *se = Fun4AllServer::instance();
   recoConsts *rc =  recoConsts::instance();
-  if(datorsim) rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2024");
+  if(isdat) rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2024");
   else rc->set_StringFlag("CDB_GLOBALTAG","MDC2");
-  if(datorsim) rc->set_uint64Flag("TIMESTAMP",rn);
+  if(isdat) rc->set_uint64Flag("TIMESTAMP",rn);
   else rc->set_uint64Flag("TIMESTAMP",28);
   
   se->Verbosity(verbosity);
@@ -84,35 +84,35 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
   Trigzvtxchecker* tz;
   tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug, "tzvtx");
-  if(datorsim) se->registerSubsystem(tz);
+  if(isdat) se->registerSubsystem(tz);
 
   Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
-  //Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
+  Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
   Fun4AllInputManager *in_3 = new Fun4AllDstInputManager("DSTin3");
   Fun4AllInputManager *in_4 = new Fun4AllDstInputManager("DSTin4");
   cout << "get filenames" << endl;
   ifstream list3, list2, list1;
-  //if(!datorsim) list3.open("lists/dst_truth_jet.list",ifstream::in);
-  //if(!datorsim) list3.open("lists/g4hits.list");
-  //if(!datorsim) list2.open("lists/dst_global.list",ifstream::in);
+  //if(!isdat) list3.open("lists/dst_truth_jet.list",ifstream::in);
+  //if(!isdat) list3.open("lists/g4hits.list");
+  //if(!isdat) list2.open("lists/dst_global.list",ifstream::in);
   string line1, line2, line3, line4;
-  if(datorsim) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
+  if(isdat) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
   else line1 = "./dsts/"+to_string(nproc)+"/calo_cluster_"+to_string(nproc)+".root";
   line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
-  if(!datorsim) line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
+  if(!isdat) line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
   else line3 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+"_jetcalo.root";
   //line4 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
   line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
-  if(!datorsim) in_2->AddFile(line2);
-  if(!datorsim) in_3->AddFile(line3);
-  if(!datorsim) in_4->AddFile(line4);
+  //if(!isdat) in_2->AddFile(line2);
+  if(!isdat) in_3->AddFile(line3);
+  if(!isdat) in_4->AddFile(line4);
   cout << "register managers" << endl;
   se->registerInputManager( in_1 );
   
-  //if(!datorsim) se->registerInputManager( in_2 );
-  //se->registerInputManager( in_3 );
-  if(!datorsim) se->registerInputManager(in_4);
+  //if(!isdat) se->registerInputManager( in_2 );
+  if(!isdat) se->registerInputManager( in_3 );
+  if(!isdat) se->registerInputManager(in_4);
 
   std::cout << "status setters" << std::endl;
 
@@ -258,7 +258,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
   
-  //if (!datorsim)
+  //if (!isdat)
     {
       //      mbddigi->Verbosity(verbosity);
       //se->registerSubsystem(mbddigi);
@@ -276,7 +276,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //TriggerRunInfoReco* tana = new TriggerRunInfoReco("tana");
   //se->registerSubsystem(tana);
   RetowerCEMC *rcemc = new RetowerCEMC();
-  //if(!datorsim)
+  //if(!isdat)
     {
       rcemc->set_towerinfo(true);
       rcemc->Verbosity(verbosity);
@@ -286,7 +286,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   /*
   JetReco *truthjetreco = new JetReco();
   
-  if(!datorsim)
+  if(!isdat)
     {
       TruthJetInput *tji = new TruthJetInput(Jet::PARTICLE);
       tji->add_embedding_flag(0);  // changes depending on signal vs. embedded
@@ -302,7 +302,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   TowerJetInput* emtji = new TowerJetInput(Jet::CEMC_TOWERINFO_RETOWER,"TOWERINFO_CALIB");
   TowerJetInput* ohtji = new TowerJetInput(Jet::HCALIN_TOWERINFO,"TOWERINFO_CALIB");
   TowerJetInput* ihtji = new TowerJetInput(Jet::HCALOUT_TOWERINFO,"TOWERINFO_CALIB");
-  //if(!datorsim)
+  //if(!isdat)
   //{
       //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
   //emtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
@@ -325,14 +325,14 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   
   Chi2checker* chi2c;
   int doall60 = 0;
-  if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug,wffname,dowf,(rn>10000)?true:false,doall60);
+  if(chi2check) chi2c = new Chi2checker(chi2filename,to_string(rn)+"_"+to_string(nproc),debug,wffname,dowf,(isdat)?true:false,doall60);
   if(chi2check) se->registerSubsystem(chi2c);
   cout << "set up chi2check" << endl;
   
   cout << "test2" << endl;
-  //R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, datorsim, 0, sampletype);
+  //R24earlytreemaker *tt = new R24earlytreemaker(filename, debug, isdat, 0, sampletype);
   cout << "test3" << endl;
-  //if(!datorsim) se->registerSubsystem( tt );
+  //if(!isdat) se->registerSubsystem( tt );
   
   cout << "test4" << endl;
   se->Print("NODETREE");

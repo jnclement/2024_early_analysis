@@ -34,7 +34,7 @@ for i in {0..9}; do
     FULLTRTH=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${DMBDEPD}';"`
     FULLMBEP=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${TRTHJET}';"`
     FULLCALO=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${CALOCLF}';"`
-    FULLG4HT=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${G4HITSF}';"`
+    #FULLG4HT=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${G4HITSF}';"`
     echo $CALOCLF
     #echo $GLOBALF
     #getinputfiles.pl $GLOBALF
@@ -45,7 +45,7 @@ for i in {0..9}; do
     cp $FULLTRTH .
     cp $FULLMBEP .
     cp $FULLCALO .
-    cp $FULLG4HT .
+    #cp $FULLG4HT .
     #cp -r $G4HITSF ./dsts/$2/g4hits_${2}.root
     echo ""
     echo "" 
@@ -56,7 +56,7 @@ for i in {0..9}; do
     #mv $GLOBALF ./dsts/$SUBDIR/global_${SUBDIR}.root
     mv $TRTHJET ./dsts/$SUBDIR/truth_jet_${SUBDIR}.root
     mv $DMBDEPD ./dsts/$SUBDIR/mbd_epd_${SUBDIR}.root
-    mv $G4HITSF ./dsts/$SUBDIR/g4hits_${SUBDIR}.root
+    #mv $G4HITSF ./dsts/$SUBDIR/g4hits_${SUBDIR}.root
     ls ./dsts/$SUBDIR
     #cp -r $TRTHJET ./dsts/$SUBDIR/truth_jet_${SUBDIR}.root
     root -b -q 'run_earlydata.C("'${1}'",'${SUBDIR}',0,'${5}','${2}','${4}',0,'${6}','${7}')'
