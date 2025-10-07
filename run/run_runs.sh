@@ -14,7 +14,7 @@ if [ $evt -gt 100000 ]; then
     evt=0
 fi
 echo $evt
-for rn in `cat grl1.list`; do
+for rn in `cat grl11.list`; do
     rn=$(expr $rn + 0)
     nfile=`wc -l lists/dst_calofitting-000${rn}.list | awk '{print $1}'`
     njob=$(( $nfile + 7 ))
@@ -28,7 +28,7 @@ for rn in `cat grl1.list`; do
     mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$rn
     echo $rn $filecounter
     echo $evt
-    #bash run_everything.sh $1 $njob $rn 1 $evt $c2c $dowf
+    bash run_everything.sh $1 $njob $rn 1 $evt $c2c $dowf
 done
 
 

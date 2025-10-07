@@ -1,7 +1,7 @@
 #!/bin/bash
 # file name: firstcondor.sh
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n new
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.509
 source /opt/sphenix/core/bin/setup_local.sh "/sphenix/user/jocl/projects/testinstall"
 export HOME=/sphenix/u/jocl
 if [[ ! -z "$_CONDOR_SCRATCH_DIR" && -d $_CONDOR_SCRATCH_DIR ]]; then
@@ -31,20 +31,20 @@ for i in {0..9}; do
     #GLOBALF=`sed -n "${UPLN}"p ./lists/dst_global.list`
     TRTHJET=`sed -n "${UPLN}"p ./lists/dst_truth_jet.list`
     DMBDEPD=`sed -n "${UPLN}"p ./lists/dst_mbd_epd.list`
-    FULLTRTH=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${DMBDEPD}';"`
-    FULLMBEP=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${TRTHJET}';"`
-    FULLCALO=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${CALOCLF}';"`
-    #FULLG4HT=`psql FileCatalog -t -c "select full_file_path from files where lfn = '${G4HITSF}';"`
+    FULLTRTH=`psql FileCatalog -tA -c "select full_file_path from files where lfn = '${TRTHJET}';"`
+    FULLMBEP=`psql FileCatalog -tA -c "select full_file_path from files where lfn = '${DMBDEPD}';"`
+    FULLCALO=`psql FileCatalog -tA -c "select full_file_path from files where lfn = '${CALOCLF}';"`
+    #FULLG4HT=`psql FileCatalog -tA -c "select full_file_path from files where lfn = '${G4HITSF}';"`
     echo $CALOCLF
     #echo $GLOBALF
     #getinputfiles.pl $GLOBALF
-    #getinputfiles.pl $CALOCLF
-    #getinputfiles.pl $TRTHJET
-    #getinputfiles.pl $DMBDEPD
+    getinputfiles.pl $CALOCLF
+    getinputfiles.pl $TRTHJET
+    getinputfiles.pl $DMBDEPD
     #getinputfiles.pl $G4HITSF
-    cp $FULLTRTH .
-    cp $FULLMBEP .
-    cp $FULLCALO .
+    #dd if="${FULLTRTH}" of="./${TRTHJET}" bs=12M
+    #dd if="${FULLMBEP}" of="./${DMBDEPD}" bs=12M
+    #dd if="${FULLCALO}" of="./${CALOCLF}" bs=12M
     #cp $FULLG4HT .
     #cp -r $G4HITSF ./dsts/$2/g4hits_${2}.root
     echo ""
@@ -66,7 +66,9 @@ for i in {0..9}; do
     echo " "
     ls output/smg
     mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
-    cp -r ./$2\_chi2/* /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
+    for file in `ls ./$2\_chi2/`; do
+	dd if="./${2}_chi2/${file}" of="/sphenix/tg/tg01/jets/jocl/chi2/${SUBDIR}/${file}" bs=12M
+    done
     rm -r ./$2\_chi2/*
     #cp -r "./${SUBDIR}/events_${1}_${SUBDIR}_${SUBDIR}_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${SUBDIR}_${SUBDIR}_${5}.root"
 done

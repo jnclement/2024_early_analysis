@@ -57,7 +57,7 @@ bool file_exists(const char* filename)
 }
 int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, int rn = 0, int szs = 0, int isdat = 1, int chi2check = 0, int sampletype = -1, string dir = ".", int dowf = 0)
 {
-  int verbosity = 0;//debug;
+  int verbosity = debug;
   string filename = dir+"/"+to_string(isdat?rn:nproc)+"/events_"+tag+(tag==""?"":"_");
   cout << "test" << endl;
   filename += to_string(isdat?rn:nproc)+"_";
@@ -83,13 +83,17 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
 
   Trigzvtxchecker* tz;
-  tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug, "tzvtx");
+  if(isdat) tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug, "tzvtx");
   if(isdat) se->registerSubsystem(tz);
 
-  Fun4AllInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
-  Fun4AllInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
-  Fun4AllInputManager *in_3 = new Fun4AllDstInputManager("DSTin3");
-  Fun4AllInputManager *in_4 = new Fun4AllDstInputManager("DSTin4");
+  Fun4AllDstInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
+  Fun4AllDstInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
+  Fun4AllDstInputManager *in_3 = new Fun4AllDstInputManager("DSTin3");
+  Fun4AllDstInputManager *in_4 = new Fun4AllDstInputManager("DSTin4");
+  in_1->Verbosity(debug);
+  in_2->Verbosity(debug);
+  in_3->Verbosity(debug);
+  in_4->Verbosity(debug);
   cout << "get filenames" << endl;
   ifstream list3, list2, list1;
   //if(!isdat) list3.open("lists/dst_truth_jet.list",ifstream::in);
@@ -111,13 +115,17 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   se->registerInputManager( in_1 );
   
   //if(!isdat) se->registerInputManager( in_2 );
-  if(!isdat) se->registerInputManager( in_3 );
-  if(!isdat) se->registerInputManager(in_4);
+  if(!isdat)
+    {
+      cout << "registering special sim input managers" << endl;
+      se->registerInputManager( in_3 );
+      se->registerInputManager(in_4);
+    }
 
   std::cout << "status setters" << std::endl;
 
 
-  Fun4AllInputManager* inseb[18];
+  Fun4AllDstInputManager* inseb[18];
 
   if(dowf)
     {
@@ -133,103 +141,6 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   CDBInterface::instance()->Verbosity(0);
 
   Process_Calo_Calib();
-
-
-
-
-
-
-  
-  /*
-  bool isSim = true;
-  int data_sim_runnumber_thres = 1000;
-  if (rc->get_uint64Flag("TIMESTAMP") > data_sim_runnumber_thres)
-  {
-    isSim = false;
-  }
-  std::cout << "Calo Calib uses runnumber " << rc->get_uint64Flag("TIMESTAMP") << std::endl;
-
-  //////////////////////
-  // Input geometry node
-  std::cout << "Adding Geometry file" << std::endl;
-  Fun4AllInputManager *ingeo = new Fun4AllRunNodeInputManager("DST_GEO");
-  std::string geoLocation = CDBInterface::instance()->getUrl("calo_geo");
-  ingeo->AddFile(geoLocation);
-  se->registerInputManager(ingeo);
-
-  //////////////////////////////
-  // set statuses on raw towers
-  std::cout << "status setters" << std::endl;
-  CaloTowerStatus *statusEMC = new CaloTowerStatus("CEMCSTATUS");
-  statusEMC->set_detector_type(CaloTowerDefs::CEMC);
-  statusEMC->set_time_cut(1);
-  // MC Towers Status
-  if(isSim) {
-    // Uses threshold of 50% for towers be considered frequently bad.
-    std::string calibName_hotMap = "CEMC_hotTowers_status";
-    /* Systematic options (to be used as needed). */
-    /* Uses threshold of 40% for towers be considered frequently bad. */
-    // std::string calibName_hotMap = "CEMC_hotTowers_status_40";
-
-    /* Uses threshold of 60% for towers be considered frequently bad. */
-    // std::string calibName_hotMap = "CEMC_hotTowers_status_60";
-
-  /*
-    std::string calibdir = CDBInterface::instance()->getUrl(calibName_hotMap);
-    statusEMC->set_directURL_hotMap(calibdir);
-    //statusEMC->set_isSim(true);
-  }
-  se->registerSubsystem(statusEMC);
-
-  CaloTowerStatus *statusHCalIn = new CaloTowerStatus("HCALINSTATUS");
-  statusHCalIn->set_detector_type(CaloTowerDefs::HCALIN);
-  statusHCalIn->set_time_cut(2);
-  se->registerSubsystem(statusHCalIn);
-
-  CaloTowerStatus *statusHCALOUT = new CaloTowerStatus("HCALOUTSTATUS");
-  statusHCALOUT->set_detector_type(CaloTowerDefs::HCALOUT);
-  statusHCALOUT->set_time_cut(2);
-  se->registerSubsystem(statusHCALOUT);
-
-  ////////////////////
-  // Calibrate towers
-  std::cout << "Calibrating EMCal" << std::endl;
-  CaloTowerCalib *calibEMC = new CaloTowerCalib("CEMCCALIB");
-  calibEMC->set_detector_type(CaloTowerDefs::CEMC);
-  se->registerSubsystem(calibEMC);
-
-  std::cout << "Calibrating OHcal" << std::endl;
-  CaloTowerCalib *calibOHCal = new CaloTowerCalib("HCALOUT");
-  calibOHCal->set_detector_type(CaloTowerDefs::HCALOUT);
-  se->registerSubsystem(calibOHCal);
-
-  std::cout << "Calibrating IHcal" << std::endl;
-  CaloTowerCalib *calibIHCal = new CaloTowerCalib("HCALIN");
-  calibIHCal->set_detector_type(CaloTowerDefs::HCALIN);
-  se->registerSubsystem(calibIHCal);
-
-  ////////////////
-  // MC Calibration
-  if (isSim)
-  {
-    std::string MC_Calib = CDBInterface::instance()->getUrl("CEMC_MC_RECALIB");
-    if (MC_Calib.empty())
-    {
-      std::cout << "No MC calibration found :( )" << std::endl;
-      gSystem->Exit(0);
-    }
-    CaloTowerCalib *calibEMC_MC = new CaloTowerCalib("CEMCCALIB_MC");
-    calibEMC_MC->set_detector_type(CaloTowerDefs::CEMC);
-    calibEMC_MC->set_inputNodePrefix("TOWERINFO_CALIB_");
-    calibEMC_MC->set_outputNodePrefix("TOWERINFO_CALIB_");
-    calibEMC_MC->set_directURL(MC_Calib);
-    calibEMC_MC->set_doCalibOnly(true);
-    se->registerSubsystem(calibEMC_MC);
-  }
-
-  */
-
-
 
   
   NullFilter::Config cfg_null {
