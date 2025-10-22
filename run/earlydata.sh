@@ -57,9 +57,9 @@ for i in {0..63}; do
 	done
     fi
     ls dsts
-    #getinputfiles.pl $DSTFILE
-    FULLPATH=`psql FileCatalog -tA -c "select full_file_path from files where lfn = '${DSTFILE}';"`
-    dd if="${FULLPATH}" of="./${DSTFILE}" bs=12M
+    getinputfiles.pl $DSTFILE
+    #FULLPATH=`psql FileCatalog -tA -c "select full_file_path from files where lfn = '${DSTFILE}';"`
+    #dd if="${FULLPATH}" of="./${DSTFILE}" bs=12M
     echo "got input files"
     mv $DSTFILE ./dsts/$3/${3}_$UPLN.root
     echo "Running Fun4All now"
