@@ -1,7 +1,7 @@
 #!/bin/bash
 # file name: firstcondor.sh
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.509
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.515
 source /opt/sphenix/core/bin/setup_local.sh "/sphenix/user/jocl/projects/testinstall"
 export HOME=/sphenix/u/jocl
 if [[ ! -z "$_CONDOR_SCRATCH_DIR" && -d $_CONDOR_SCRATCH_DIR ]]; then
@@ -70,5 +70,6 @@ for i in {0..9}; do
 	dd if="./${2}_chi2/${file}" of="/sphenix/tg/tg01/jets/jocl/chi2/${SUBDIR}/${file}" bs=12M
     done
     rm -r ./$2\_chi2/*
+    rm ./dsts/$SUBDIR/*
     #cp -r "./${SUBDIR}/events_${1}_${SUBDIR}_${SUBDIR}_${5}.root" "/sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/events_${1}_${SUBDIR}_${SUBDIR}_${5}.root"
 done

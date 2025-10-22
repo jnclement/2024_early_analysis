@@ -14,11 +14,11 @@ if [ $evt -gt 100000 ]; then
     evt=0
 fi
 echo $evt
-for rn in `cat grl11.list`; do
+for rn in `cat grl_2.list`; do
     rn=$(expr $rn + 0)
     nfile=`wc -l lists/dst_calofitting-000${rn}.list | awk '{print $1}'`
-    njob=$(( $nfile + 7 ))
-    njob=$(( $njob / 8 ))
+    njob=$(( $nfile + 63 ))
+    njob=$(( $njob / 64 ))
     filecounter=$(( $filecounter + $njob ))
     if [ $filecounter -gt $nmax ]; then
 	break

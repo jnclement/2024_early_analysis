@@ -1,7 +1,7 @@
 #!/bin/bash
 # file name: firstcondor.sh
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n new
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.515
 source /opt/sphenix/core/bin/setup_local.sh "/sphenix/user/jocl/projects/testinstall"
 export HOME=/sphenix/u/jocl
 export TESTINSTALL=/sphenix/user/jocl/projects/testinstall
@@ -14,7 +14,7 @@ else
     exit -1
 fi
 SUBDIR=${3}
-STARTN=$(( $2 * 8 ))
+STARTN=$(( $2 * 64 ))
 echo $SUBDIR
 
 mkdir -p $SUBDIR
@@ -34,7 +34,7 @@ cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calofitting-00
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_triggered_event_seb*-000$3.list ./lists/
 echo "copied dstlist here"
 
-for i in {0..7}; do
+for i in {0..63}; do
     UPLN=$(( $STARTN + $i + 1 ))
     #DSTFILE=`sed -n "${UPLN}"p "./lists/${3}_jetcalo.list"`
     #if [ -z "${DSTFILE}" ]; then
@@ -72,9 +72,9 @@ for i in {0..7}; do
     echo "after run"
     ls -larth
     echo " "
-    ls -larth $SUBDIR
-    ls -larth $SUBDIR\_chi2/*
-    rm ./dsts/*
+    ls -l $SUBDIR
+    ls -l $SUBDIR\_chi2/*
+    rm -rf ./dsts/$3/${3}_$UPLN.root
     for file in `ls ./${SUBDIR}_chi2/`; do
 	dd if=./${SUBDIR}_chi2/$file of=/sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/$file
     done
