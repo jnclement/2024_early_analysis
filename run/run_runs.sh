@@ -5,7 +5,7 @@ if [ $# -lt 4 ]; then
     exit 1
 fi
 
-nmax=350000
+nmax=10000
 evt=$2
 c2c=$3
 dowf=$4
@@ -14,21 +14,22 @@ if [ $evt -gt 100000 ]; then
     evt=0
 fi
 echo $evt
-for rn in `cat grl_2.list`; do
+for rn in `cat newgoodrunlist.list`; do
     rn=$(expr $rn + 0)
-    nfile=`wc -l lists/dst_calofitting-000${rn}.list | awk '{print $1}'`
+    nfile=`wc -l lists/dst_jetcalo-000${rn}.list | awk '{print $1}'`
     njob=$(( $nfile + 63 ))
     njob=$(( $njob / 64 ))
     filecounter=$(( $filecounter + $njob ))
-    if [ $filecounter -gt $nmax ]; then
-	break
-    fi
+    
 #    nfile=$(( ($nfile + 9) / 10 ))
     mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$rn
     mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$rn
     echo $rn $filecounter
     echo $evt
     bash run_everything.sh $1 $njob $rn 1 $evt $c2c $dowf
+    if [ $filecounter -gt $nmax ]; then
+	break
+    fi
 done
 
 

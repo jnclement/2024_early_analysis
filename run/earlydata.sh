@@ -1,7 +1,7 @@
 #!/bin/bash
 # file name: firstcondor.sh
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.515
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.521
 source /opt/sphenix/core/bin/setup_local.sh "/sphenix/user/jocl/projects/testinstall"
 export HOME=/sphenix/u/jocl
 export TESTINSTALL=/sphenix/user/jocl/projects/testinstall
@@ -29,7 +29,7 @@ echo "copied root script here"
 #cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_jetcalo_run2pp-000$3.list ./lists/$3\_jetcalo.list
 echo "copied dstlist here"
 
-cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calofitting-000$3.list ./lists/$3.list
+cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_jetcalo-000$3.list ./lists/$3.list
 
 cp /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_triggered_event_seb*-000$3.list ./lists/
 echo "copied dstlist here"

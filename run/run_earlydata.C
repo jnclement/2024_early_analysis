@@ -9,7 +9,7 @@
 #include <jetbackground/FastJetAlgoSub.h>
 #include <jetbase/FastJetAlgo.h>
 #include <jetbackground/RetowerCEMC.h>
-#include <jetbackground/BeamBackgroundFilterAndQA.h>
+//#include <jetbackground/BeamBackgroundFilterAndQA.h>
 #include <fstream>
 #include <phool/recoConsts.h>
 #include <TSystem.h>
@@ -26,6 +26,7 @@
 #include <TruthJetInput.h>//#include <G4Setup_sPHENIX.C>
 //#include <MbdDigitization.h>
 #include <MbdReco.h>
+#include <jetbackground/TimingCut.h>
 using namespace std;
 
 R__LOAD_LIBRARY(libchi2checker.so)
@@ -142,7 +143,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
   Process_Calo_Calib();
 
-  
+  /*
   NullFilter::Config cfg_null {
     .verbosity = verbosity,
     .debug = false
@@ -155,7 +156,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
     .maxAdjacentTwrEne = 0.06,
     .minNumTwrsInStreak = 5
   };
-
+  */
+  /*
   BeamBackgroundFilterAndQA::Config cfg_filter {
     .debug = false,
     .doQA = false,
@@ -165,10 +167,11 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   
   BeamBackgroundFilterAndQA* bgelim = new BeamBackgroundFilterAndQA(cfg_filter);
   se->registerSubsystem(bgelim);
+
+  */
   //auto mbddigi = new MbdDigitization();
   auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
-  
   //if (!isdat)
     {
       //      mbddigi->Verbosity(verbosity);
@@ -232,7 +235,8 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   cout << "set up jetreco" << endl;
       //}
   
-
+  TimingCut* tc = new TimingCut("AntiKt_Tower_HIRecoSeedsRaw_r04");
+  se->registerSubsystem(tc);
   
   Chi2checker* chi2c;
   int doall60 = 0;
