@@ -1,1 +1,1 @@
-CreateFileList.pl -nop -run 28 -type 34 DST_GLOBAL DST_CALO_CLUSTER DST_TRUTH_JET DST_MBD_EPD G4Hits
+CreateFileList.pl -nop -run 28 -type 11 DST_GLOBAL DST_CALO_CLUSTER DST_TRUTH_JET DST_MBD_EPD G4Hits

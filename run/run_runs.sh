@@ -14,7 +14,7 @@ if [ $evt -gt 100000 ]; then
     evt=0
 fi
 echo $evt
-for rn in `cat newgoodrunlist.list`; do
+for rn in 47524; do #`cat newgoodrunlist.list`; do
     rn=$(expr $rn + 0)
     nfile=`wc -l lists/dst_jetcalo-000${rn}.list | awk '{print $1}'`
     njob=$(( $nfile + 63 ))

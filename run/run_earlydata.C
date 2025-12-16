@@ -21,7 +21,7 @@
 #include <chi2checker/Chi2checker.h>
 #include <trigzvtxchecker/Trigzvtxchecker.h>
 #include <globalvertex/GlobalVertexReco.h>
-#include <Calo_Calib.C>
+#include </sphenix/user/jocl/projects/run2024_earlydata/run/Calo_Calib.C>
 #include <GlobalVertex.h>
 #include <TruthJetInput.h>//#include <G4Setup_sPHENIX.C>
 //#include <MbdDigitization.h>
@@ -141,7 +141,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   
   CDBInterface::instance()->Verbosity(0);
 
-  Process_Calo_Calib();
+  Process_Calo_Calib(1);
 
   /*
   NullFilter::Config cfg_null {

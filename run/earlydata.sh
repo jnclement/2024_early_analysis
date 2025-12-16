@@ -24,6 +24,7 @@ mkdir -p ./dsts/$SUBDIR
 mkdir -p $SUBDIR\_chi2
 echo "Made dirs"
 cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/run_earlydata.C .
+cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/Calo_Calib.C .
 #cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/Fun4All_CaloDataAna.C .
 echo "copied root script here"
 #cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_jetcalo_run2pp-000$3.list ./lists/$3\_jetcalo.list
