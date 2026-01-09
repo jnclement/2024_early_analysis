@@ -1,1 +1,10 @@
-CreateFileList.pl -nop -run 28 -type 11 DST_GLOBAL DST_CALO_CLUSTER DST_TRUTH_JET DST_MBD_EPD G4Hits
+CreateFileList.pl -nop -run 28 -type 26 DST_GLOBAL DST_CALO_CLUSTER DST_TRUTH_JET DST_MBD_EPD G4Hits
+
+#26 mb
+#36 5 GeV
+#12 10 GeV
+#33 15 GeV
+#21 20 GeV
+#11 30 GeV
+#34 50 GeV
+#35 70 GeV
