@@ -28,6 +28,7 @@
 //#include <MbdDigitization.h>
 #include <MbdReco.h>
 #include <jetbackground/TimingCut.h>
+#include <jetbase/JetCalib.h>
 using namespace std;
 
 R__LOAD_LIBRARY(libchi2checker.so)
@@ -142,7 +143,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   
   CDBInterface::instance()->Verbosity(0);
 
-  Process_Calo_Calib(1);
+  Process_Calo_Calib();
 
   /*
   NullFilter::Config cfg_null {
@@ -232,6 +233,15 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   towerjetreco->set_input_node("TOWER");
   towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
+
+  JetCalib *jetCalib04 = new JetCalib("JetCalib04");
+  jetCalib04->set_InputNode("AntiKt_Tower_HIRecoSeedsRaw_r04");
+  jetCalib04->set_OutputNode("AntiKt_unsubtracted_r04_calib");
+  jetCalib04->set_JetRadius(0.4);
+  jetCalib04->set_ZvrtxNode("GlobalVertexMap");
+  jetCalib04->set_ApplyZvrtxDependentCalib(true);
+  jetCalib04->set_ApplyEtaDependentCalib(true);
+  se->registerSubsystem(jetCalib04);
   
   cout << "set up jetreco" << endl;
       //}

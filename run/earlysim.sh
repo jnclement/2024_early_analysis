@@ -10,8 +10,8 @@ else
     echo condor scratch NOT set
     exit -1
 fi
-STARTN=$(( $2 * 10 ))
-for i in {0..9}; do
+STARTN=$(( $2 * 100 ))
+for i in {0..99}; do
     SUBDIR=$(( $STARTN + $i ))
     UPLN=$(( $SUBDIR + 1 ))
     mkdir -p $SUBDIR
@@ -21,11 +21,11 @@ for i in {0..9}; do
     mkdir -p /sphenix/tg/tg01/jets/jocl/evt/${SUBDIR}/
     mkdir -p ./dsts/$SUBDIR
     cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/run_earlydata.C .
-    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/g4hits.list ./lists/g4hits.list
-    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_truth_jet.list ./lists/dst_truth_jet.list
-    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_calo_cluster.list ./lists/dst_calo_cluster.list
+    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/${7}list/g4hits.list ./lists/g4hits.list
+    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/${7}list/dst_truth_jet.list ./lists/dst_truth_jet.list
+    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/${7}list/dst_calo_cluster.list ./lists/dst_calo_cluster.list
     #cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_global.list ./lists/dst_global.list
-    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/lists/dst_mbd_epd.list ./lists/dst_mbd_epd.list
+    cp -r /sphenix/user/jocl/projects/run2024_earlydata/run/${7}list/dst_mbd_epd.list ./lists/dst_mbd_epd.list
     G4HITSF=`sed -n "${UPLN}"p ./lists/g4hits.list`
     CALOCLF=`sed -n "${UPLN}"p ./lists/dst_calo_cluster.list`
     #GLOBALF=`sed -n "${UPLN}"p ./lists/dst_global.list`
