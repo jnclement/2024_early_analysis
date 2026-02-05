@@ -5,7 +5,7 @@ if [ $# -lt 4 ]; then
     exit 1
 fi
 
-nmax=100000
+nmax=0
 evt=$2
 c2c=$3
 dowf=$4

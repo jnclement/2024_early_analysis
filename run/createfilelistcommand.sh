@@ -15,7 +15,7 @@ if [ "$1" = "jet10" ] || [ "$1" = "all" ]; then
 fi
 if [ "$1" = "jet15" ] || [ "$1" = "all" ]; then
     cd ../jet15list
-    CreateFileList.pl -nop -run 28 -type 33 DST_GLOBAL DST_CALO_CLUSTER DST_TRUTH_JET DST_MBD_EPD G4Hit
+    CreateFileList.pl -nop -run 28 -type 33 DST_GLOBAL DST_CALO_CLUSTER DST_TRUTH_JET DST_MBD_EPD G4Hits
 fi
 if [ "$1" = "jet20" ] || [ "$1" = "all" ]; then
     cd ../jet20list

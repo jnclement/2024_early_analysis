@@ -85,9 +85,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   // just if we set some flags somewhere in this macro
 
 
-  Trigzvtxchecker* tz;
-  if(isdat) tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug, "tzvtx");
-  if(isdat) se->registerSubsystem(tz);
+
 
   Fun4AllDstInputManager *in_1 = new Fun4AllDstInputManager("DSTin1");
   Fun4AllDstInputManager *in_2 = new Fun4AllDstInputManager("DSTin2");
@@ -105,10 +103,11 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   string line1, line2, line3, line4;
   if(isdat) line1 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+".root";
   else line1 = "./dsts/"+to_string(nproc)+"/calo_cluster_"+to_string(nproc)+".root";
-  line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
+  if(isdat) line2 = "./dsts/"+to_string(rn)+"/dst_jet_"+to_string(rn)+"_"+to_string(nproc)+".root";
+  else line2 = "./dsts/"+to_string(nproc)+"/global_"+to_string(nproc)+".root";
   if(!isdat) line3 = "./dsts/"+to_string(nproc)+"/mbd_epd_"+to_string(nproc)+".root";
   else line3 = "./dsts/"+to_string(rn)+"/"+to_string(rn)+"_"+to_string(nproc)+"_jetcalo.root";
-  line2 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
+  if(!isdat) line2 = "./dsts/"+to_string(nproc)+"/g4hits_"+to_string(nproc)+".root";
   line4 = "./dsts/"+to_string(nproc)+"/truth_jet_"+to_string(nproc)+".root";
   in_1->AddFile(line1);
   if(!isdat) in_2->AddFile(line2);
@@ -117,10 +116,11 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   cout << "register managers" << endl;
   se->registerInputManager( in_1 );
   
-  if(!isdat) se->registerInputManager( in_2 );
+  
   if(!isdat)
     {
       cout << "registering special sim input managers" << endl;
+      se->registerInputManager( in_2 );
       se->registerInputManager( in_3 );
       se->registerInputManager(in_4);
     }
@@ -141,7 +141,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
     }
 
   
-  CDBInterface::instance()->Verbosity(0);
+  CDBInterface::instance()->Verbosity(1);
 
   Process_Calo_Calib();
 
@@ -175,15 +175,17 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
   //if (!isdat)
-    {
-      //      mbddigi->Verbosity(verbosity);
-      //se->registerSubsystem(mbddigi);
-      mbdreco->Verbosity(verbosity);
-      se->registerSubsystem(mbdreco);
-      
-      gblvertex->Verbosity(verbosity);
-      se->registerSubsystem(gblvertex);
-    }
+  //      mbddigi->Verbosity(verbosity);
+  //se->registerSubsystem(mbddigi);
+  mbdreco->Verbosity(verbosity);
+  se->registerSubsystem(mbdreco);
+  
+  Trigzvtxchecker* tz;
+  if(isdat) tz = new Trigzvtxchecker(trigzvtxfilename, rn, nproc, debug, "tzvtx");
+  if(isdat) se->registerSubsystem(tz);
+  
+  gblvertex->Verbosity(verbosity);
+  se->registerSubsystem(gblvertex);
   
   se->Print("NODETREE");
 
@@ -221,21 +223,21 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   //if(!isdat)
   //{
       //towerjetreco->add_input(new TowerJetInput(Jet::CEMC_TOWER));
-  //emtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
-  //ohtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
-  //ihtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
-      
+  emtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+  ohtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+  ihtji->set_GlobalVertexType(GlobalVertex::VTXTYPE::MBD);
+  
   towerjetreco->add_input(emtji);
   towerjetreco->add_input(ohtji);
   towerjetreco->add_input(ihtji);
-  towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_Tower_HIRecoSeedsRaw_r04");
+  towerjetreco->add_algo(new FastJetAlgoSub(Jet::ANTIKT, 0.4), "AntiKt_unsubtracted_r04");
   towerjetreco->set_algo_node("ANTIKT");
   towerjetreco->set_input_node("TOWER");
   towerjetreco->Verbosity(verbosity);
   se->registerSubsystem(towerjetreco);
 
   JetCalib *jetCalib04 = new JetCalib("JetCalib04");
-  jetCalib04->set_InputNode("AntiKt_Tower_HIRecoSeedsRaw_r04");
+  jetCalib04->set_InputNode("AntiKt_unsubtracted_r04");
   jetCalib04->set_OutputNode("AntiKt_unsubtracted_r04_calib");
   jetCalib04->set_JetRadius(0.4);
   jetCalib04->set_ZvrtxNode("GlobalVertexMap");
@@ -246,7 +248,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
   cout << "set up jetreco" << endl;
       //}
   
-  TimingCut* tc = new TimingCut("AntiKt_Tower_HIRecoSeedsRaw_r04");
+  TimingCut* tc = new TimingCut("AntiKt_unsubtracted_r04");
   se->registerSubsystem(tc);
   
   Chi2checker* chi2c;

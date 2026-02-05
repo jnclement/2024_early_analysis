@@ -1,7 +1,7 @@
 #!/bin/bash
 # file name: firstcondor.sh
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.521
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.533
 source /opt/sphenix/core/bin/setup_local.sh "/sphenix/user/jocl/projects/testinstall"
 export HOME=/sphenix/u/jocl
 if [[ ! -z "$_CONDOR_SCRATCH_DIR" && -d $_CONDOR_SCRATCH_DIR ]]; then
@@ -10,8 +10,8 @@ else
     echo condor scratch NOT set
     exit -1
 fi
-STARTN=$(( $2 * 100 ))
-for i in {0..99}; do
+STARTN=$(( $2 * 20 ))
+for i in {0..19}; do
     SUBDIR=$(( $STARTN + $i ))
     UPLN=$(( $SUBDIR + 1 ))
     mkdir -p $SUBDIR
@@ -59,7 +59,7 @@ for i in {0..99}; do
     mv $G4HITSF ./dsts/$SUBDIR/g4hits_${SUBDIR}.root
     ls ./dsts/$SUBDIR
     #cp -r $TRTHJET ./dsts/$SUBDIR/truth_jet_${SUBDIR}.root
-    root -b -q 'run_earlydata.C("'${1}'",'${SUBDIR}',0,'${5}','${2}','${4}',0,'${6}','${7}')'
+    root -b -q 'run_earlydata.C("'${1}'",'${SUBDIR}',0,'${5}','${2}','${4}',0,'${6}')'
     ls
     echo " "
     ls $SUBDIR
@@ -67,7 +67,7 @@ for i in {0..99}; do
     ls output/smg
     mkdir -p /sphenix/tg/tg01/jets/jocl/chi2/$SUBDIR/
     for file in `ls ./$2\_chi2/`; do
-	dd if="./${2}_chi2/${file}" of="/sphenix/tg/tg01/jets/jocl/chi2/${SUBDIR}/${file}" bs=12M
+	dd if="./${2}_chi2/${file}" of="/sphenix/tg/tg01/jets/jocl/chi2/${2}/${file}" bs=12M
     done
     rm -r ./$2\_chi2/*
     rm ./dsts/$SUBDIR/*
