@@ -5,7 +5,7 @@ if [ $# -lt 4 ]; then
     exit 1
 fi
 
-nmax=0
+nmax=100000
 evt=$2
 c2c=$3
 dowf=$4
@@ -17,8 +17,8 @@ echo $evt
 for rn in `cat listrunnumber.txt`; do #`cat newgoodrunlist.list`; do
     rn=$(expr $rn + 0)
     nfile=`wc -l lists/dst_jetcalo-000${rn}.list | awk '{print $1}'`
-    njob=$(( $nfile + 63 ))
-    njob=$(( $njob / 64 ))
+    njob=$(( $nfile + 24 ))
+    njob=$(( $njob / 25 ))
     filecounter=$(( $filecounter + $njob ))
     
 #    nfile=$(( ($nfile + 9) / 10 ))
