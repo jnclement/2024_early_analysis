@@ -1,17 +1,16 @@
 #!/bin/bash
 
 if [ $# -lt 4 ]; then
-    echo "Need tag argument (string), evtnum (int), chi2check (int), sampletype (string formatted as jetX)"
+    echo "Need tag argument (string), evtnum (int), chi2check (int), sampletype (string formatted as jetX or mb)"
     exit 1
 fi
 rn=0
 evt=$2
 c2c=$3
-nfile=500
+nfile=2000
 if [ "$4" = "mb" ]; then
     nfile=10000
 fi
-
 #for i in {0..25000}; do
 #    mkdir -p /sphenix/tg/tg01/jets/jocl/evt/$i
 #    mkdir -p /sphenix/tg/tg01/jets/jocl/err/$i
