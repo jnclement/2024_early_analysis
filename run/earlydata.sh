@@ -1,7 +1,7 @@
 #!/bin/bash
 # file name: firstcondor.sh
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.533
+source /opt/sphenix/core/bin/sphenix_setup.sh -n new
 source /opt/sphenix/core/bin/setup_local.sh "/sphenix/user/jocl/projects/testinstall"
 export HOME=/sphenix/u/jocl
 export TESTINSTALL=/sphenix/user/jocl/projects/testinstall
