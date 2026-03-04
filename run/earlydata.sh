@@ -58,6 +58,8 @@ done
 ls -v dsts/$3/* > thelist.list
 cat thelist.list
 root -b -q 'run_earlydata.C("'${1}'",'$UPLN',0,'${5}','${3}','${4}',1,'${6}',-1,".",'${7}')'
+echo "isgoodrun:"
+echo $?
 echo " "
 echo " "
 echo " "

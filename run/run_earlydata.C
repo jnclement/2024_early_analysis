@@ -143,6 +143,9 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
 
   Process_Calo_Calib();
 
+
+
+  
   //auto mbddigi = new MbdDigitization();
   auto mbdreco = new MbdReco();
   GlobalVertexReco* gblvertex = new GlobalVertexReco();
@@ -265,7 +268,7 @@ int run_earlydata(string tag = "", int nproc = 0, int debug = 0, int nevt = 0, i
       //}
   
   TimingCut* tc = new TimingCut("AntiKt_unsubtracted_r04");
-  se->registerSubsystem(tc);
+  if(isdat) se->registerSubsystem(tc);
   
   Chi2checker* chi2c;
   int doall60 = 0;
