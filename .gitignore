@@ -28,3 +28,14 @@ lists/
 run/flatrunlist.txt
 run/activerunlist.txt
 run/danrunlist.txt
+*.root
+*/*.root
+*/*.pdf
+*.pdf
+*/*.list
+*.list
+*.sub
+.gitignore
+*~
+\#*
+*.txt
